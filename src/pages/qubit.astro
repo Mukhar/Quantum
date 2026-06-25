@@ -1,0 +1,97 @@
+---
+/**
+ * "What is a Qubit?" — Phase 2 flagship essay. STUB for Plan 02-01.
+ *
+ * This page proves the layout chassis works. Real prose + widgets land
+ * in 02-03 → 02-06. For now we render lorem-ish copy + a math sample so
+ * we can sanity-check KaTeX, the math-nerds collapsible, and the
+ * annotations outlet.
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+---
+
+<EssayLayout
+  title="What is a Qubit?"
+  subtitle="A qubit is not a magical coin. It's a unit vector in a two-dimensional complex vector space — and you can drag it."
+  description="An interactive introduction to qubits for working developers."
+>
+  <p>
+    Forget the coin. Forget the cat. A qubit is a unit vector
+    <code>(α, β)</code> with complex components, and almost everything
+    interesting about quantum computing falls out of two facts: the
+    vector can point in any direction in a 2D complex space, and gates
+    are just rotations of that vector.
+  </p>
+
+  <p data-step="0">
+    We'll build intuition by <strong>playing</strong>. Each section
+    below has a widget. The widgets share one simulator — change the
+    state in one, and the others update.
+  </p>
+
+  <h2>The state vector</h2>
+  <p data-step="1">
+    A qubit's state lives on the surface of a sphere — the Bloch sphere.
+    The north pole is <code>|0⟩</code>. The south pole is <code>|1⟩</code>.
+    Every other point is a superposition. (Real widget lands in 02-04.)
+  </p>
+
+  <div class="my-6 rounded-lg border border-dashed border-slate-700 bg-slate-900/40 p-6 text-center text-slate-500">
+    [BlochSphere widget — placeholder, lands in 02-04]
+  </div>
+
+  <h2>Probabilities</h2>
+  <p data-step="2">
+    Measure the qubit and you collapse it to a basis state. The
+    <code>|α|²</code> and <code>|β|²</code> values are the probabilities.
+  </p>
+
+  <div class="my-6 rounded-lg border border-dashed border-slate-700 bg-slate-900/40 p-6 text-center text-slate-500">
+    [ProbabilityBars + StateVector — placeholder, lands in 02-03]
+  </div>
+
+  <MathNerds title="The state vector, formally">
+    <p>A single qubit's state is a unit vector in <MathBlock display={false} tex="\\mathbb{C}^2" />:</p>
+    <MathBlock tex="|\\psi\\rangle = \\alpha|0\\rangle + \\beta|1\\rangle, \\quad |\\alpha|^2 + |\\beta|^2 = 1" />
+    <p>
+      A rotation gate is a 2×2 unitary matrix. For example,
+      a rotation about the X axis by θ:
+    </p>
+    <MathBlock tex="R_x(\\theta) = \\cos(\\theta/2)\\, I - i \\sin(\\theta/2)\\, X" />
+  </MathNerds>
+
+  <Fragment slot="math-nerds">
+    <p>
+      The Bloch sphere is the visualization of pure single-qubit states
+      modulo global phase. Two states that differ only by a unit complex
+      scalar are physically indistinguishable, so we represent a qubit
+      as a point on the unit 2-sphere parameterized by (θ, φ):
+    </p>
+    <MathBlock tex="|\\psi\\rangle = \\cos(\\theta/2)\\,|0\\rangle + e^{i\\varphi}\\sin(\\theta/2)\\,|1\\rangle" />
+  </Fragment>
+
+  <Fragment slot="footer-nav">
+    <a href="/" class="hover:text-slate-200">← Home</a>
+    <span class="text-slate-600">Next: Superposition (coming in Phase 4)</span>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  // Wire scrolly + annotation-reset stubs. Real work lands in 02-05.
+  import { attachScrolly } from "../lib/scrolly";
+
+  const root = document.querySelector("article");
+  if (root) {
+    attachScrolly(root, {
+      stepSelector: "[data-step]",
+      onStep: (i) => console.debug(`[scrolly] step ${i}`),
+    });
+  }
+
+  document.getElementById("reset-annotations")?.addEventListener("click", () => {
+    // Plan 02-05 will replace this with a real localStorage clear.
+    console.debug("[annotations] reset clicked (no-op until 02-05)");
+  });
+</script>

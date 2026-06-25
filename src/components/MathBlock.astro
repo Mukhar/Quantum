@@ -1,0 +1,39 @@
+---
+/**
+ * MathBlock — server-renders a LaTeX expression to KaTeX HTML at build time.
+ *
+ * Falls back gracefully if KaTeX throws: the raw TeX is shown inside a
+ * `<code class="math-fallback">` block so the reader still gets the
+ * source rather than a broken render.
+ */
+import katex from "katex";
+
+interface Props {
+  /** The raw TeX. Don't wrap in $...$ or \[...\] — we handle that. */
+  tex: string;
+  /** Block-level (\[...\]) vs inline ($...$). Defaults to block. */
+  display?: boolean;
+}
+
+const { tex, display = true } = Astro.props as Props;
+
+let rendered = "";
+let failed = false;
+try {
+  rendered = katex.renderToString(tex, {
+    displayMode: display,
+    throwOnError: true,
+    strict: "ignore",
+  });
+} catch {
+  failed = true;
+}
+---
+
+{
+  failed ? (
+    <code class="math-fallback">{tex}</code>
+  ) : (
+    <Fragment set:html={rendered} />
+  )
+}

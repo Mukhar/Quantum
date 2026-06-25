@@ -1,0 +1,103 @@
+---
+/**
+ * EssayLayout — the visual chassis every concept essay slots into.
+ *
+ * Slots:
+ *  - default: the prose + widgets, in reading order.
+ *  - "math-nerds": optional collapsible appendix for the chalkboard math.
+ *  - "footer-nav": prev/next links (filled per essay).
+ *
+ * The annotations outlet is reserved as `<div id="annotations-root">`
+ * inside the article — Plan 02-05's AnnotationLayer mounts into it.
+ */
+
+interface Props {
+  title: string;
+  /** Short tagline shown under the title. */
+  subtitle?: string;
+  /** Used in <title> and og:title. */
+  pageTitle?: string;
+  /** Open Graph description. */
+  description?: string;
+}
+
+const { title, subtitle, pageTitle, description } = Astro.props as Props;
+const docTitle = pageTitle ?? `${title} — Quantum`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{docTitle}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" />
+  </head>
+  <body class="bg-slate-950 text-slate-100 antialiased">
+    <header class="border-b border-slate-800/60">
+      <div class="mx-auto max-w-3xl px-6 py-5 flex items-center justify-between">
+        <a href="/" class="text-sm uppercase tracking-widest text-indigo-400 hover:text-indigo-300">Quantum</a>
+        <nav class="text-sm text-slate-400">
+          <a href="/" class="hover:text-slate-200">Home</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <article class="mx-auto max-w-3xl px-6 py-12 prose-essay">
+        <header class="mb-10">
+          <h1 class="text-4xl sm:text-5xl font-semibold leading-tight">{title}</h1>
+          {subtitle && (
+            <p class="mt-3 text-lg text-slate-400">{subtitle}</p>
+          )}
+        </header>
+
+        <div id="annotations-root" class="relative">
+          <slot />
+        </div>
+
+        {Astro.slots.has("math-nerds") && (
+          <details class="mt-16 rounded-lg border border-slate-800 bg-slate-900/40 p-5">
+            <summary class="cursor-pointer text-sm uppercase tracking-widest text-indigo-400 hover:text-indigo-300">
+              For the math nerds
+            </summary>
+            <div class="mt-4 space-y-4 text-slate-200">
+              <slot name="math-nerds" />
+            </div>
+          </details>
+        )}
+
+        <footer class="mt-16 border-t border-slate-800 pt-6 flex items-center justify-between text-sm text-slate-400">
+          <slot name="footer-nav">
+            <a href="/" class="hover:text-slate-200">← Home</a>
+            <span></span>
+          </slot>
+        </footer>
+
+        <div class="mt-10 text-right">
+          <button
+            id="reset-annotations"
+            type="button"
+            class="text-xs text-slate-500 hover:text-slate-300 underline-offset-4 hover:underline"
+          >
+            Reset annotations on this page
+          </button>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  /* Essay typography — keeps prose readable without pulling in @tailwindcss/typography. */
+  .prose-essay p { @apply text-lg leading-relaxed text-slate-200 my-5; }
+  .prose-essay h2 { @apply text-2xl font-semibold mt-12 mb-4 text-slate-100; }
+  .prose-essay h3 { @apply text-xl font-semibold mt-8 mb-3 text-slate-100; }
+  .prose-essay a { @apply text-indigo-300 underline underline-offset-4 hover:text-indigo-200; }
+  .prose-essay code { @apply rounded bg-slate-800/80 px-1.5 py-0.5 text-sm text-indigo-200; }
+  .prose-essay ul { @apply my-4 list-disc list-inside space-y-1 text-slate-200; }
+
+  /* KaTeX fallback when CDN fails: at least the source is legible. */
+  .math-fallback { @apply rounded bg-slate-800/60 px-2 py-1 text-sm text-amber-200; }
+</style>
