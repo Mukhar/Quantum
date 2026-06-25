@@ -1,5 +1,6 @@
 ---
 import SandboxLayout from "../../layouts/SandboxLayout.astro";
+import QuantumCanvas from "../../components/sandbox/QuantumCanvas.astro";
 ---
 
 <SandboxLayout
@@ -69,13 +70,7 @@ import SandboxLayout from "../../layouts/SandboxLayout.astro";
         <p class="mb-2 text-slate-200 font-medium">Results panel</p>
         <p>Live multi-qubit Bloch + ProbabilityBars + StateVector hydrate here (Plan 03-04).</p>
       </div>
-      <div
-        data-creative-tabs
-        class="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400"
-      >
-        <p class="text-slate-200 font-medium">Creative outputs</p>
-        <p>Quantum Canvas (03-06) and Quantum Tones (03-07) attach here once visible.</p>
-      </div>
+      <QuantumCanvas />
     </section>
 
     <aside aria-label="Tools" class="space-y-4">
@@ -108,6 +103,30 @@ import SandboxLayout from "../../layouts/SandboxLayout.astro";
     if (!root) return;
     mountComposer(root as HTMLElement);
     mountToast();
+
+    // Quantum Canvas pays for its Web Worker chunk only when it scrolls
+    // into view — the composer up top stays the fast critical path.
+    const canvasRoot = root.querySelector<HTMLElement>("[data-quantum-canvas-root]");
+    if (canvasRoot) {
+      const hydrate = () => import("../../lib/sandbox/canvas.client")
+        .then(({ mountCanvas }) => mountCanvas(canvasRoot))
+        .catch((err) => console.warn("[QuantumCanvas] mount failed", err));
+
+      if (typeof IntersectionObserver === "function") {
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              io.disconnect();
+              hydrate();
+              return;
+            }
+          }
+        }, { rootMargin: "200px" });
+        io.observe(canvasRoot);
+      } else {
+        hydrate();
+      }
+    }
   };
 
   if (document.readyState === "loading") {

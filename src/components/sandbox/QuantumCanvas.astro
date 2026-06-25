@@ -1,0 +1,158 @@
+---
+/**
+ * QuantumCanvas — generative-art widget for the sandbox.
+ *
+ * Pure scaffold: every interactive bit (worker spawn, axis pickers,
+ * sweep loop, PNG export) lives in `canvas.client.ts`. Mounting is
+ * gated on visibility from the sandbox page so the worker chunk only
+ * downloads when the user actually scrolls into view.
+ *
+ * Tone: formal, lightly dry. We're a serious widget that just happens
+ * to make pretty pictures.
+ */
+---
+
+<section
+  data-quantum-canvas-root
+  aria-labelledby="quantum-canvas-title"
+  class="rounded-lg border border-slate-800 bg-slate-900/40 p-4"
+>
+  <header class="mb-3 flex items-baseline justify-between gap-3 flex-wrap">
+    <h2
+      id="quantum-canvas-title"
+      class="text-base font-semibold text-slate-100"
+    >
+      Quantum Canvas
+    </h2>
+    <p class="text-xs text-slate-400">
+      Sweep two rotation angles, plot the metric per cell, save the result.
+    </p>
+  </header>
+
+  <div class="grid gap-4 md:grid-cols-[auto_1fr]">
+    <div class="flex justify-center">
+      <canvas
+        data-quantum-canvas
+        width="128"
+        height="128"
+        class="rounded-md border border-slate-800 bg-slate-900 w-[320px] h-[320px] [image-rendering:pixelated]"
+        aria-label="Quantum Canvas — generated image from a parameter sweep"
+        role="img"
+      ></canvas>
+    </div>
+
+    <div class="grid gap-3 text-sm">
+      <div class="grid grid-cols-2 gap-2">
+        <label class="flex flex-col gap-1 text-slate-400">
+          <span>X axis</span>
+          <select
+            data-canvas-x
+            class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+            aria-label="Rotation slot to sweep on the X axis"
+          ></select>
+        </label>
+        <label class="flex flex-col gap-1 text-slate-400">
+          <span>Y axis</span>
+          <select
+            data-canvas-y
+            class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+            aria-label="Rotation slot to sweep on the Y axis"
+          ></select>
+        </label>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <label class="flex flex-col gap-1 text-slate-400">
+          <span>Metric</span>
+          <select
+            data-canvas-metric
+            class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+          >
+            <option value="p0">P(q0 = 0)</option>
+            <option value="expectationZ_q0">⟨Z⟩ on q0</option>
+            <option value="entanglementEntropy_q0">entanglement S(q0)</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 text-slate-400">
+          <span>Resolution</span>
+          <select
+            data-canvas-resolution
+            class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+          >
+            <option value="32">32 × 32</option>
+            <option value="64" selected>64 × 64</option>
+            <option value="128">128 × 128</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid gap-2">
+        <label class="flex items-center gap-2 text-slate-400">
+          <span>Palette</span>
+          <select
+            data-canvas-palette
+            class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+          >
+            <option value="viridis">viridis</option>
+            <option value="magma">magma</option>
+            <option value="monochrome">monochrome</option>
+            <option value="custom">custom (2-color)</option>
+          </select>
+        </label>
+        <div
+          data-canvas-custom-wrap
+          class="flex items-center gap-2 text-slate-400"
+          hidden
+        >
+          <label class="flex items-center gap-1">
+            <span class="text-xs">low</span>
+            <input
+              type="color"
+              data-canvas-color0
+              value="#0f172a"
+              class="h-7 w-10 cursor-pointer rounded border border-slate-700 bg-slate-900"
+              aria-label="Custom palette low-value color"
+            />
+          </label>
+          <label class="flex items-center gap-1">
+            <span class="text-xs">high</span>
+            <input
+              type="color"
+              data-canvas-color1
+              value="#34d399"
+              class="h-7 w-10 cursor-pointer rounded border border-slate-700 bg-slate-900"
+              aria-label="Custom palette high-value color"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2 pt-1">
+        <button
+          type="button"
+          data-canvas-run
+          class="rounded bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed px-3 py-1 text-white"
+        >Run sweep</button>
+        <button
+          type="button"
+          data-canvas-cancel
+          class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-slate-200"
+          disabled
+        >Cancel</button>
+        <button
+          type="button"
+          data-canvas-png
+          class="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1 text-slate-200"
+          title="Download the current canvas as PNG"
+        >Download PNG</button>
+      </div>
+
+      <p
+        data-canvas-status
+        class="text-xs text-slate-500"
+        role="status"
+        aria-live="polite"
+      >Add at least two Rx/Ry/Rz gates to the circuit to enable a sweep.</p>
+    </div>
+  </div>
+</section>
