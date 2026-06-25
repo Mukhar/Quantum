@@ -26,7 +26,7 @@ import {
   mul,
   normSquared,
 } from "./complex";
-import { type Gate2x2, type GateName, GATES } from "./gates";
+import { type Gate2x2, type GateName, GATES, ROTATIONS, type RotationAxis } from "./gates";
 
 const MAX_QUBITS = 4;
 
@@ -104,6 +104,15 @@ export class Simulator {
       }
     }
     return this;
+  }
+
+  /**
+   * Apply a parameterized rotation gate (Rx/Ry/Rz) to a single qubit.
+   * Kept separate from `apply()` so the discrete-gate API stays string-only
+   * and the rotation API forces θ to be explicit.
+   */
+  applyRotation(axis: RotationAxis, qubit: number, theta: number): this {
+    return this.applySingle(ROTATIONS[axis](theta), qubit);
   }
 
   /** P(outcome) for every basis state. Sums to 1 (up to floating error). */
