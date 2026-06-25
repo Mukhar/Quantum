@@ -1,0 +1,188 @@
+---
+/**
+ * `/sandbox/challenges/[slug]` — per-puzzle page.
+ *
+ * Re-uses the same composer scaffold as `/sandbox/index.astro` (same
+ * `data-sandbox-*` attributes, same hydrator) and layers a challenge
+ * sidebar on top: brief, qubits badge, status, hint reveal, and a
+ * link back to the open sandbox with the current circuit preserved.
+ */
+import SandboxLayout from "../../../layouts/SandboxLayout.astro";
+import { PUZZLES, puzzleBySlug } from "../../../lib/sandbox/challenges/data";
+
+export function getStaticPaths() {
+  return PUZZLES.map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const puzzle = puzzleBySlug(slug!);
+if (!puzzle) {
+  // getStaticPaths makes this unreachable at build time, but the
+  // explicit guard keeps the type narrow and the failure mode obvious.
+  throw new Error(`Unknown puzzle slug: ${slug}`);
+}
+---
+
+<SandboxLayout
+  title={puzzle.title}
+  subtitle={puzzle.brief}
+  description={`Quantum challenge: ${puzzle.title}. ${puzzle.brief}`}
+>
+  <div
+    id="sandbox-root"
+    class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4"
+  >
+    <section aria-label="Composer" class="space-y-4">
+      <div
+        data-sandbox-toolbar
+        class="flex flex-wrap items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2 text-sm"
+        role="toolbar"
+        aria-label="Sandbox actions"
+      >
+        <button
+          type="button"
+          data-action="undo"
+          class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-slate-200"
+          title="Undo (Cmd/Ctrl+Z)"
+        >Undo</button>
+        <button
+          type="button"
+          data-action="redo"
+          class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-slate-200"
+          title="Redo (Cmd/Ctrl+Shift+Z)"
+        >Redo</button>
+        <button
+          type="button"
+          data-action="reset"
+          class="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1 text-slate-300"
+          title="Reset to empty circuit"
+        >Reset</button>
+        <button
+          type="button"
+          data-action="share"
+          class="rounded bg-emerald-700 hover:bg-emerald-600 px-3 py-1 text-white"
+          title="Copy share URL"
+        >Copy share URL</button>
+        <label class="ml-auto flex items-center gap-2 text-slate-400">
+          Qubits:
+          <select
+            data-action="qubits"
+            class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+            aria-label="Number of qubits"
+          >
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+      </div>
+      <div
+        data-sandbox-grid
+        class="relative overflow-x-auto rounded-lg border border-slate-800 bg-slate-900/40 p-3 grid gap-1.5 min-w-fit"
+      >
+        <!-- composer.client.ts hydrates this -->
+      </div>
+      <div
+        data-results-panel
+        class="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400"
+      >
+        <p class="mb-2 text-slate-200 font-medium">Results panel</p>
+        <p>Live multi-qubit Bloch + ProbabilityBars + StateVector hydrate here (Plan 03-04).</p>
+      </div>
+    </section>
+
+    <aside aria-label="Challenge" class="space-y-4">
+      <div class="rounded-lg border border-indigo-700/40 bg-indigo-950/30 p-4 space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-xs uppercase tracking-widest text-indigo-300">Goal</p>
+          <span class="rounded-full border border-slate-700 bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-300">
+            {puzzle.qubits} qubit{puzzle.qubits === 1 ? "" : "s"}
+          </span>
+        </div>
+        <p class="text-sm text-slate-200 leading-relaxed">{puzzle.brief}</p>
+        <div
+          data-challenge-status
+          class="inline-flex items-center gap-2 rounded-md border border-slate-700 bg-slate-800/70 px-3 py-1.5 text-sm font-medium text-slate-300"
+          role="status"
+          aria-live="polite"
+        >
+          <span aria-hidden="true" class="font-mono">·</span>
+          <span>Waiting for first move…</span>
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-slate-800 bg-slate-900/40 p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-medium text-slate-200">Hints</p>
+          <button
+            type="button"
+            data-challenge-hint-btn
+            class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-xs text-slate-200"
+          >Show a hint</button>
+        </div>
+        <ul
+          data-challenge-hint
+          class="list-disc list-inside space-y-2 marker:text-slate-600"
+        ></ul>
+      </div>
+
+      <div class="rounded-lg border border-slate-800 bg-slate-900/40 p-4 space-y-2">
+        <p class="text-sm font-medium text-slate-200">Take it further</p>
+        <p class="text-xs text-slate-400">
+          When you're done (or want a bigger canvas), open this exact
+          circuit in the full sandbox.
+        </p>
+        <a
+          href="/sandbox"
+          data-challenge-open
+          class="inline-block rounded-md bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white"
+        >Open in sandbox →</a>
+      </div>
+
+      <div class="rounded-lg border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400 space-y-2">
+        <p class="text-slate-200 font-medium">Controls</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Click a palette gate, then click a grid cell to drop.</li>
+          <li>For CNOT: drop on the control qubit, then tap the target in the same column.</li>
+          <li>Rx/Ry/Rz cells open a θ slider when clicked.</li>
+          <li>Backspace removes the selected cell's op; arrows move the selection.</li>
+        </ul>
+      </div>
+
+      <div
+        data-sandbox-palette
+        class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-3 gap-2 p-3 rounded-lg border border-slate-800 bg-slate-900/60"
+      >
+        <!-- composer.client.ts hydrates this -->
+      </div>
+    </aside>
+  </div>
+</SandboxLayout>
+
+<script define:vars={{ slug: puzzle.slug }}>
+  // The slug is the only piece of per-page state we need on the
+  // client; everything else is data-attribute scaffolding above.
+  window.__CHALLENGE_SLUG__ = slug;
+</script>
+
+<script>
+  import { mountComposer } from "../../../lib/sandbox/composer.client";
+  import { mountToast } from "../../../lib/sandbox/toast.client";
+  import { mountChallengeRuntime } from "../../../lib/sandbox/challenges/runtime.client";
+
+  const init = () => {
+    const root = document.getElementById("sandbox-root");
+    if (!root) return;
+    mountComposer(root as HTMLElement);
+    mountToast();
+    const slug = (window as unknown as { __CHALLENGE_SLUG__?: string }).__CHALLENGE_SLUG__;
+    if (slug) mountChallengeRuntime(slug);
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+</script>
