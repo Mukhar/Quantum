@@ -14,3 +14,26 @@ export { X, Y, Z, I, H, S, T, GATES, Rx, Ry, Rz, ROTATIONS } from "./gates";
 
 export { Simulator } from "./simulator";
 export type { SimulatorOptions } from "./simulator";
+
+export type { Circuit, Op, DiscreteGate, RotAxis, RunResult } from "./circuit";
+export {
+  MAX_QUBITS,
+  MAX_STEPS,
+  emptyCircuit,
+  validateCircuit,
+  runCircuit,
+  opQubits,
+  gateOp,
+  cnotOp,
+  rotOp,
+  measureOp,
+} from "./circuit";
+
+export {
+  encodeCircuit,
+  decodeCircuit,
+  roundTrip,
+  CodecError,
+  UnsupportedVersionError,
+  CODEC_VERSION,
+} from "./codec";
