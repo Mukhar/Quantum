@@ -34,6 +34,10 @@ import {
   type RotAxis,
 } from "../quantum/circuit";
 import { mountParamSlider } from "./paramSlider.client";
+import { initHistory, undo, redo, canUndo, canRedo } from "./history";
+import { hydrateFromUrlOrStorage, startAutoPersist, copyShareUrl } from "./persistence";
+import { emptyCircuit } from "../quantum/circuit";
+import { padToVisibleSteps, DEFAULT_QUBITS, DEFAULT_STEPS } from "./store";
 
 interface PendingCnot {
   control: number;
@@ -80,16 +84,25 @@ const TOUCH_CANCEL_PX = 8;
 export function mountComposer(root: HTMLElement) {
   const palette = root.querySelector<HTMLDivElement>("[data-sandbox-palette]");
   const grid = root.querySelector<HTMLDivElement>("[data-sandbox-grid]");
+  const toolbar = root.querySelector<HTMLDivElement>("[data-sandbox-toolbar]");
   if (!palette || !grid) {
     console.warn("sandbox composer: missing palette or grid scaffold");
     return;
   }
+
+  // Hydrate state BEFORE setting up subscriptions so initial render
+  // reflects the URL/storage circuit, not the default empty one.
+  initHistory();
+  hydrateFromUrlOrStorage();
+  startAutoPersist();
 
   renderPalette(palette);
   attachPaletteHandlers(palette);
 
   renderGrid(grid);
   attachGridHandlers(grid);
+
+  if (toolbar) attachToolbar(toolbar);
 
   // Re-render on any state change.
   let queued = false;
@@ -372,9 +385,68 @@ function renderGridDeferred() {
 /* -------------------------------------------------------------------------- */
 /* Keyboard */
 
+function attachToolbar(toolbar: HTMLElement) {
+  const undoBtn = toolbar.querySelector<HTMLButtonElement>("[data-action='undo']");
+  const redoBtn = toolbar.querySelector<HTMLButtonElement>("[data-action='redo']");
+  const shareBtn = toolbar.querySelector<HTMLButtonElement>("[data-action='share']");
+  const resetBtn = toolbar.querySelector<HTMLButtonElement>("[data-action='reset']");
+  const qubitsSel = toolbar.querySelector<HTMLSelectElement>("[data-action='qubits']");
+
+  undoBtn?.addEventListener("click", () => undo());
+  redoBtn?.addEventListener("click", () => redo());
+  shareBtn?.addEventListener("click", () => { void copyShareUrl(); });
+  resetBtn?.addEventListener("click", () => {
+    commit(() => padToVisibleSteps(emptyCircuit(circuit.value.qubits), DEFAULT_STEPS));
+  });
+  qubitsSel?.addEventListener("change", () => {
+    const n = parseInt(qubitsSel.value, 10);
+    if (!Number.isInteger(n) || n < 1 || n > 4) return;
+    commit((c) => {
+      const filtered = c.steps.map((step) =>
+        step.filter((op) => {
+          switch (op.kind) {
+            case "gate":
+            case "rot":
+            case "measure":
+              return op.qubit < n;
+            case "cnot":
+              return op.control < n && op.target < n;
+          }
+        }),
+      );
+      return padToVisibleSteps({ qubits: n, steps: filtered }, DEFAULT_STEPS);
+    });
+  });
+
+  if (qubitsSel) qubitsSel.value = String(circuit.value.qubits);
+
+  // Reactive enable/disable.
+  const sync = () => {
+    if (undoBtn) undoBtn.disabled = !canUndo.value;
+    if (redoBtn) redoBtn.disabled = !canRedo.value;
+    if (qubitsSel) qubitsSel.value = String(circuit.value.qubits);
+  };
+  canUndo.subscribe(sync);
+  canRedo.subscribe(sync);
+  circuit.subscribe(sync);
+}
+
 function attachKeyboardShortcuts() {
   window.addEventListener("keydown", (e) => {
     if (isTypingInForm(e.target)) return;
+    // Undo/redo first — they MUST win over palette shortcuts.
+    const meta = e.metaKey || e.ctrlKey;
+    if (meta && (e.key === "z" || e.key === "Z")) {
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+      return;
+    }
+    if (meta && (e.key === "y" || e.key === "Y")) {
+      e.preventDefault();
+      redo();
+      return;
+    }
     if (e.key === "Escape") {
       draggingGate.set(null);
       pendingCnot = null;

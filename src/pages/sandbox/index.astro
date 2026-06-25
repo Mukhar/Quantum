@@ -13,18 +13,68 @@ import SandboxLayout from "../../layouts/SandboxLayout.astro";
   >
     <section aria-label="Composer" class="space-y-4">
       <div
+        data-sandbox-toolbar
+        class="flex flex-wrap items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2 text-sm"
+        role="toolbar"
+        aria-label="Sandbox actions"
+      >
+        <button
+          type="button"
+          data-action="undo"
+          class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-slate-200"
+          title="Undo (⌘Z)"
+        >Undo</button>
+        <button
+          type="button"
+          data-action="redo"
+          class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-slate-200"
+          title="Redo (⌘⇧Z)"
+        >Redo</button>
+        <button
+          type="button"
+          data-action="share"
+          class="rounded bg-emerald-600 hover:bg-emerald-500 px-3 py-1 text-white"
+          title="Copy share URL"
+        >Copy share URL</button>
+        <button
+          type="button"
+          data-action="reset"
+          class="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1 text-slate-300"
+          title="Reset to empty circuit"
+        >Reset</button>
+        <label class="ml-auto flex items-center gap-2 text-slate-400">
+          Qubits:
+          <select
+            data-action="qubits"
+            class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+            aria-label="Number of qubits"
+          >
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+      </div>
+      <div
         data-sandbox-grid
         class="relative overflow-x-auto rounded-lg border border-slate-800 bg-slate-900/40 p-3 grid gap-1.5 min-w-fit"
       >
         <!-- composer.client.ts hydrates this -->
       </div>
-      <div class="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400">
+      <div
+        data-results-panel
+        class="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400"
+      >
         <p class="mb-2 text-slate-200 font-medium">Results panel</p>
-        <p>
-          Multi-qubit Bloch + ProbabilityBars + StateVector will hydrate here in Plan 03-04.
-          For now the circuit you build is already valid input to
-          <code class="rounded bg-slate-800 px-1.5 py-0.5 text-indigo-200">runCircuit()</code>.
-        </p>
+        <p>Live multi-qubit Bloch + ProbabilityBars + StateVector hydrate here (Plan 03-04).</p>
+      </div>
+      <div
+        data-creative-tabs
+        class="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400"
+      >
+        <p class="text-slate-200 font-medium">Creative outputs</p>
+        <p>Quantum Canvas (03-06) and Quantum Tones (03-07) attach here once visible.</p>
       </div>
     </section>
 
