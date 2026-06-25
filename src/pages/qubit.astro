@@ -1,20 +1,24 @@
 ---
 /**
- * "What is a Qubit?" — Phase 2 flagship essay. STUB for Plan 02-01.
+ * "What is a Qubit?" — Phase 2 flagship essay.
  *
- * This page proves the layout chassis works. Real prose + widgets land
- * in 02-03 → 02-06. For now we render lorem-ish copy + a math sample so
- * we can sanity-check KaTeX, the math-nerds collapsible, and the
- * annotations outlet.
+ * 02-03 wired in: ProbabilityBars + StateVector + GateButtons + a per-page store
+ * (key: "qubit-essay"). Bloch sphere widget (02-04) and rotation sliders +
+ * annotations (02-05) land next. Final copy + a11y/perf pass in 02-06.
  */
 import EssayLayout from "../layouts/EssayLayout.astro";
 import MathBlock from "../components/MathBlock.astro";
 import MathNerds from "../components/MathNerds.astro";
+import ProbabilityBars from "../components/ProbabilityBars.astro";
+import StateVector from "../components/StateVector.astro";
+import GateButtons from "../components/GateButtons.astro";
+
+const KEY = "qubit-essay";
 ---
 
 <EssayLayout
   title="What is a Qubit?"
-  subtitle="A qubit is not a magical coin. It's a unit vector in a two-dimensional complex vector space — and you can drag it."
+  subtitle="A qubit is not a magical coin. It's a unit vector in a two-dimensional complex vector space — and you can poke it."
   description="An interactive introduction to qubits for working developers."
 >
   <p>
@@ -26,39 +30,55 @@ import MathNerds from "../components/MathNerds.astro";
   </p>
 
   <p data-step="0">
-    We'll build intuition by <strong>playing</strong>. Each section
-    below has a widget. The widgets share one simulator — change the
-    state in one, and the others update.
+    We'll build intuition by <strong>playing</strong>. Every widget on
+    this page shares one simulator — change the state with a button and
+    every visualization below updates.
   </p>
+
+  <h2>Press a gate, watch the state</h2>
+
+  <p data-step="1">
+    Click <code>H</code> below. The Hadamard gate puts <code>|0⟩</code>
+    into an equal superposition of <code>|0⟩</code> and <code>|1⟩</code>.
+    Click <code>X</code> to flip. Click <code>Z</code> to phase-flip
+    (and notice probabilities don't change). Click <code>H</code> twice
+    in a row to return to where you started — H is its own inverse.
+  </p>
+
+  <GateButtons storeKey={KEY} qubits={1} gates={["H", "X", "Z"]} />
+  <ProbabilityBars storeKey={KEY} qubits={1} caption="Probability of measuring each outcome" />
+  <StateVector storeKey={KEY} qubits={1} caption="The amplitudes themselves" />
 
   <h2>The state vector</h2>
-  <p data-step="1">
-    A qubit's state lives on the surface of a sphere — the Bloch sphere.
-    The north pole is <code>|0⟩</code>. The south pole is <code>|1⟩</code>.
-    Every other point is a superposition. (Real widget lands in 02-04.)
-  </p>
-
-  <div class="my-6 rounded-lg border border-dashed border-slate-700 bg-slate-900/40 p-6 text-center text-slate-500">
-    [BlochSphere widget — placeholder, lands in 02-04]
-  </div>
-
-  <h2>Probabilities</h2>
   <p data-step="2">
-    Measure the qubit and you collapse it to a basis state. The
-    <code>|α|²</code> and <code>|β|²</code> values are the probabilities.
+    Above, the readout shows the complex amplitudes <code>α</code> and
+    <code>β</code>. Their squared magnitudes are the probabilities.
+    The Bloch sphere (next plan) gives this state a geometric body —
+    every qubit state is a point on the surface of a 3D unit sphere.
   </p>
 
   <div class="my-6 rounded-lg border border-dashed border-slate-700 bg-slate-900/40 p-6 text-center text-slate-500">
-    [ProbabilityBars + StateVector — placeholder, lands in 02-03]
+    [BlochSphere widget — lands in 02-04]
   </div>
 
-  <MathNerds title="The state vector, formally">
+  <h2>Continuous rotation</h2>
+  <p data-step="3">
+    Discrete gates jump between named states. <strong>Rotation gates</strong>
+    sweep continuously: drag a slider and watch the state smear from
+    <code>|0⟩</code> to <code>|1⟩</code> and back. (Sliders + annotations
+    land in 02-05.)
+  </p>
+
+  <div class="my-6 rounded-lg border border-dashed border-slate-700 bg-slate-900/40 p-6 text-center text-slate-500">
+    [Rotation sliders — lands in 02-05]
+  </div>
+
+  <MathNerds title="What the gates are, formally">
     <p>A single qubit's state is a unit vector in <MathBlock display={false} tex="\\mathbb{C}^2" />:</p>
     <MathBlock tex="|\\psi\\rangle = \\alpha|0\\rangle + \\beta|1\\rangle, \\quad |\\alpha|^2 + |\\beta|^2 = 1" />
-    <p>
-      A rotation gate is a 2×2 unitary matrix. For example,
-      a rotation about the X axis by θ:
-    </p>
+    <p>The Hadamard gate as a 2×2 matrix:</p>
+    <MathBlock tex="H = \\tfrac{1}{\\sqrt{2}}\\begin{bmatrix}1 & 1\\\\1 & -1\\end{bmatrix}" />
+    <p>Rotation about the X axis by θ:</p>
     <MathBlock tex="R_x(\\theta) = \\cos(\\theta/2)\\, I - i \\sin(\\theta/2)\\, X" />
   </MathNerds>
 
@@ -70,6 +90,11 @@ import MathNerds from "../components/MathNerds.astro";
       as a point on the unit 2-sphere parameterized by (θ, φ):
     </p>
     <MathBlock tex="|\\psi\\rangle = \\cos(\\theta/2)\\,|0\\rangle + e^{i\\varphi}\\sin(\\theta/2)\\,|1\\rangle" />
+    <p>
+      All single-qubit gates are 2×2 unitaries, i.e. elements of U(2).
+      Modulo a global phase, they're rotations of the Bloch sphere —
+      that's why "rotation gates" is the right mental model, not "logic gates."
+    </p>
   </Fragment>
 
   <Fragment slot="footer-nav">
@@ -79,7 +104,6 @@ import MathNerds from "../components/MathNerds.astro";
 </EssayLayout>
 
 <script>
-  // Wire scrolly + annotation-reset stubs. Real work lands in 02-05.
   import { attachScrolly } from "../lib/scrolly";
 
   const root = document.querySelector("article");
@@ -89,9 +113,4 @@ import MathNerds from "../components/MathNerds.astro";
       onStep: (i) => console.debug(`[scrolly] step ${i}`),
     });
   }
-
-  document.getElementById("reset-annotations")?.addEventListener("click", () => {
-    // Plan 02-05 will replace this with a real localStorage clear.
-    console.debug("[annotations] reset clicked (no-op until 02-05)");
-  });
 </script>

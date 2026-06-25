@@ -1,0 +1,127 @@
+---
+/**
+ * ProbabilityBars — animated SVG bar chart of |amplitude|^2.
+ *
+ * Bound to a store via `data-store-key`. The companion `.client.ts`
+ * subscribes and morphs the bars on every snapshot.
+ */
+
+interface Props {
+  storeKey: string;
+  /** Qubit count for the underlying simulator. Must match other widgets sharing the key. */
+  qubits: number;
+  /** Optional caption above the chart. */
+  caption?: string;
+  /** Heading for the math nerds: "P(outcome)". Hidden if false. */
+  showAxis?: boolean;
+}
+
+const { storeKey, qubits, caption, showAxis = true } = Astro.props as Props;
+---
+
+<figure
+  class="my-6 rounded-lg border border-slate-800 bg-slate-900/40 p-5"
+  data-widget="probability-bars"
+  data-store-key={storeKey}
+  data-qubits={qubits}
+>
+  {caption && <figcaption class="mb-3 text-sm text-slate-400">{caption}</figcaption>}
+  <div class="relative">
+    <svg
+      class="w-full h-40"
+      viewBox="0 0 400 160"
+      role="img"
+      aria-label="Probability bars (updates as the qubit state changes)"
+      data-role="chart"
+    ></svg>
+    {showAxis && (
+      <p class="mt-2 text-right text-xs text-slate-500" data-role="readout" aria-live="polite">
+        P(|0⟩) = …, P(|1⟩) = …
+      </p>
+    )}
+  </div>
+</figure>
+
+<script>
+  import { ensureStore } from "../lib/quantum/store";
+  import { basisKet } from "../lib/quantum/format";
+
+  const COLORS = ["#818cf8", "#22d3ee", "#34d399", "#f472b6", "#fbbf24", "#f87171", "#a78bfa", "#fb923c"];
+
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function mount(el: HTMLElement) {
+    const storeKey = el.dataset.storeKey!;
+    const qubits = Number(el.dataset.qubits ?? "1");
+    const store = ensureStore(storeKey, { qubits });
+    const svg = el.querySelector<SVGSVGElement>('[data-role="chart"]')!;
+    const readout = el.querySelector<HTMLParagraphElement>('[data-role="readout"]');
+
+    const width = 400;
+    const height = 160;
+    const padding = 24;
+
+    const render = (probs: number[], qubits: number) => {
+      const n = probs.length;
+      const barWidth = (width - padding * 2) / n - 6;
+      const maxBarH = height - padding - 20;
+
+      // Build the bars on first render, then animate widths/heights.
+      let bars = Array.from(svg.querySelectorAll<SVGRectElement>("rect.bar"));
+      let labels = Array.from(svg.querySelectorAll<SVGTextElement>("text.label"));
+
+      if (bars.length !== n) {
+        svg.innerHTML = "";
+        bars = [];
+        labels = [];
+        for (let i = 0; i < n; i++) {
+          const x = padding + i * (barWidth + 6);
+          const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          rect.classList.add("bar");
+          rect.setAttribute("x", String(x));
+          rect.setAttribute("width", String(barWidth));
+          rect.setAttribute("rx", "4");
+          rect.setAttribute("fill", COLORS[i % COLORS.length]);
+          if (!reduceMotion) {
+            rect.style.transition = "height 220ms ease-out, y 220ms ease-out";
+          }
+          svg.appendChild(rect);
+          bars.push(rect);
+
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.classList.add("label");
+          label.setAttribute("x", String(x + barWidth / 2));
+          label.setAttribute("y", String(height - 4));
+          label.setAttribute("text-anchor", "middle");
+          label.setAttribute("fill", "#94a3b8");
+          label.setAttribute("font-size", "11");
+          label.setAttribute("font-family", "ui-monospace, monospace");
+          label.textContent = basisKet(i, qubits);
+          svg.appendChild(label);
+          labels.push(label);
+        }
+      }
+
+      for (let i = 0; i < n; i++) {
+        const h = probs[i] * maxBarH;
+        bars[i].setAttribute("height", String(h));
+        bars[i].setAttribute("y", String(height - 20 - h));
+      }
+
+      if (readout) {
+        readout.textContent = probs
+          .map((p, i) => `P(${basisKet(i, qubits)}) = ${p.toFixed(3)}`)
+          .join("   ");
+      }
+    };
+
+    return store.subscribe((snap) => render(snap.probabilities, snap.qubits));
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="probability-bars"]')
+    .forEach(mount);
+</script>

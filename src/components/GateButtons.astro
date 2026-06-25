@@ -1,0 +1,83 @@
+---
+/**
+ * GateButtons — a row of click-to-apply discrete-gate buttons.
+ *
+ * Used in essay prose to give readers an instant "press H, watch the
+ * bars" interaction without forcing them to learn a circuit composer.
+ * The sandbox composer in Phase 3 will live separately.
+ */
+
+interface Props {
+  storeKey: string;
+  /** Qubit count for the underlying simulator. Must match other widgets sharing the key. */
+  qubits: number;
+  /** Subset of gates to expose. Defaults to a useful pedagogy set. */
+  gates?: readonly ("X" | "Y" | "Z" | "H" | "S" | "T")[];
+  /** Which qubit the buttons act on. Defaults to 0. */
+  qubit?: number;
+  /** Show a "reset" button alongside. Defaults to true. */
+  showReset?: boolean;
+}
+
+const {
+  storeKey,
+  qubits,
+  gates = ["H", "X", "Z"],
+  qubit = 0,
+  showReset = true,
+} = Astro.props as Props;
+---
+
+<div
+  class="my-4 flex flex-wrap items-center gap-2"
+  data-widget="gate-buttons"
+  data-store-key={storeKey}
+  data-qubits={qubits}
+  data-qubit={qubit}
+>
+  {gates.map((g) => (
+    <button
+      type="button"
+      class="rounded-md border border-indigo-500/40 bg-indigo-500/10 px-3 py-1.5 text-sm font-mono text-indigo-200 hover:bg-indigo-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 transition-colors"
+      data-gate={g}
+    >
+      {g}
+    </button>
+  ))}
+  {showReset && (
+    <button
+      type="button"
+      class="ml-2 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+      data-action="reset"
+    >
+      Reset
+    </button>
+  )}
+</div>
+
+<script>
+  import { ensureStore } from "../lib/quantum/store";
+  import type { GateName } from "../lib/quantum/gates";
+
+  function mount(el: HTMLElement) {
+    const storeKey = el.dataset.storeKey!;
+    const qubits = Number(el.dataset.qubits ?? "1");
+    const store = ensureStore(storeKey, { qubits });
+    const qubit = Number(el.dataset.qubit ?? "0");
+
+    el.addEventListener("click", (event) => {
+      const target = (event.target as HTMLElement).closest("button");
+      if (!target) return;
+      if (target.dataset.action === "reset") {
+        store.reset();
+        return;
+      }
+      const gate = target.dataset.gate as GateName | undefined;
+      if (gate) store.apply(gate, qubit);
+    });
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="gate-buttons"]')
+    .forEach(mount);
+</script>

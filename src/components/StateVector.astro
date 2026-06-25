@@ -1,0 +1,51 @@
+---
+/**
+ * StateVector — numeric readout of the simulator's complex amplitudes,
+ * formatted as `(a)|0⟩ + (b)|1⟩ + …`.
+ *
+ * Pairs with ProbabilityBars: bars show the *what*, this shows the *why*.
+ */
+
+interface Props {
+  storeKey: string;
+  /** Qubit count for the underlying simulator. Must match other widgets sharing the key. */
+  qubits: number;
+  caption?: string;
+}
+
+const { storeKey, qubits, caption } = Astro.props as Props;
+---
+
+<figure
+  class="my-6 rounded-lg border border-slate-800 bg-slate-900/40 p-5"
+  data-widget="state-vector"
+  data-store-key={storeKey}
+  data-qubits={qubits}
+>
+  {caption && <figcaption class="mb-3 text-sm text-slate-400">{caption}</figcaption>}
+  <pre
+    class="overflow-x-auto rounded bg-slate-950/60 p-4 font-mono text-sm leading-relaxed text-indigo-200"
+    data-role="readout"
+    aria-live="polite"
+  >…</pre>
+</figure>
+
+<script>
+  import { ensureStore } from "../lib/quantum/store";
+  import { formatState } from "../lib/quantum/format";
+
+  function mount(el: HTMLElement) {
+    const storeKey = el.dataset.storeKey!;
+    const qubits = Number(el.dataset.qubits ?? "1");
+    const store = ensureStore(storeKey, { qubits });
+    const readout = el.querySelector<HTMLPreElement>('[data-role="readout"]')!;
+
+    return store.subscribe((snap) => {
+      readout.textContent = `|ψ⟩ = ${formatState(snap.state, snap.qubits)}`;
+    });
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="state-vector"]')
+    .forEach(mount);
+</script>
