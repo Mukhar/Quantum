@@ -2,9 +2,15 @@
 /**
  * "What is a Qubit?" — Phase 2 flagship essay.
  *
- * 02-03 wired in: ProbabilityBars + StateVector + GateButtons + a per-page store
- * (key: "qubit-essay"). Bloch sphere widget (02-04) and rotation sliders +
- * annotations (02-05) land next. Final copy + a11y/perf pass in 02-06.
+ * Final copy + a11y pass per Plan 02-06.
+ *
+ * Skeleton:
+ *   hook → press-a-gate (instant interaction) → state-vector context →
+ *   Bloch sphere (drag it) → continuous rotation (sliders) →
+ *   make-it-yours (annotations) → math nerds → self-test → next link.
+ *
+ * Each section has at least one "Try this:" prompt that asks the reader
+ * to do something specific with the widgets, then notice a result.
  */
 import EssayLayout from "../layouts/EssayLayout.astro";
 import MathBlock from "../components/MathBlock.astro";
@@ -20,86 +26,158 @@ const KEY = "qubit-essay";
 
 <EssayLayout
   title="What is a Qubit?"
-  subtitle="A qubit is not a magical coin. It's a unit vector in a two-dimensional complex vector space — and you can poke it."
-  description="An interactive introduction to qubits for working developers."
+  subtitle="Forget the magical coin. A qubit is a unit vector in a two-dimensional complex space — and on this page, you can poke it."
+  description="An interactive introduction to qubits for working developers. Press the buttons, drag the sphere, sweep the sliders — every widget runs a real quantum simulator."
 >
   <p>
-    Forget the coin. Forget the cat. A qubit is a unit vector
-    <code>(α, β)</code> with complex components, and almost everything
-    interesting about quantum computing falls out of two facts: the
-    vector can point in any direction in a 2D complex space, and gates
-    are just rotations of that vector.
+    You've probably been told a qubit is &ldquo;a bit that can be 0 and 1
+    at the same time.&rdquo; That is, technically, true. It is also useless
+    as a mental model. It doesn't tell you what's actually on the wire,
+    it doesn't predict what gates do, and it absolutely won't survive
+    contact with a circuit diagram.
   </p>
 
   <p data-step="0">
-    We'll build intuition by <strong>playing</strong>. Every widget on
-    this page shares one simulator — change the state with a button and
-    every visualization below updates.
+    Here is the model that actually works: a qubit's state is a
+    two-component complex vector <code>(α, β)</code> with
+    <code>|α|² + |β|² = 1</code>. The squared magnitudes are the
+    probabilities of measuring <code>|0⟩</code> or <code>|1⟩</code>.
+    Everything else — superposition, phase, the Bloch sphere, why
+    quantum gates are &ldquo;rotations&rdquo; — falls out of those two
+    facts.
+  </p>
+
+  <p>
+    We're not going to dwell on the math up front. You're going to
+    <strong>play with the state</strong> for a few minutes first, and
+    we'll fill in the symbols underneath. Every widget on this page is
+    driven by a real (and very tiny) quantum simulator running in your
+    browser. You can open DevTools and poke it.
   </p>
 
   <h2>Press a gate, watch the state</h2>
 
   <p data-step="1">
-    Click <code>H</code> below. The Hadamard gate puts <code>|0⟩</code>
-    into an equal superposition of <code>|0⟩</code> and <code>|1⟩</code>.
-    Click <code>X</code> to flip. Click <code>Z</code> to phase-flip
-    (and notice probabilities don't change). Click <code>H</code> twice
-    in a row to return to where you started — H is its own inverse.
+    Start with <code>|0⟩</code>. The probability bars show two outcomes;
+    only the left one is on. Now press <strong>H</strong> (the Hadamard
+    gate). The probabilities split evenly: a 50/50 superposition.
   </p>
 
   <GateButtons storeKey={KEY} qubits={1} gates={["H", "X", "Z"]} />
-  <ProbabilityBars storeKey={KEY} qubits={1} caption="Probability of measuring each outcome" />
-  <StateVector storeKey={KEY} qubits={1} caption="The amplitudes themselves" />
+  <ProbabilityBars storeKey={KEY} qubits={1} caption="P(outcome) — updates live as you press gates." />
+  <StateVector storeKey={KEY} qubits={1} caption="The complex amplitudes themselves." />
 
-  <h2>The state vector</h2>
-  <p data-step="2">
-    Above, the readout shows the complex amplitudes <code>α</code> and
-    <code>β</code>. Their squared magnitudes are the probabilities.
-    Below, the same state has a geometric body: every qubit state is
-    a point on the surface of a unit sphere. Drag the arrow tip.
-  </p>
-
-  <BlochSphere storeKey={KEY} caption="Drag the arrow tip. Apply a gate above and watch the arrow rotate." />
-
-  <h2>Continuous rotation</h2>
-  <p data-step="3">
-    Discrete gates jump between named states. <strong>Rotation gates</strong>
-    sweep continuously: drag a slider and watch the state smear from
-    <code>|0⟩</code> to <code>|1⟩</code> and back. (Sliders + annotations
-    land in 02-05.)
-  </p>
-
-  <h2>Continuous rotation</h2>
-  <p data-step="3">
-    Discrete gates jump between named states. <strong>Rotation gates</strong>
-    sweep continuously: drag a slider and watch the state smear from
-    <code>|0⟩</code> toward <code>|1⟩</code> and back. Sliders own a
-    snapshot taken when you grab them — sweeping back to 0 returns to
-    the pre-grab state. (They don't compound.)
-  </p>
   <p>
-    <strong>Try this:</strong> press <code>H</code> above, then sweep <code>Rz(θ)</code> from 0 to 2π. The probabilities never change — but the
-    Bloch arrow spins around the Z axis. That's a phase rotation.
+    <strong>Try this:</strong> press <code>H</code> twice in a row. You
+    end up back at <code>|0⟩</code>. The Hadamard gate is its own
+    inverse — applying it again &ldquo;undoes&rdquo; the superposition.
+    That's not magic, that's <code>H · H = I</code>.
+  </p>
+
+  <p>
+    <strong>Try this:</strong> press <code>H</code> then <code>Z</code>.
+    The bars don't move — <code>Z</code> doesn't change the
+    probabilities of <code>|0⟩</code> vs. <code>|1⟩</code>. But look at
+    the state-vector readout. The amplitude in front of
+    <code>|1⟩</code> flipped sign. That sign is called a
+    <strong>phase</strong>, and it'll come back to haunt us in a moment.
+  </p>
+
+  <h2>The state, geometrically</h2>
+
+  <p data-step="2">
+    Two complex numbers with a normalization constraint and a free
+    overall phase have exactly two real degrees of freedom — which means
+    every single-qubit state can be drawn as a point on the surface of
+    a sphere. North pole is <code>|0⟩</code>, south pole is
+    <code>|1⟩</code>, equator is the equal-superposition states. This is
+    the <em>Bloch sphere</em>.
+  </p>
+
+  <BlochSphere
+    storeKey={KEY}
+    caption="The Bloch sphere. Drag the arrow tip to set the qubit state directly."
+  />
+
+  <p>
+    <strong>Try this:</strong> drag the arrow to the equator (anywhere
+    on the equator). The probability bars go to 50/50. Now press
+    <code>Z</code>. The bars don't move — but the arrow rotates around
+    the vertical axis. <em>That's</em> what a Z phase rotation looks
+    like geometrically. Phase isn't &ldquo;invisible&rdquo;; it lives
+    around the equator.
+  </p>
+
+  <p>
+    <strong>Try this:</strong> reset, then press <code>H</code>, then
+    drag the arrow to the south pole. Press <code>H</code> again. Where
+    does the arrow land? Why? (Hint: the math nerds box at the bottom
+    of the page has the full matrix.)
+  </p>
+
+  <h2>Continuous rotation</h2>
+
+  <p data-step="3">
+    Discrete gates jump between named states. <strong>Rotation gates</strong>
+    sweep continuously: drag a slider and watch the state smear smoothly
+    from <code>|0⟩</code> toward <code>|1⟩</code> and back. Each slider
+    snapshots the state when you grab it, so sweeping back to <code>0</code>
+    always returns you to where you started — they don't compound.
   </p>
 
   <RotationSlider storeKey={KEY} qubits={1} axis="Rx" />
   <RotationSlider storeKey={KEY} qubits={1} axis="Ry" />
   <RotationSlider storeKey={KEY} qubits={1} axis="Rz" />
 
-  <h2>Make this page yours</h2>
   <p>
-    <strong>Double-click any widget</strong> to drop a sticky note. Your
-    notes live in your browser's local storage — they'll be here when
-    you come back. The "Reset annotations" link at the bottom wipes
-    them for this page.
+    <strong>Try this:</strong> press <code>H</code>, then sweep
+    <code>Rz(θ)</code> from 0 to <code>2π</code>. The probabilities
+    never budge. But the Bloch arrow spins around the vertical axis
+    a full turn. Phase, again — alive and visible.
   </p>
+
+  <p>
+    <strong>Try this:</strong> reset, then sweep <code>Ry(θ)</code> to
+    exactly <code>π</code>. You land on <code>|1⟩</code>. That's the
+    continuous, half-way-rotation version of the discrete <code>X</code>
+    gate: <code>X ≈ Ry(π)</code> up to a global phase. Every discrete
+    gate has a smooth, parameterized cousin.
+  </p>
+
+  <h2>Make this page yours</h2>
+
+  <p>
+    Found a moment that clicked? <strong>Double-click any widget</strong>
+    to drop a sticky note. Your notes live in your browser's local
+    storage — they'll be here when you come back. (The
+    &ldquo;Reset annotations on this page&rdquo; link at the bottom
+    wipes them.)
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+    <li>
+      You apply <code>HZH</code> to <code>|0⟩</code>. What state do you
+      end up in, and why is that equivalent to applying <code>X</code>?
+      (Try it with the buttons.)
+    </li>
+    <li>
+      <code>Rz(θ)</code> never changes measurement probabilities in the
+      computational basis. So why is it useful at all? (Hint: think
+      about what happens if you apply <code>H</code> <em>after</em> the
+      <code>Rz</code>.)
+    </li>
+  </ol>
 
   <MathNerds title="What the gates are, formally">
     <p>A single qubit's state is a unit vector in <MathBlock display={false} tex="\\mathbb{C}^2" />:</p>
     <MathBlock tex="|\\psi\\rangle = \\alpha|0\\rangle + \\beta|1\\rangle, \\quad |\\alpha|^2 + |\\beta|^2 = 1" />
     <p>The Hadamard gate as a 2×2 matrix:</p>
     <MathBlock tex="H = \\tfrac{1}{\\sqrt{2}}\\begin{bmatrix}1 & 1\\\\1 & -1\\end{bmatrix}" />
-    <p>Rotation about the X axis by θ:</p>
+    <p>The Pauli-Z gate (only affects phase of <MathBlock display={false} tex="|1\\rangle" />):</p>
+    <MathBlock tex="Z = \\begin{bmatrix}1 & 0\\\\0 & -1\\end{bmatrix}" />
+    <p>Rotation about the X axis by θ — note the angle is θ/2, a quirk of mapping double-cover SU(2) to the Bloch sphere:</p>
     <MathBlock tex="R_x(\\theta) = \\cos(\\theta/2)\\, I - i \\sin(\\theta/2)\\, X" />
   </MathNerds>
 
@@ -112,15 +190,24 @@ const KEY = "qubit-essay";
     </p>
     <MathBlock tex="|\\psi\\rangle = \\cos(\\theta/2)\\,|0\\rangle + e^{i\\varphi}\\sin(\\theta/2)\\,|1\\rangle" />
     <p>
-      All single-qubit gates are 2×2 unitaries, i.e. elements of U(2).
-      Modulo a global phase, they're rotations of the Bloch sphere —
-      that's why "rotation gates" is the right mental model, not "logic gates."
+      All single-qubit gates are 2×2 unitaries — i.e. elements of
+      <MathBlock display={false} tex="U(2)" />. Modulo a global phase
+      they're rotations of the Bloch sphere, which is why
+      &ldquo;rotation gates&rdquo; is the right mental model, not
+      &ldquo;logic gates.&rdquo;
+    </p>
+    <p>
+      A keyboard-only note: the <em>sliders</em> are fully operable
+      with the arrow keys (Page Up/Down jumps in bigger increments).
+      Drag on the Bloch sphere is also reachable as &ldquo;drag the
+      arrow tip with the pointer&rdquo; — pointer events cover mouse,
+      touch, and pen.
     </p>
   </Fragment>
 
   <Fragment slot="footer-nav">
     <a href="/" class="hover:text-slate-200">← Home</a>
-    <span class="text-slate-600">Next: Superposition (coming in Phase 4)</span>
+    <span class="text-slate-600">Next: Superposition (Phase 4)</span>
   </Fragment>
 </EssayLayout>
 
