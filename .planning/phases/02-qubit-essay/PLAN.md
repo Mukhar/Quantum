@@ -1,11 +1,14 @@
-# Phase 2 Plan — Flagship "What is a Qubit?" Essay
+# Phase 2 Plan — Flagship Interactive "What is a Qubit?" Essay
 
-**Phase goal:** Ship one complete, polished concept essay end-to-end —
-the qubit essay — proving the format works pedagogically and technically,
-and getting at least 3 working devs to read it and give feedback before
-we scale out to more essays.
+**Phase goal:** Ship one complete, polished, **interactive-first** concept
+essay end-to-end — the qubit essay — proving that the format works
+pedagogically and that direct-manipulation widgets feel right. Lay the
+technical foundations (param rotation gates, draggable Bloch arrow, a
+per-essay simulator store, annotations) that the Phase 3 sandbox will
+depend on.
 
-**Maps to:** Milestone 1 in `docs/plans/2026-06-24-quantum-learning-site-design.md`.
+**Maps to:** Milestone 1 in `docs/plans/2026-06-24-quantum-learning-site-design.md`,
+expanded with the interactivity/creativity pillar.
 
 **Depends on:** Phase 1 (simulator + Astro scaffold).
 
@@ -14,16 +17,26 @@ we scale out to more essays.
 A reader visits `/qubit` and:
 
 1. Lands on a hook paragraph that reframes the question without metaphors.
-2. Scrolls through prose interleaved with three interactive widgets:
-   Bloch sphere, ProbabilityBars, StateVector. All three share a single
-   `Simulator` instance — flipping a gate updates all three.
-3. Sees real math (KaTeX) inside a collapsed "for the math nerds" block.
-4. Ends with a 1–2 question self-test and a link to the next essay.
-5. Works on mobile (2D polar fallback for the Bloch sphere; widgets
-   remain readable; reduced-motion respected).
-6. Loads with LCP < 2s on a simulated 4G mid-range phone.
-7. Is deployed to a public static URL.
-8. Has been read by ≥ 3 dev friends; ≥ 1 iteration pass made on feedback.
+2. Scrolls through prose interleaved with **three directly-manipulable
+   widgets**: Bloch sphere (draggable arrow), ProbabilityBars, StateVector.
+   All three share a single `Simulator` instance.
+3. Encounters **continuous rotation sliders** (Rx, Ry, Rz with θ ∈ [0, 2π])
+   that sweep the state in real time. Every visualization tracks at
+   16 ms per frame on a mid-range laptop.
+4. Can **drag the Bloch state-vector arrow** to set the qubit's initial
+   state, then apply gates from there. Drag uses pointer events (works
+   for mouse + touch + pen).
+5. Can **pin a sticky note** anywhere on any widget; notes persist
+   to `localStorage` and re-render on revisit.
+6. Sees real math (KaTeX) inside a "for the math nerds" collapsible.
+7. Ends with a 1–2 question self-test and a "Next: Superposition" link
+   (Phase 4 will fill the destination; for now it stubs out).
+8. Works on mobile (2D polar fallback for the Bloch sphere; sliders are
+   thumb-friendly; reduced-motion respected).
+9. Loads with LCP < 2s on a simulated 4G mid-range phone.
+10. Is deployed to a public static URL.
+11. Has been read AND played-with by ≥ 3 dev friends; ≥ 1 iteration
+    pass made on their feedback.
 
 ## Plans
 
@@ -33,156 +46,216 @@ A reader visits `/qubit` and:
 ### 02-01 — Astro page shell + KaTeX + scrolly helper + per-essay layout
 
 **Why:** Every later plan needs the essay scaffolding to exist. Builds
-the reusable `<EssayLayout>` component, KaTeX integration, scrolly
-helper module, and the `/qubit` route stub.
+the reusable layout, KaTeX integration, scrolly helper, and the
+`/qubit` route stub.
 
 **Deliverables:**
 - `src/layouts/EssayLayout.astro` — header, prose container, footer,
-  prev/next nav slot, "math nerds" collapsible slot.
-- `src/components/MathBlock.astro` — KaTeX-rendered math wrapper.
-  Build-time render; falls back to `<code>` on render failure.
-- `src/components/MathNerds.astro` — `<details>` collapsible with the
-  "For the math nerds" header.
-- `src/lib/scrolly.ts` — IntersectionObserver-based scroll-tied
-  animation helper. Respects `prefers-reduced-motion` (no-op when set).
-- `src/pages/qubit.astro` — stub page using `EssayLayout`, lorem prose,
+  prev/next nav slot, "math nerds" collapsible slot, annotations
+  outlet (real impl lands in 02-05).
+- `src/components/MathBlock.astro` + `MathNerds.astro` — KaTeX wrapper
+  + `<details>` collapsible. KaTeX failure falls back to `<code>`.
+- `src/lib/scrolly.ts` — IntersectionObserver helper. Respects
+  `prefers-reduced-motion` (no-op when set).
+- `src/pages/qubit.astro` — stub with `EssayLayout`, lorem prose,
   placeholder widget slots.
-- Add KaTeX dep (`katex`), wire CSS in `src/styles/global.css`.
-- Vitest test for `scrolly.ts` reduced-motion branch (jsdom).
+- Add `katex` dep, wire CSS in `src/styles/global.css`.
+- Vitest: `scrolly.ts` reduced-motion branch (jsdom).
 
 **Acceptance:**
 - `npm run dev` shows `/qubit` rendering the stub with KaTeX math.
-- `npm test` still green; new scrolly test passes.
-- LCP measurement script (lightweight) records baseline for later
-  comparison.
+- `npm test` green; new scrolly test passes.
 
 **File budget:** ≤ 6 new files, all ≤ 200 lines.
 
 ---
 
-### 02-02 — ProbabilityBars + StateVector widgets
+### 02-02 — Param rotation gates Rx/Ry/Rz in the simulator + tests
 
-**Why:** These are the cheap, high-value visualizations. They establish
-the shared-simulator pattern that the Bloch sphere will plug into.
+**Why:** Continuous-θ rotation gates are the technical key that
+unlocks all of the interactivity-first design. Without them, sliders
+have nothing to sweep. They're also the basis of the Bloch-drag
+implementation (drag → derive Ry/Rz angles → apply).
 
 **Deliverables:**
-- `src/lib/quantum/store.ts` — a tiny pub-sub wrapper around a
-  `Simulator` instance. `subscribe(cb)`, `apply(...)`, `reset()`.
-  Vanilla TS, no framework. (Decision point: if subscription wiring
-  starts feeling painful, switch to Preact signals here — but YAGNI
-  until proven.)
-- `src/components/ProbabilityBars.astro` (+ `.client.ts` island) — SVG
-  bar chart of `sim.probabilities()`. Animates on update.
-- `src/components/StateVector.astro` (+ `.client.ts` island) — numeric
-  readout of amplitudes, formatted as `a|0⟩ + b|1⟩` (or `|00⟩ + ...`
-  for multi-qubit).
-- Gate-toggle buttons (X, H, Z) in the qubit essay page that drive the
-  store.
-- Vitest tests for `store.ts` (subscribe/notify/unsubscribe) and for
-  the `formatAmplitudes` helper.
+- Extend `src/lib/quantum/gates.ts` with **factory functions**:
+  - `Rx(theta: number): Gate2x2`
+  - `Ry(theta: number): Gate2x2`
+  - `Rz(theta: number): Gate2x2`
+  Each returns a `Gate2x2` matrix — implemented from the textbook
+  forms (`cos(θ/2) I − i sin(θ/2) σ`).
+- Extend `Simulator.apply` to accept a parameterized gate variant:
+  `sim.applyRotation("Rx", qubit, theta)` (keeps the discrete
+  `apply("H", q)` API untouched).
+- New tests in `tests/quantum/rotations.test.ts`:
+  - `Rx(π) ≈ −i X` (up to global phase — verify probabilities)
+  - `Ry(π) ≈ −i Y` (probabilities)
+  - `Rz(π) ≈ −i Z` (probabilities)
+  - `Ry(π/2) |0⟩` lands in `|+⟩` (probabilities [0.5, 0.5], real-valued amps)
+  - `Rx(2π)` returns to original probabilities (up to global phase)
+  - Composability: `Ry(π/2) Rx(π) Ry(-π/2)` ≡ X (probabilities)
+- Update `src/lib/quantum/index.ts` (or add one) re-exporting the new
+  factories.
 
 **Acceptance:**
-- Clicking H on the qubit page updates ProbabilityBars to [0.5, 0.5]
-  and StateVector to `(1/√2)|0⟩ + (1/√2)|1⟩` instantly.
-- Re-clicking H returns to `|0⟩`.
-- Both widgets re-render only on store updates (no global polling).
+- `npm test` green with ≥ 6 new rotation assertions.
+- The simulator's public API stays backwards-compatible with Phase 1
+  callers (no breaking changes to existing tests).
 
-**Decision to record after this plan:** vanilla TS vs. Preact for
-widget islands. Write the answer + rationale into `PROJECT.md`'s
-Key Decisions table.
+**File budget:** edits to 2 files + 1 new test file (~150 lines).
 
 ---
 
-### 02-03 — BlochSphere widget (Three.js) + 2D polar fallback
+### 02-03 — ProbabilityBars + StateVector widgets + per-page simulator store
 
-**Why:** This is the marquee widget of the qubit essay. Most pedagogical
-risk and most technical risk in one component.
+**Why:** Two cheap, high-value visualizations. Also establishes the
+shared-store pattern every other widget plugs into.
 
 **Deliverables:**
-- `src/components/BlochSphere/index.astro` — Astro entrypoint, decides
-  3D vs. 2D fallback at mount via WebGL feature detect + viewport-width
-  check (treat width < 640 as fallback territory).
+- `src/lib/quantum/store.ts` — pub-sub wrapper around a `Simulator`.
+  API: `createStore({qubits}) → { subscribe, apply, applyRotation,
+  reset, snapshot }`. Vanilla TS. No framework yet.
+- `src/components/ProbabilityBars.astro` (+ `.client.ts`) — SVG bar
+  chart of `sim.probabilities()`. Animates on update unless reduced-motion.
+- `src/components/StateVector.astro` (+ `.client.ts`) — numeric readout
+  of amplitudes, formatted as `(a)|0⟩ + (b)|1⟩` for n=1; truncates
+  near-zero amplitudes for readability.
+- Discrete-gate buttons (X, H, Z) on the qubit page that drive the store.
+- Vitest tests: `store.ts` (subscribe/notify/unsubscribe/snapshot
+  immutability) and the `formatAmplitude` helper.
+
+**Acceptance:**
+- Clicking H updates both widgets to [0.5, 0.5] and `(1/√2)|0⟩ +
+  (1/√2)|1⟩` instantly. Reclick returns to `|0⟩`.
+- Both widgets re-render only on store updates.
+
+**Decision gate after this plan:** vanilla TS vs. Preact. Likely tip
+toward Preact at this point given Phase 3 needs. Record the decision
++ rationale in `PROJECT.md` Key Decisions.
+
+---
+
+### 02-04 — BlochSphere widget (Three.js, **draggable arrow**) + 2D polar fallback
+
+**Why:** The marquee widget. Direct manipulation here is what makes
+the page feel like a toy, not a slide deck.
+
+**Deliverables:**
+- `src/components/BlochSphere/index.astro` — entrypoint; picks 3D or
+  2D fallback at mount via WebGL detect + viewport-width (< 640 → 2D).
 - `src/components/BlochSphere/Sphere3D.client.ts` — Three.js scene:
-  unit sphere, axes labelled |0⟩/|1⟩/|+⟩/|-⟩/|+i⟩/|-i⟩, state-vector
-  arrow that animates between gate applications. Lazy-loads Three.js
-  via dynamic import so non-Bloch pages don't pay the cost.
-- `src/components/BlochSphere/Polar2D.client.ts` — SVG polar projection
-  fallback. Shows the same state-vector tip.
-- `src/lib/quantum/bloch.ts` — pure helper: `stateToBlochAngles(state):
-  {theta, phi}`. Tested.
-- Subscribe both Sphere3D and Polar2D to the per-essay store from 02-02.
-- Vitest tests for `bloch.ts` against textbook values:
-  - `|0⟩` → θ=0
-  - `|1⟩` → θ=π
-  - `H|0⟩ = |+⟩` → θ=π/2, φ=0
-  - `S H |0⟩ = |+i⟩` → θ=π/2, φ=π/2
+  unit sphere, labelled axes, state-vector arrow.
+  - **Drag interaction:** pointer-down on the arrow tip → on pointer-move,
+    project pointer onto the sphere surface, convert to (θ, φ),
+    update the store with `setStateFromBloch(theta, phi)`.
+  - Animates between gate-driven changes (≤ 200 ms ease-out); animation
+    short-circuited when `prefers-reduced-motion` is set.
+  - Lazy-loads Three.js via dynamic import.
+- `src/components/BlochSphere/Polar2D.client.ts` — SVG fallback with
+  drag support too (drag the tip around a 2D unit circle).
+- `src/lib/quantum/bloch.ts` — pure helpers:
+  - `stateToBloch(state) → {theta, phi}`
+  - `blochToState(theta, phi) → Complex[]` (the inverse — drives the drag)
+- New `store.setStateFromBloch(theta, phi)` method backed by
+  `blochToState` then push to subscribers.
+- Vitest: `bloch.ts` round-trips (`blochToState ∘ stateToBloch ≈ id`)
+  and textbook angles (`|0⟩`, `|1⟩`, `|+⟩`, `|+i⟩`).
 
 **Acceptance:**
-- Desktop with WebGL: 3D sphere with arrow that animates on gate clicks.
-- WebGL disabled (manually) or mobile width: 2D polar plot, same arrow tip.
-- Three.js bundle does NOT load on the homepage (Lighthouse bundle check).
-- `bloch.ts` tests all green.
+- Desktop with WebGL: 3D sphere; dragging the arrow updates
+  ProbabilityBars + StateVector live.
+- WebGL disabled or mobile width: 2D polar plot with the same
+  drag-to-set behavior.
+- Three.js bundle does NOT load on the homepage (verified via
+  bundle-analyzer or Lighthouse network panel).
+- All `bloch.ts` tests green.
 
-**File budget:** ≤ 5 new files. Sphere3D may push 250 lines; split if
-it crosses 300.
+**File budget:** ≤ 5 new files. Sphere3D may push 250 lines; split
+into `scene.ts` + `dragController.ts` if it crosses 300.
 
 ---
 
-### 02-04 — Write the "What is a Qubit?" essay copy + wire widgets in
+### 02-05 — Param-gate sliders + annotations system
 
-**Why:** Without good prose, the rest is a tech demo. This is where
-pedagogy lives or dies.
+**Why:** Sliders convert the param gates from 02-02 into the
+"sweep and watch" creative interaction. Annotations let readers
+externalize their own discoveries — turning the page into something
+they own.
 
 **Deliverables:**
-- Final essay copy in `src/pages/qubit.astro` following the design-doc
-  skeleton (hook → intuition → widget → deeper → widget → math nerds →
-  self-test → next).
-- Embedded widgets from 02-02 and 02-03 wired to a per-page store.
-- "For the math nerds" collapsible with the 1-qubit state vector,
-  Bloch coordinates, and the Hadamard matrix.
-- 1–2 self-test prompts at the end (plain prose, no scoring system).
-- Footer link: "Next: Superposition" (page may 404 until M2 — wire
-  with a `coming-soon` flag).
+- `src/components/RotationSlider.astro` (+ `.client.ts`) — labelled
+  range input (Rx/Ry/Rz × selectable qubit), θ ∈ [0, 2π], step π/64.
+  On `input` event, calls `store.applyRotation(...)`. **Holds an
+  internal "base state" snapshot** so sweeping the slider is
+  idempotent (rather than compounding rotations) — design note: each
+  slider owns a snapshot taken when the user first grabs it.
+- `src/components/AnnotationLayer.astro` (+ `.client.ts`) — wraps any
+  widget; click-to-pin a `<textarea>` at a relative coordinate.
+  Notes serialized as `{widgetId, x%, y%, text}` in `localStorage`
+  under a per-page key.
+- `src/components/AnnotationPin.astro` — the visible pin/note
+  component, draggable to reposition, dismissable.
+- Add a "Reset annotations" button to `EssayLayout`'s footer.
+- Vitest: annotation serialization round-trip; slider snapshot
+  semantics (sweeping back to θ=0 returns to base state).
 
 **Acceptance:**
-- Read the essay top-to-bottom on desktop and mobile — flows without
-  jargon collisions or widget glitches.
-- All math renders.
-- Self-edit pass: every paragraph either teaches a new idea or sets up
-  the next widget. No filler.
-
-**Time bias:** spend the most time here. Pedagogy is the bottleneck.
+- Dragging the Rx slider continuously updates all three widgets
+  smoothly (no jank on a 2019 laptop).
+- Setting slider back to 0 returns to the pre-grab state.
+- Pinning a note, refreshing the page, note reappears at the same spot.
+- A11y: sliders are keyboard-operable (arrows ± 1 step, PgUp/Dn ± 16);
+  annotations are reachable via Tab.
 
 ---
 
-### 02-05 — Mobile fallbacks, a11y polish, perf budget, deploy & feedback round
+### 02-06 — Write the essay copy + a11y/perf pass + deploy + feedback round
 
-**Why:** The polish that makes the difference between "interesting demo"
-and "trustworthy resource."
+**Why:** Without good prose, the rest is a tech demo. Without a perf
++ a11y pass, the experience is brittle. Without real-reader feedback,
+we're guessing about pedagogy.
 
 **Deliverables:**
-- A11y audit pass on `/qubit`:
-  - Keyboard nav through all gate buttons.
-  - Visible focus rings (Tailwind `focus-visible:` utilities).
-  - Color contrast ≥ WCAG 2.2 AA on text + chart elements.
-  - `aria-live="polite"` on StateVector so screen readers get updates.
-  - `prefers-reduced-motion` respected end-to-end (verify Sphere3D
-    rotation animation also short-circuits, not just scrolly).
-- Lighthouse run via `npx lighthouse` against `npm run build && preview`:
+
+**Essay copy (priority 1):**
+- Final "What is a Qubit?" essay in `src/pages/qubit.astro` following
+  the design-doc skeleton: hook → intuition → first widget
+  (ProbabilityBars + StateVector) → deeper notion (the Bloch
+  sphere) → BlochSphere widget with explicit "try dragging me"
+  callout → param-rotation interlude with sliders → math-nerds
+  collapsible → self-test → next link.
+- "Try this:" prompts placed inline (≥ 3 per essay): explicit
+  invitations to play (e.g., "Drag the arrow to the equator, then
+  apply Z. What changes? Why?").
+
+**A11y pass:**
+- Keyboard nav through every interactive control on the page.
+- Focus rings (Tailwind `focus-visible:`).
+- `aria-live="polite"` on StateVector + ProbabilityBars text so SR
+  users hear updates.
+- All color/contrast ≥ WCAG 2.2 AA (verify with axe).
+- `prefers-reduced-motion` verified end-to-end (no Bloch arrow
+  animation, no scroll-tied transitions).
+
+**Perf pass:**
+- `npm run build && npx lighthouse` against `npm run preview`:
   - LCP < 2s on Slow 4G profile
-  - Accessibility score ≥ 95
-  - JS payload for `/qubit` documented; flag anything > 200KB gzipped.
-- Choose static host (GitHub Pages vs. Netlify vs. Vercel — decision
-  recorded in `PROJECT.md` Key Decisions). Deploy.
-- Send the URL to ≥ 3 working dev friends with a focused ask: "Read
-  this, then explain superposition + measurement to me in your words."
-- Capture feedback in `docs/feedback/m1-round1.md`. Make ≥ 1 substantive
+  - Accessibility ≥ 95
+  - JS payload for `/qubit` documented; flag > 200 KB gzipped.
+- Commit the Lighthouse report under `docs/perf/m1-lighthouse.html`.
+
+**Deploy + feedback:**
+- Pick static host (decision logged to `PROJECT.md`). Deploy.
+- Send URL to ≥ 3 working dev friends with the explicit ask:
+  "(1) Read it. (2) Play with the widgets for 5 minutes. (3) Tell me
+  one thing that clicked and one thing that didn't."
+- Capture in `docs/feedback/m1-round1.md`. Make ≥ 1 substantive
   iteration before declaring Phase 2 done.
 
 **Acceptance:**
 - Public URL works.
-- Lighthouse PDF/HTML report committed under `docs/perf/m1-lighthouse.html`.
-- Feedback file exists with at least 3 readers' notes + an "edits made"
+- Lighthouse report committed.
+- Feedback file exists with ≥ 3 readers' notes + an "edits made"
   section.
 
 ---
@@ -191,16 +264,18 @@ and "trustworthy resource."
 
 | Risk | Mitigation |
 |------|-----------|
-| Three.js blows the perf budget | Lazy-load via dynamic import; mount only when in viewport; measure in 02-05 and trim if needed |
-| Bloch sphere math wrong → false intuition | Pure `bloch.ts` helper with textbook unit tests in 02-03 |
-| Essay is technically perfect but pedagogically dull | 02-04 prioritized for time; 02-05 mandates reader feedback before Phase 2 closes |
-| Vanilla TS island state plumbing turns into a tangled mess | Decision gate at end of 02-02: switch to Preact if subscribe wiring exceeds ~80 LOC across the two widgets |
-| Mobile 3D performance is bad | 2D polar fallback is *the* mobile experience — don't even attempt 3D below 640px width |
+| Three.js + drag interactions push the page over the perf budget | Lazy import; suspend animation when `document.hidden`; profile in 02-06 |
+| Rotation-slider compounding feels confusing ("why isn't it idempotent?") | Slider owns a base-state snapshot taken on grab; tested in 02-05 |
+| `setStateFromBloch` produces non-unit-norm states due to drag jitter | Renormalize defensively inside `blochToState`; assert in `bloch.ts` tests |
+| Annotations balloon `localStorage` over time | Cap at 25 notes per page; soft-evict oldest |
+| Essay is technically perfect but pedagogically dull | 02-06 prioritizes copy + reader feedback; "Try this:" prompts force play |
+| Mobile drag interactions hijack scroll | Use `touch-action: none` only on the Bloch arrow hit-target, not the page |
 
 ## Out of Scope (this phase)
 
-- Concept map on homepage — Phase 3
-- CircuitBuilder widget — Phase 4
-- localStorage persistence — defer; reset-on-refresh is fine for v1
-- Analytics — defer to pre-launch (end of Phase 4)
-- Multi-qubit widgets — Phase 3 (entanglement essay needs them)
+- The full Quantum Sandbox composer — Phase 3
+- URL-fragment circuit sharing — Phase 3 (annotations are localStorage, not URL)
+- Quantum Canvas / Quantum Tones creative outputs — Phase 3
+- Concept map on homepage — Phase 4
+- Other essays (superposition, etc.) — Phase 4
+- localStorage progress persistence beyond annotations — defer
