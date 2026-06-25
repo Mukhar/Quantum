@@ -14,6 +14,7 @@
 import { Simulator } from "./simulator";
 import type { GateName, RotationAxis } from "./gates";
 import type { Complex } from "./complex";
+import { blochToState } from "./bloch";
 
 export interface Snapshot {
   qubits: number;
@@ -46,6 +47,11 @@ export interface Store {
    * but logs a warning if the deviation is large.
    */
   setState: (state: Complex[]) => void;
+  /**
+   * Single-qubit shortcut: set the state from Bloch (θ, φ). No-op for
+   * multi-qubit simulators (logs a warning so you notice).
+   */
+  setStateFromBloch: (theta: number, phi: number) => void;
 }
 
 export interface StoreOptions {
@@ -120,6 +126,16 @@ export const createStore = ({ qubits }: StoreOptions): Store => {
         );
       }
       sim.state = renormalize(cloneState(next));
+      notify();
+    },
+    setStateFromBloch(theta, phi) {
+      if (sim.qubits !== 1) {
+        console.warn(
+          `setStateFromBloch: only meaningful for 1-qubit stores (got ${sim.qubits})`,
+        );
+        return;
+      }
+      sim.state = blochToState(theta, phi);
       notify();
     },
   };

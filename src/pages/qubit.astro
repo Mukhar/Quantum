@@ -12,6 +12,7 @@ import MathNerds from "../components/MathNerds.astro";
 import ProbabilityBars from "../components/ProbabilityBars.astro";
 import StateVector from "../components/StateVector.astro";
 import GateButtons from "../components/GateButtons.astro";
+import BlochSphere from "../components/BlochSphere/index.astro";
 
 const KEY = "qubit-essay";
 ---
@@ -53,13 +54,11 @@ const KEY = "qubit-essay";
   <p data-step="2">
     Above, the readout shows the complex amplitudes <code>α</code> and
     <code>β</code>. Their squared magnitudes are the probabilities.
-    The Bloch sphere (next plan) gives this state a geometric body —
-    every qubit state is a point on the surface of a 3D unit sphere.
+    Below, the same state has a geometric body: every qubit state is
+    a point on the surface of a unit sphere. Drag the arrow tip.
   </p>
 
-  <div class="my-6 rounded-lg border border-dashed border-slate-700 bg-slate-900/40 p-6 text-center text-slate-500">
-    [BlochSphere widget — lands in 02-04]
-  </div>
+  <BlochSphere storeKey={KEY} caption="Drag the arrow tip. Apply a gate above and watch the arrow rotate." />
 
   <h2>Continuous rotation</h2>
   <p data-step="3">
