@@ -1,0 +1,68 @@
+---
+import SandboxLayout from "../../layouts/SandboxLayout.astro";
+---
+
+<SandboxLayout
+  title="Quantum Sandbox"
+  subtitle="Drag gates, sweep rotations, share what you build via URL — no backend, no signup."
+  description="Open-ended quantum circuit composer with live state visualization, challenge puzzles, and creative outputs."
+>
+  <div
+    id="sandbox-root"
+    class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4"
+  >
+    <section aria-label="Composer" class="space-y-4">
+      <div
+        data-sandbox-grid
+        class="relative overflow-x-auto rounded-lg border border-slate-800 bg-slate-900/40 p-3 grid gap-1.5 min-w-fit"
+      >
+        <!-- composer.client.ts hydrates this -->
+      </div>
+      <div class="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400">
+        <p class="mb-2 text-slate-200 font-medium">Results panel</p>
+        <p>
+          Multi-qubit Bloch + ProbabilityBars + StateVector will hydrate here in Plan 03-04.
+          For now the circuit you build is already valid input to
+          <code class="rounded bg-slate-800 px-1.5 py-0.5 text-indigo-200">runCircuit()</code>.
+        </p>
+      </div>
+    </section>
+
+    <aside aria-label="Tools" class="space-y-4">
+      <div
+        data-sandbox-palette
+        class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-3 gap-2 p-3 rounded-lg border border-slate-800 bg-slate-900/60"
+      >
+        <!-- composer.client.ts hydrates this -->
+      </div>
+      <div class="rounded-lg border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400 space-y-2">
+        <p class="text-slate-200 font-medium">How to play</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Click a gate to arm it, then click a grid cell to drop. Or use shortcut keys (shown on each button) to insert at the selected cell.</li>
+          <li>For CNOT: drop on the <em>control</em> qubit, then tap the target in the same column.</li>
+          <li>Click an Rx/Ry/Rz cell to open the θ slider. Arrow keys nudge θ.</li>
+          <li>Right-click any cell (or <kbd class="font-mono">Backspace</kbd> at the selection) to remove its op.</li>
+          <li>Arrow keys move the selection. <kbd class="font-mono">Esc</kbd> cancels pickup or closes the popover.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</SandboxLayout>
+
+<script>
+  import { mountComposer } from "../../lib/sandbox/composer.client";
+  import { mountToast } from "../../lib/sandbox/toast.client";
+
+  const init = () => {
+    const root = document.getElementById("sandbox-root");
+    if (!root) return;
+    mountComposer(root as HTMLElement);
+    mountToast();
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+</script>

@@ -33,14 +33,22 @@ i18n, accounts.
 ## Implementation Decisions
 
 ### Reactivity Framework
-- **Preact signals** is the sandbox's state primitive — adopted at the
-  Phase 3 boundary as STATE.md flagged. Phase 2 widgets stay vanilla TS;
-  Preact is only loaded on `/sandbox`.
-- Composer islands hydrate `client:load`; creative widgets (Canvas,
-  Tones) hydrate `client:visible` to keep the initial sandbox bundle
-  light.
-- Each `/sandbox*` page owns **one** simulator + circuit signal;
-  creative widgets re-derive measurements from that same circuit.
+- **Vanilla TS with a 40-line in-repo `signal<T>` primitive** (see
+  `src/lib/sandbox/signal.ts`). Originally defaulted to Preact signals
+  during smart discuss, but no Preact packages were actually present
+  on disk and the npm registry was unreachable through the sandbox
+  network during Phase 3 execution (proxy timeouts). The reactive
+  needs (subscribe, computed reads, fine-grained per-cell renders)
+  are small enough that a hand-rolled primitive ships them without
+  any new runtime dependency.
+- Phase 2's per-page registry pattern is **extended**, not replaced.
+  Sandbox components are `.astro` shells with companion `.client.ts`
+  modules that hydrate from `[data-sandbox-*]` attributes, exactly
+  like Phase 2's BlochSphere split.
+- Composer components hydrate on `DOMContentLoaded`. Creative widgets
+  (Canvas, Tones) defer their hydration with an IntersectionObserver.
+- Each `/sandbox*` page owns **one** circuit signal; creative widgets
+  re-derive measurements from that same circuit.
 - URL fragment is canonical state; `localStorage` mirrors the
   last-edited circuit ("crash recovery" — restore on next load if URL
   is empty).

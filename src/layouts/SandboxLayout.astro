@@ -1,0 +1,73 @@
+---
+/**
+ * SandboxLayout — wide, prose-free chassis for `/sandbox*` routes.
+ *
+ * Differs from EssayLayout: no max-w-3xl prose column, no KaTeX, no
+ * essay typography. Header carries an "Open in essay" placeholder
+ * we'll start wiring up in Phase 4 once the remix CTAs land.
+ *
+ * Slots:
+ *  - default: the sandbox surface (composer + results + creative tabs).
+ *  - "subnav": optional secondary nav row (challenge list uses this).
+ */
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  pageTitle?: string;
+  description?: string;
+}
+
+const { title, subtitle, pageTitle, description } = Astro.props as Props;
+const docTitle = pageTitle ?? `${title} — Quantum Sandbox`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{docTitle}</title>
+    {description && <meta name="description" content={description} />}
+  </head>
+  <body class="bg-slate-950 text-slate-100 antialiased min-h-screen">
+    <header class="border-b border-slate-800/60">
+      <div class="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <a
+            href="/"
+            class="text-sm uppercase tracking-widest text-indigo-400 hover:text-indigo-300"
+          >Quantum</a>
+          <span class="text-slate-700">/</span>
+          <a
+            href="/sandbox"
+            class="text-sm uppercase tracking-widest text-slate-300 hover:text-white"
+          >Sandbox</a>
+        </div>
+        <nav class="text-sm text-slate-400 flex items-center gap-5">
+          <a href="/qubit" class="hover:text-slate-200">Qubit essay</a>
+          <a href="/sandbox/challenges" class="hover:text-slate-200">Challenges</a>
+          <a href="/" class="hover:text-slate-200">Home</a>
+        </nav>
+      </div>
+      {Astro.slots.has("subnav") && (
+        <div class="border-t border-slate-800/40 bg-slate-900/40">
+          <div class="mx-auto max-w-7xl px-6 py-2">
+            <slot name="subnav" />
+          </div>
+        </div>
+      )}
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 sm:px-6 py-6">
+      <header class="mb-6">
+        <h1 class="text-3xl sm:text-4xl font-semibold leading-tight">{title}</h1>
+        {subtitle && (
+          <p class="mt-2 text-base text-slate-400 max-w-2xl">{subtitle}</p>
+        )}
+      </header>
+
+      <slot />
+    </main>
+  </body>
+</html>
