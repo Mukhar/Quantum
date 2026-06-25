@@ -1,5 +1,6 @@
 ---
 import SandboxLayout from "../../layouts/SandboxLayout.astro";
+import ResultsPanel from "../../components/sandbox/ResultsPanel.astro";
 import QuantumCanvas from "../../components/sandbox/QuantumCanvas.astro";
 ---
 
@@ -63,13 +64,7 @@ import QuantumCanvas from "../../components/sandbox/QuantumCanvas.astro";
       >
         <!-- composer.client.ts hydrates this -->
       </div>
-      <div
-        data-results-panel
-        class="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400"
-      >
-        <p class="mb-2 text-slate-200 font-medium">Results panel</p>
-        <p>Live multi-qubit Bloch + ProbabilityBars + StateVector hydrate here (Plan 03-04).</p>
-      </div>
+      <ResultsPanel />
       <QuantumCanvas />
     </section>
 
@@ -97,12 +92,14 @@ import QuantumCanvas from "../../components/sandbox/QuantumCanvas.astro";
 <script>
   import { mountComposer } from "../../lib/sandbox/composer.client";
   import { mountToast } from "../../lib/sandbox/toast.client";
+  import { mountResults } from "../../lib/sandbox/results.client";
 
   const init = () => {
     const root = document.getElementById("sandbox-root");
     if (!root) return;
     mountComposer(root as HTMLElement);
     mountToast();
+    mountResults(root as HTMLElement);
 
     // Quantum Canvas pays for its Web Worker chunk only when it scrolls
     // into view — the composer up top stays the fast critical path.
