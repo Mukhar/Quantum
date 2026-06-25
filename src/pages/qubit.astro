@@ -13,6 +13,7 @@ import ProbabilityBars from "../components/ProbabilityBars.astro";
 import StateVector from "../components/StateVector.astro";
 import GateButtons from "../components/GateButtons.astro";
 import BlochSphere from "../components/BlochSphere/index.astro";
+import RotationSlider from "../components/RotationSlider.astro";
 
 const KEY = "qubit-essay";
 ---
@@ -68,9 +69,30 @@ const KEY = "qubit-essay";
     land in 02-05.)
   </p>
 
-  <div class="my-6 rounded-lg border border-dashed border-slate-700 bg-slate-900/40 p-6 text-center text-slate-500">
-    [Rotation sliders — lands in 02-05]
-  </div>
+  <h2>Continuous rotation</h2>
+  <p data-step="3">
+    Discrete gates jump between named states. <strong>Rotation gates</strong>
+    sweep continuously: drag a slider and watch the state smear from
+    <code>|0⟩</code> toward <code>|1⟩</code> and back. Sliders own a
+    snapshot taken when you grab them — sweeping back to 0 returns to
+    the pre-grab state. (They don't compound.)
+  </p>
+  <p>
+    <strong>Try this:</strong> press <code>H</code> above, then sweep <code>Rz(θ)</code> from 0 to 2π. The probabilities never change — but the
+    Bloch arrow spins around the Z axis. That's a phase rotation.
+  </p>
+
+  <RotationSlider storeKey={KEY} qubits={1} axis="Rx" />
+  <RotationSlider storeKey={KEY} qubits={1} axis="Ry" />
+  <RotationSlider storeKey={KEY} qubits={1} axis="Rz" />
+
+  <h2>Make this page yours</h2>
+  <p>
+    <strong>Double-click any widget</strong> to drop a sticky note. Your
+    notes live in your browser's local storage — they'll be here when
+    you come back. The "Reset annotations" link at the bottom wipes
+    them for this page.
+  </p>
 
   <MathNerds title="What the gates are, formally">
     <p>A single qubit's state is a unit vector in <MathBlock display={false} tex="\\mathbb{C}^2" />:</p>
@@ -104,6 +126,7 @@ const KEY = "qubit-essay";
 
 <script>
   import { attachScrolly } from "../lib/scrolly";
+  import { mountAnnotations } from "../lib/annotations";
 
   const root = document.querySelector("article");
   if (root) {
@@ -112,4 +135,9 @@ const KEY = "qubit-essay";
       onStep: (i) => console.debug(`[scrolly] step ${i}`),
     });
   }
+
+  const ann = mountAnnotations();
+  document.getElementById("reset-annotations")?.addEventListener("click", () => {
+    ann.reset();
+  });
 </script>

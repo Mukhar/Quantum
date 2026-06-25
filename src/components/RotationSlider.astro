@@ -1,0 +1,117 @@
+---
+/**
+ * RotationSlider — continuous Rx / Ry / Rz sweep.
+ *
+ * Base-state semantics (per plan 02-05): when the user starts dragging,
+ * we snapshot the store's current state. Every input restores that base
+ * snapshot and *then* applies the rotation. So sweeping back to θ=0
+ * idempotently returns to the pre-grab state — sliders don't compound.
+ *
+ * Keyboard-friendly: arrow keys = ±1 step, PgUp/PgDn = ±16 steps.
+ * Default step = π/64; full range = [0, 2π].
+ */
+
+interface Props {
+  storeKey: string;
+  qubits: number;
+  axis: "Rx" | "Ry" | "Rz";
+  /** Which qubit the rotation acts on. Defaults to 0. */
+  qubit?: number;
+  label?: string;
+}
+
+const {
+  storeKey,
+  qubits,
+  axis,
+  qubit = 0,
+  label,
+} = Astro.props as Props;
+
+const displayLabel = label ?? `${axis}(θ) — qubit ${qubit}`;
+---
+
+<div
+  class="my-4 rounded-lg border border-slate-800 bg-slate-900/40 p-4"
+  data-widget="rotation-slider"
+  data-store-key={storeKey}
+  data-qubits={qubits}
+  data-axis={axis}
+  data-qubit={qubit}
+>
+  <label class="flex flex-col gap-2">
+    <span class="flex items-baseline justify-between gap-3 text-sm">
+      <span class="font-mono text-indigo-200">{displayLabel}</span>
+      <span class="text-xs text-slate-400" data-role="theta-readout">θ = 0.000 rad</span>
+    </span>
+    <input
+      type="range"
+      min="0"
+      max="6.283185307179586"
+      step="0.04908738521234052"
+      value="0"
+      data-role="slider"
+      class="w-full accent-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+      aria-label={`${axis} rotation angle on qubit ${qubit}`}
+    />
+  </label>
+</div>
+
+<script>
+  import { ensureStore } from "../lib/quantum/store";
+  import type { RotationAxis } from "../lib/quantum/gates";
+  import type { Complex } from "../lib/quantum/complex";
+
+  function mount(el: HTMLElement) {
+    const storeKey = el.dataset.storeKey!;
+    const qubits = Number(el.dataset.qubits ?? "1");
+    const store = ensureStore(storeKey, { qubits });
+    const axis = el.dataset.axis as RotationAxis;
+    const qubit = Number(el.dataset.qubit ?? "0");
+    const slider = el.querySelector<HTMLInputElement>('[data-role="slider"]')!;
+    const readout = el.querySelector<HTMLElement>('[data-role="theta-readout"]')!;
+
+    let base: Complex[] | null = null;
+
+    const grab = () => {
+      base = store.snapshot().state.map((a) => ({ re: a.re, im: a.im }));
+    };
+    const release = () => {
+      base = null;
+    };
+
+    const applyAt = (theta: number) => {
+      readout.textContent = `θ = ${theta.toFixed(3)} rad`;
+      if (!base) {
+        // Keyboard arrow-key tweak without grab — take a base on the fly.
+        grab();
+      }
+      // Restore base, then apply.
+      store.setState(base!);
+      if (theta !== 0) store.applyRotation(axis, qubit, theta);
+    };
+
+    slider.addEventListener("pointerdown", grab);
+    slider.addEventListener("focus", grab);
+    slider.addEventListener("pointerup", release);
+    slider.addEventListener("blur", release);
+    slider.addEventListener("input", () => applyAt(Number(slider.value)));
+
+    // Reset slider when an external change happens AND the slider isn't being
+    // dragged — keeps the slider's "θ" honest after a gate button press.
+    store.subscribe((snap) => {
+      if (base !== null) return; // currently dragging — leave alone
+      // External state change → slider should display 0 (we don't know the
+      // current angle relative to the new base).
+      if (slider.value !== "0") {
+        slider.value = "0";
+        readout.textContent = "θ = 0.000 rad";
+      }
+      void snap;
+    });
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="rotation-slider"]')
+    .forEach(mount);
+</script>

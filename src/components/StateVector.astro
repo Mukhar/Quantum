@@ -19,6 +19,8 @@ const { storeKey, qubits, caption } = Astro.props as Props;
 <figure
   class="my-6 rounded-lg border border-slate-800 bg-slate-900/40 p-5"
   data-widget="state-vector"
+  data-widget-id={`state-vector:${storeKey}`}
+  data-annotatable
   data-store-key={storeKey}
   data-qubits={qubits}
 >
