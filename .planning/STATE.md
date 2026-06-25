@@ -34,26 +34,29 @@ See: `.planning/PROJECT.md` (updated 2026-06-25)
 | 03-04 | Multi-qubit results panel + reduced-density math               | [done] | (post-Agent-A wiring commit on 2026-06-25) |
 | 03-05 | Challenge mode + 5 puzzles + fidelity success                  | [done] | `e3e1047` |
 | 03-06 | Quantum Canvas (Web Worker sweeps + PNG export)                | [done] | `602e4f5` |
-| 03-07 | Quantum Tones (Web Audio + WAV + a11y/perf pass)               | [todo] | — |
+| 03-07 | Quantum Tones (Web Audio + WAV + a11y/perf pass)               | [partial] | wav.ts, wav.test.ts, QuantumTones.astro committed; tones.client.ts + page wiring missing |
 
 **Test count:** 92 passing (was 32 at end of Phase 2).
 **Build:** 9 pages, clean, no warnings beyond Three.js chunk-size.
 
 ## Next action (resume here)
 
-1. **Re-dispatch Plan 03-07 (Quantum Tones)** — the sub-agent timed
-   out before starting. Files it should own (none of which exist on
-   disk yet):
-   - `src/lib/sandbox/wav.ts` (pure 16-bit PCM mono WAV encoder)
-   - `src/lib/sandbox/tones.client.ts` (Web Audio sequencer)
-   - `src/components/sandbox/QuantumTones.astro`
-   - `tests/quantum/wav.test.ts` (≥ 4 tests)
-   - Plus the page wiring in `src/pages/sandbox/index.astro`
-     (creative-outputs section now hosts `<QuantumCanvas />` —
-     mirror that pattern with `<QuantumTones />` next to it, lazy
-     hydrate via IntersectionObserver).
-   - Full prompt template is preserved in the autonomous-run
-     conversation history — same recipe as plan 03-06.
+1. **Finish Plan 03-07 (Quantum Tones)** — 3 of 4 files exist on
+   disk and were just committed:
+   - [done] `src/lib/sandbox/wav.ts` (pure 16-bit PCM WAV encoder)
+   - [done] `tests/quantum/wav.test.ts` (need to run vitest to
+     confirm pass count)
+   - [done] `src/components/sandbox/QuantumTones.astro` (scaffold)
+   - [todo] `src/lib/sandbox/tones.client.ts` (Web Audio sequencer
+     + offline render + WAV download — the hydrator)
+   - [todo] Page wiring in `src/pages/sandbox/index.astro`:
+     - Add `import QuantumTones from ".../QuantumTones.astro";`
+     - Drop `<QuantumTones />` next to `<QuantumCanvas />`
+     - Add a lazy `mountTones()` hydration call mirroring the
+       Canvas IntersectionObserver pattern
+   - Mappings to implement: chromatic / major / pentatonic; base C3,
+     C4, A4; tempo 60-180 BPM; max 4 s total duration (truncate +
+     toast if exceeded); AudioContext created on first user gesture.
 2. **Smoke-check the integrated sandbox** — run `npm run dev`, open
    `/sandbox`, drag a few gates, hit Run Sweep on Canvas, verify the
    ResultsPanel updates as the circuit changes. (Phase 3 ui-review
