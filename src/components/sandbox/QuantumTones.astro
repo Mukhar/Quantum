@@ -1,0 +1,121 @@
+---
+/**
+ * QuantumTones — Web Audio sequencer fed by quantum measurements.
+ *
+ * Same shape as QuantumCanvas.astro: pure static scaffold here, all
+ * the interesting work (AudioContext lifecycle, sequence generation,
+ * WAV rendering) lives in `tones.client.ts` and only mounts when the
+ * section scrolls into view.
+ *
+ * The widget caps total playback at 4 s by design — long enough to
+ * hear a pattern, short enough that nobody accidentally synthesizes a
+ * 90-second drone while clicking around.
+ */
+---
+
+<section
+  data-quantum-tones-root
+  aria-labelledby="quantum-tones-title"
+  class="rounded-lg border border-slate-800 bg-slate-900/40 p-4"
+>
+  <header class="mb-3 flex items-baseline justify-between gap-3 flex-wrap">
+    <h2
+      id="quantum-tones-title"
+      class="text-base font-semibold text-slate-100"
+    >
+      Quantum Tones
+    </h2>
+    <p class="text-xs text-slate-400">
+      Measure the circuit a few times, map outcomes to pitches, play the result.
+    </p>
+  </header>
+
+  <div class="grid gap-3 text-sm">
+    <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <label class="flex flex-col gap-1 text-slate-400">
+        <span>Scale</span>
+        <select
+          data-tones-mapping
+          class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+          aria-label="Pitch mapping scale"
+        >
+          <option value="chromatic">chromatic</option>
+          <option value="major" selected>major</option>
+          <option value="pentatonic">pentatonic</option>
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1 text-slate-400">
+        <span>Base note</span>
+        <select
+          data-tones-base
+          class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+          aria-label="Base note for the scale"
+        >
+          <option value="C3">C3</option>
+          <option value="C4" selected>C4</option>
+          <option value="A4">A4</option>
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1 text-slate-400">
+        <span>Steps</span>
+        <input
+          type="number"
+          data-tones-steps
+          min="4"
+          max="32"
+          value="16"
+          class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200 tabular-nums"
+          aria-label="Number of measurement steps in the sequence"
+        />
+      </label>
+
+      <label class="flex flex-col gap-1 text-slate-400">
+        <span>Tempo · <span data-tones-tempo-label class="tabular-nums text-slate-300">120</span> bpm</span>
+        <input
+          type="range"
+          data-tones-tempo
+          min="60"
+          max="180"
+          value="120"
+          class="w-full accent-emerald-400"
+          aria-label="Tempo in beats per minute"
+        />
+      </label>
+    </div>
+
+    <div class="flex flex-wrap gap-2 pt-1">
+      <button
+        type="button"
+        data-action="play"
+        class="rounded bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed px-3 py-1 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+      >Play</button>
+      <button
+        type="button"
+        data-action="stop"
+        class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+        disabled
+      >Stop</button>
+      <button
+        type="button"
+        data-action="download"
+        class="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1 text-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+        title="Render the same sequence offline and download as a 16-bit PCM WAV"
+      >Download WAV</button>
+
+      <span
+        data-tones-step
+        class="ml-auto inline-flex min-w-[3.5rem] justify-center self-center rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-300 tabular-nums"
+        aria-hidden="true"
+      >—</span>
+    </div>
+
+    <p
+      data-tones-status
+      class="text-xs text-slate-500"
+      role="status"
+      aria-live="polite"
+    >Idle</p>
+  </div>
+</section>
