@@ -16,7 +16,7 @@ straight into a pre-loaded creative space.
 ## Phases
 
 - [x] **Phase 1: Foundation** — Astro/Tailwind shell + simulator skeleton + tests
-- [ ] **Phase 2: Flagship interactive qubit essay** — End-to-end M1 with direct-manipulation widgets, parameterized rotations, draggable Bloch sphere, annotations
+- [x] **Phase 2: Flagship interactive qubit essay** — End-to-end M1 with direct-manipulation widgets, parameterized rotations, draggable Bloch sphere, annotations (code-complete; deploy + feedback round still pending — see `phases/02-qubit-essay/REMAINING.md`)
 - [ ] **Phase 3: Quantum Sandbox + Creative Outputs** — `/sandbox` circuit composer with URL sharing, challenge mode, Quantum Canvas (art), Quantum Tones (audio)
 - [ ] **Phase 4: Foundations essay track** — Superposition, measurement, gates, entanglement essays + homepage concept map; each essay deep-links to sandbox remixes
 - [ ] **Phase 5: Algorithm track + v1 launch** — CNOT+Bell essay, Deutsch's algorithm essay, in-essay drag-drop circuits, launch polish
@@ -67,12 +67,12 @@ parameterized rotation gates the rest of the site will depend on.
       widgets; ≥ 1 iteration pass made on their feedback
 
 **Plans**: 6 plans
-- [ ] 02-01: Astro page shell + KaTeX + scrolly helper + per-essay layout
-- [ ] 02-02: **Param rotation gates Rx/Ry/Rz in the simulator** + tests
-- [ ] 02-03: ProbabilityBars + StateVector widgets + per-page sim store
-- [ ] 02-04: BlochSphere widget (Three.js, draggable arrow) + 2D polar fallback
-- [ ] 02-05: Param-gate sliders + annotations system (pin notes to widgets)
-- [ ] 02-06: Write the "What is a Qubit?" essay copy, wire widgets, a11y/perf, deploy & feedback round
+- [x] 02-01: Astro page shell + KaTeX + scrolly helper + per-essay layout
+- [x] 02-02: **Param rotation gates Rx/Ry/Rz in the simulator** + tests
+- [x] 02-03: ProbabilityBars + StateVector widgets + per-page sim store
+- [x] 02-04: BlochSphere widget (Three.js, draggable arrow) + 2D polar fallback
+- [x] 02-05: Param-gate sliders + annotations system (pin notes to widgets)
+- [~] 02-06: Essay copy + a11y/perf shipped; deploy + dev-friend feedback round remain (see `phases/02-qubit-essay/REMAINING.md`)
 
 ### Phase 3: Quantum Sandbox + Creative Outputs
 
@@ -168,8 +168,8 @@ v1 launches at the end of this phase.
 
 | Phase | Plans Complete | Status      | Completed  |
 |-------|----------------|-------------|------------|
-| 1. Foundation                         | 3/3 | Done        | 2026-06-24 |
-| 2. Flagship interactive qubit essay   | 0/6 | Active      | —          |
-| 3. Quantum Sandbox + Creative Outputs | 0/7 | Not started | —          |
-| 4. Foundations essay track            | 0/6 | Not started | —          |
-| 5. Algorithm track + v1 launch        | 0/5 | Not started | —          |
+| 1. Foundation                         | 3/3 | Done           | 2026-06-24 |
+| 2. Flagship interactive qubit essay   | 5/6 + partial | Code-complete  | 2026-06-25 (deploy + feedback pending) |
+| 3. Quantum Sandbox + Creative Outputs | 0/7 | Not started    | —          |
+| 4. Foundations essay track            | 0/6 | Not started    | —          |
+| 5. Algorithm track + v1 launch        | 0/5 | Not started    | —          |
