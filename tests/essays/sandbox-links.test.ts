@@ -32,8 +32,9 @@ import {
   type Op,
 } from "../../src/lib/quantum";
 
-// Mirrors of every essay's `STARTER` (or `bellStarter`) constant.
-// Keep in sync with src/pages/{superposition,measurement,gates,entanglement}.astro
+// Mirrors of every essay's `STARTER` (or `bellStarter`/`DEUTSCH_F2_CIRCUIT`)
+// constant. Keep in sync with src/pages/{superposition,measurement,gates,
+// entanglement,cnot-bell,deutsch}.astro
 const STARTERS: Record<string, Circuit> = {
   superposition: {
     qubits: 1,
@@ -53,6 +54,20 @@ const STARTERS: Record<string, Circuit> = {
   entanglement: {
     qubits: 2,
     steps: [[gateOp("H", 0)], [cnotOp(0, 1)]],
+  },
+  "cnot-bell": {
+    qubits: 2,
+    steps: [[gateOp("H", 0)], [cnotOp(0, 1)]],
+  },
+  deutsch: {
+    qubits: 2,
+    steps: [
+      [gateOp("X", 1)],
+      [gateOp("H", 0), gateOp("H", 1)],
+      [cnotOp(0, 1)],
+      [gateOp("H", 0)],
+      [measureOp(0)],
+    ],
   },
 };
 

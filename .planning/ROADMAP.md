@@ -19,7 +19,7 @@ straight into a pre-loaded creative space.
 - [x] **Phase 2: Flagship interactive qubit essay** — End-to-end M1 with direct-manipulation widgets, parameterized rotations, draggable Bloch sphere, annotations (code-complete; deploy + feedback round still pending — see `phases/02-qubit-essay/REMAINING.md`)
 - [x] **Phase 3: Quantum Sandbox + Creative Outputs** — `/sandbox` circuit composer with URL sharing, challenge mode, Quantum Canvas (art), Quantum Tones (audio)
 - [x] **Phase 4: Foundations essay track** — Superposition, measurement, gates, entanglement essays + homepage concept map; each essay deep-links to sandbox remixes
-- [ ] **Phase 5: Algorithm track + v1 launch** — CNOT+Bell essay, Deutsch's algorithm essay, in-essay drag-drop circuits, launch polish
+- [x] **Phase 5: Algorithm track + v1 launch** — CNOT+Bell essay, Deutsch's algorithm essay, in-essay drag-drop circuits, launch polish
 
 ## Phase Details
 

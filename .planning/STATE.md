@@ -1,7 +1,8 @@
 # State
 
-*Last updated: 2026-06-26 — Phase 4 complete. Ready to start Phase 5
-(final phase before v1 launch).*
+*Last updated: 2026-06-26 — Phase 5 complete. **v1 launch-ready
+modulo deployment.** No further phase work; only a deploy + post-launch
+feedback round remains before v1 is publicly live.*
 
 ## Project Reference
 
@@ -9,95 +10,131 @@ See: `.planning/PROJECT.md` and `.planning/ROADMAP.md`.
 
 - **Core value:** Earn dev trust with real, inspectable math — then
   unlock creativity by letting readers actually play.
-- **Current focus:** Phase 5 (Algorithm track + v1 launch) has not
-  started. Phase 4 is **done**; summary at
-  `.planning/phases/04-foundations/04-SUMMARY.md`.
+- **Current status:** v1 milestone is **code-complete**. All 5
+  roadmap phases are done. The only remaining work before v1 ships
+  is a deployment + the feedback round documented in
+  `.planning/phases/05-algorithms/LAUNCH-ANNOUNCEMENT.md`.
 
 ## Where we are
 
-- [done] **Phase 1 (Foundation)** — `8148713`. 21-test simulator.
-- [code-complete] **Phase 2 (Flagship qubit essay)** — all 6 plans
-  landed. Deploy + dev-friend feedback + Lighthouse still pending,
-  tracked in `.planning/phases/02-qubit-essay/REMAINING.md`.
-- [done] **Phase 3 (Quantum Sandbox + Creative Outputs)** — all 7
-  plans landed. Summary at
-  `.planning/phases/03-sandbox/03-SUMMARY.md`.
-- [done] **Phase 4 (Foundations essay track)** — all 6 plans landed.
-  Four new essays + concept-map homepage + cross-essay nav + Bell-pair
-  visualization. Highlights:
-  - 130 tests passing (was 97 at start of phase).
-  - 13 pages build clean.
-  - Every essay carries a build-time-encoded "Open in sandbox →" CTA
-    that round-trips through `decodeCircuit` (asserted in CI).
-  - `ConceptMap.astro` homepage with all 5 live essays + sandbox +
-    challenges + 2 dimmed v2 placeholders; mobile falls back to a
-    stacked `<ol>`.
-  - `MiniBloch.astro` extracted for the entanglement essay; reuses
-    `reducedDensityMatrix` + `blochVectorFromRho` math from Phase 3.
-- [not started] **Phase 5 (Algorithm track + v1 launch)** — zero
-  files on disk. Plans per ROADMAP: CircuitBuilder embed mode,
-  CNOT+Bell essay, Deutsch's algorithm essay, launch polish, launch
-  announcement.
+- [done] **Phase 1** — Foundation simulator (`8148713`).
+- [done] **Phase 2** — Flagship qubit essay. (Phase 2 `REMAINING.md`
+  folded into Phase 5's launch-prep artifacts; the deploy + feedback
+  + Lighthouse items live in the launch announcement pre-launch
+  checklist.)
+- [done] **Phase 3** — Quantum Sandbox + creative outputs.
+  See `.planning/phases/03-sandbox/03-SUMMARY.md`.
+- [done] **Phase 4** — Foundations essay track (4 new essays +
+  concept-map homepage).
+  See `.planning/phases/04-foundations/04-SUMMARY.md`.
+- [done] **Phase 5** — Algorithm track + v1 launch prep.
+  See `.planning/phases/05-algorithms/05-SUMMARY.md`. Highlights:
+  - 146 tests passing.
+  - 16 pages build clean.
+  - 7 essays live: qubit → superposition → measurement → gates →
+    entanglement → cnot-bell → deutsch. ConceptMap has zero dimmed
+    nodes.
+  - `CircuitView.astro` slim read-only embed primitive shipped
+    (same extraction pattern as MiniBloch in Phase 4).
+  - SEO + presentation infra in place: robots.txt, sitemap.xml
+    endpoint, og + twitter card meta on every essay + homepage,
+    site-wide SVG og-image, friendly 404, canonical link tags
+    available via EssayLayout props.
+  - `LIGHTHOUSE.md` captured as a manual bundle-size + a11y audit
+    with predicted scores; formal run replaces it post-deploy.
+  - `LAUNCH-ANNOUNCEMENT.md` Markdown draft committed with
+    pre-launch checklist.
 
-## Next action (resume here)
+## Next action (v1 launch — not a phase, just a task)
 
-1. **(Optional) Close Phase 2 leftovers** — deploy to a static host,
-   run a real-device Lighthouse pass, collect dev-friend feedback,
-   delete `phases/02-qubit-essay/REMAINING.md`. Doesn't block Phase 5
-   development, but does block the v1 launch announcement at the end
-   of plan 05-05.
-2. **Start Phase 5** via `smart_discuss`:
-   - No `05-CONTEXT.md` exists yet. Discuss should lock:
-     - Whether `CircuitBuilder` essay-embed mode (plan 05-01) reuses
-       `composer.client.ts` as-is in a "read-mode" prop, or whether
-       it gets a slimmer renderer that doesn't drag in undo/persist.
-     - Whether to bring in Playwright (or any E2E harness) before
-       shipping CNOT+Bell and Deutsch (both are interaction-heavy
-       and would benefit from a smoke test).
-     - Analytics opt-in story for launch (probably "no" — we've
-       avoided it through Phase 4).
-     - Final-Lighthouse acceptance criteria (LCP, a11y score, JS
-       payload per route).
-3. **Plan-phase per essay/feature** — probably 5 plans matching
-   ROADMAP. CircuitBuilder embed mode is the only one that touches
-   shared infra; the two essays can fan out in parallel like Phase 4
-   did.
-4. **Phase 5 DoD checkpoint** — all 7 essays cross-linked through
-   the concept map; v1 launch announcement post drafted; Lighthouse
-   passes across the board.
+**The user explicitly chose NO deployment in Phase 5.** v1 launch
+itself is a future task, not the next phase. When ready:
 
-## Active architectural decisions carrying into Phase 5
+1. **Pick a deploy host.** Cloudflare Pages recommended (free,
+   global edge, zero config for static Astro output):
+   ```bash
+   npx wrangler pages deploy ./dist --project-name quantum
+   ```
+   Netlify / Vercel / GitHub Pages also work. Whatever host gets
+   picked, set the `SITE_URL` env var to the deployed origin so
+   `sitemap.xml` emits absolute URLs.
+2. **Build + deploy:**
+   ```bash
+   SITE_URL=https://your-url npx astro build
+   {deploy command}
+   ```
+3. **Generate a PNG og-image** from `public/og/quantum.svg`
+   (modern scrapers handle SVG, legacy ones don't). One-shot
+   ImageMagick / sharp call.
+4. **Replace `<URL>` and `<REPO>` placeholders** in
+   `.planning/phases/05-algorithms/LAUNCH-ANNOUNCEMENT.md`.
+5. **Formal Lighthouse pass:** `npx lighthouse {URL}/{route}
+   --output html --preset=mobile` against every route. If any
+   score lands more than 5 points below the predicted table in
+   `LIGHTHOUSE.md`, investigate before posting. Replace
+   `LIGHTHOUSE.md` with the formal report.
+6. **Feedback round:** send to 3+ working-dev friends. Ask "one
+   thing that clicked, one thing that didn't." Iterate at least
+   once. Capture in `docs/feedback/v1-round1.md`.
+7. **Post the announcement** (HN, r/QuantumComputing, social).
 
-1. **Reactivity = vanilla TS + in-repo `signal<T>`** — proven across
-   sandbox (Phase 3) and essay-store widgets (Phase 2 + 4). Stay
-   with it unless a Phase 5 widget genuinely demands more.
-2. **`SandboxLink.astro` pattern** for any new essay that wants a
-   deep-link CTA. Build-time encoding, static href, zero runtime
-   cost. Round-trips asserted in `tests/essays/sandbox-links.test.ts`.
-3. **`MiniBloch.astro` extraction pattern** for reusing sandbox
-   visualization code outside the sandbox. Pull out the pure math +
-   inline SVG; don't import hydrators coupled to sandbox singletons.
-4. **Cross-essay nav lives in essay frontmatter**, not a centralized
-   JSON. Chain integrity is asserted by
-   `tests/essays/nav-graph.test.ts`.
-5. **`ConceptMap.astro` is the canonical site nav**. Phase 5 must
-   un-dim the v2 placeholders (CNOT+Bell, Deutsch) when those
-   essays land — see plan-04-01-mirrored node list at the top of
-   the file.
+## Active architectural decisions carrying into v2
 
-## Open risks (carried into Phase 5)
+The decisions below survived Phase 5 and should carry into any v2
+work without re-litigation:
 
-- **No E2E test harness yet.** 130 tests are all unit. CNOT+Bell and
-  Deutsch will push the interaction surface up another notch;
-  surface the Playwright question in `smart_discuss` for Phase 5
-  entry.
-- **Phase 2 `REMAINING.md` (deploy + Lighthouse + feedback)** still
-  open. Phase 5 plan 05-05 ("final Lighthouse + retro") will need
-  these resolved or it stalls.
-- **Three.js chunk** is still 130.86 KB gzipped on every Bloch-using
-  essay. Plans 05-02 (CNOT+Bell) and 05-03 (Deutsch) will both touch
-  multi-qubit Bloch; verify they reuse the cached chunk and don't
-  inadvertently split it.
-- **Concept-map v2 placeholders are wired but dimmed.** When Phase 5
-  essays land, update `ConceptMap.astro` AND `concept-map.test.ts`
-  in lockstep — the test mirror catches drift.
+1. **Reactivity = vanilla TS + in-repo `signal<T>`** — survived
+   every phase. Stay with it.
+2. **Sandbox visualization re-use pattern:** when an essay needs
+   sandbox-renderer math, **extract a slim component** (`MiniBloch`,
+   `CircuitView`) that reuses pure pieces; do NOT import sandbox
+   hydrators coupled to the singleton sandbox store.
+3. **Build-time circuit encoding for deep links:** `SandboxLink`
+   and `CircuitView` both encode `Circuit` literals at Astro
+   frontmatter time. Static href, zero runtime cost, CI catches
+   broken codec changes.
+4. **Cross-essay nav in essay frontmatter**, asserted by
+   `tests/essays/nav-graph.test.ts`. Centralized JSON would be
+   worse; the test mirror catches drift cheaply.
+5. **Test mirrors of source canonical lists** (concept-map nodes,
+   nav chain, sandbox-link starters). Whenever a v2 plan touches
+   any of these, touch the mirror in the same commit.
+6. **Algorithm essays use the "why should I care" opener.** Carry
+   this convention into any v2 algorithm essay (teleportation,
+   Grover, QFT, Shor).
+7. **No analytics. Ever.** Ratified at Phase 5 entry; the
+   "no tracking" line is a core promise of the launch announcement.
+
+## Open risks for the v1 launch
+
+- **No formal Lighthouse run yet.** Predictions in `LIGHTHOUSE.md`
+  are confident but unverified. Mobile LCP on `/qubit` and `/gates`
+  (the two Three.js essays) is the most likely target to miss; if it
+  does, the mitigation is to drop 3D from `/gates` and reuse the 2D
+  SVG fallback.
+- **KaTeX is loaded via cdn.jsdelivr.net.** If the launch
+  audience's region has bad jsdelivr latency, math-render time
+  becomes a perf risk. Mitigation: self-host the CSS at deploy time
+  (trivial path swap, KaTeX CSS is a single file).
+- **OG image is SVG, not PNG.** Modern scrapers handle it; legacy
+  Facebook + some link-preview tools might fall back to the
+  metadata title only. PNG-generation step is in the
+  `LAUNCH-ANNOUNCEMENT.md` pre-launch checklist.
+- **No E2E coverage.** 146 unit tests. The post-launch feedback
+  round IS the smoke test. If readers report broken interactions,
+  that's the v2 trigger for Playwright (deferred from Phase 5).
+
+## What's after launch
+
+**v2 milestone scoping** — a fresh PROJECT.md milestone bump.
+Probable contents based on what Phase 5 deferred:
+- Algorithm track 2: teleportation, superdense coding
+- Algorithm track 3 (reader-driven): Grover, QFT, Shor
+- Quality-of-life: bundle-size regression budget, E2E harness,
+  concept-map progress indicator, opt-in interaction analytics if
+  user changes mind on the "no tracking" rule
+- Pedagogy experiments: pick-a-path reading order, in-essay quiz
+  format
+
+v2 should NOT be bolted onto v1's `.planning/`. Bump the milestone,
+write a new ROADMAP, and let v2 start clean.
