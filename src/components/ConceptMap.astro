@@ -1,0 +1,220 @@
+---
+/**
+ * ConceptMap — homepage nav.
+ *
+ * Design constraints:
+ *  - Hand-rolled SVG, no D3, no graph library. At ~10 nodes in v1
+ *    a programmatic layout would cost more than placing nodes by hand.
+ *  - Every live node is an <a> with a visible focus ring (WCAG 2.2 AA).
+ *  - Mobile (< 640 px) falls back to a stacked <ol> — the SVG is
+ *    `sm:block hidden`, the list is `sm:hidden block`. Same hrefs,
+ *    zero feature drift.
+ *  - v2 placeholders (CNOT+Bell, Deutsch) render as <div> not <a>,
+ *    `aria-disabled="true"`, dimmed slate, no hover state.
+ *
+ * Edge layout: the linear reading path runs across the top in a
+ * single row. Sandbox and Challenges sit underneath as utility nodes
+ * connected to qubit (entry) and entanglement (exit). v2 placeholders
+ * float on a third row, dimmed.
+ *
+ * Sizes assume a 1100×360 viewBox. The SVG scales to its container
+ * (max-width: 1100 px) and never exceeds 360 px tall, so it fits
+ * inside the 65vh hero region without scrolling on a laptop.
+ */
+
+interface Node {
+  /** href; null marks a v2 placeholder (renders as div). */
+  href: string | null;
+  label: string;
+  /** Center x in SVG units. */
+  cx: number;
+  cy: number;
+  /** Visual tier: primary (essays), utility (sandbox/challenges), v2 (dimmed). */
+  tier: "primary" | "utility" | "v2";
+}
+
+const NODE_W = 150;
+const NODE_H = 56;
+const NODE_R = 10;
+
+// One row of essays across the top, utilities in the middle row,
+// v2 placeholders dimmed on the bottom row.
+const nodes: Node[] = [
+  { href: "/qubit",          label: "Qubit",          cx: 100,  cy: 60,  tier: "primary" },
+  { href: "/superposition",  label: "Superposition",  cx: 290,  cy: 60,  tier: "primary" },
+  { href: "/measurement",    label: "Measurement",    cx: 480,  cy: 60,  tier: "primary" },
+  { href: "/gates",          label: "Gates",          cx: 670,  cy: 60,  tier: "primary" },
+  { href: "/entanglement",   label: "Entanglement",   cx: 860,  cy: 60,  tier: "primary" },
+  { href: "/sandbox",        label: "Sandbox",        cx: 380,  cy: 190, tier: "utility" },
+  { href: "/sandbox/challenges", label: "Challenges", cx: 580,  cy: 190, tier: "utility" },
+  { href: null,              label: "CNOT + Bell",    cx: 290,  cy: 310, tier: "v2" },
+  { href: null,              label: "Deutsch",        cx: 480,  cy: 310, tier: "v2" },
+];
+
+// Directed edges: from-node index → to-node index. Indices match `nodes`.
+// Reading-path edges (0..4), plus utility entry/exit (0→sandbox,
+// 4→sandbox, 0→challenges, 4→challenges), plus dimmed v2 connectors.
+const edges: Array<{ from: number; to: number; dim?: boolean }> = [
+  { from: 0, to: 1 },
+  { from: 1, to: 2 },
+  { from: 2, to: 3 },
+  { from: 3, to: 4 },
+  { from: 0, to: 5 },
+  { from: 4, to: 5 },
+  { from: 0, to: 6 },
+  { from: 4, to: 6 },
+  { from: 4, to: 7, dim: true },
+  { from: 7, to: 8, dim: true },
+];
+
+function nodeFill(tier: Node["tier"]): string {
+  if (tier === "primary") return "rgb(30 41 59)";    // slate-800
+  if (tier === "utility") return "rgb(6 78 59)";     // emerald-900
+  return "rgb(15 23 42)";                            // slate-950 (dim)
+}
+function nodeStroke(tier: Node["tier"]): string {
+  if (tier === "primary") return "rgb(129 140 248)"; // indigo-400
+  if (tier === "utility") return "rgb(52 211 153)";  // emerald-400
+  return "rgb(51 65 85)";                            // slate-700 (dim)
+}
+function nodeText(tier: Node["tier"]): string {
+  // All three pass AA against their respective fills.
+  if (tier === "primary") return "rgb(226 232 240)"; // slate-200
+  if (tier === "utility") return "rgb(167 243 208)"; // emerald-200
+  return "rgb(100 116 139)";                         // slate-500
+}
+
+/** Build a smooth cubic Bezier between two nodes, edge-to-edge. */
+function edgePath(a: Node, b: Node): string {
+  const x1 = a.cx;
+  const y1 = a.cy + (b.cy > a.cy ? NODE_H / 2 : -NODE_H / 2);
+  const x2 = b.cx;
+  const y2 = b.cy + (b.cy > a.cy ? -NODE_H / 2 : NODE_H / 2);
+  const dy = (y2 - y1) * 0.55;
+  return `M ${x1} ${y1} C ${x1} ${y1 + dy}, ${x2} ${y2 - dy}, ${x2} ${y2}`;
+}
+---
+
+<nav aria-label="Site concept map" class="not-prose">
+  <!-- Desktop / tablet SVG map -->
+  <svg
+    role="img"
+    aria-label="Visual map of the Quantum site: five essays in reading order, sandbox and challenges below, with v2 essays dimmed"
+    viewBox="0 0 1000 360"
+    class="hidden sm:block w-full max-w-[1100px] mx-auto h-auto"
+  >
+    <defs>
+      <marker
+        id="concept-arrow"
+        viewBox="0 0 10 10"
+        refX="9"
+        refY="5"
+        markerWidth="6"
+        markerHeight="6"
+        orient="auto-start-reverse"
+      >
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(100 116 139)" />
+      </marker>
+      <marker
+        id="concept-arrow-dim"
+        viewBox="0 0 10 10"
+        refX="9"
+        refY="5"
+        markerWidth="6"
+        markerHeight="6"
+        orient="auto-start-reverse"
+      >
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(51 65 85)" />
+      </marker>
+    </defs>
+
+    {edges.map((e) => (
+      <path
+        d={edgePath(nodes[e.from], nodes[e.to])}
+        fill="none"
+        stroke={e.dim ? "rgb(51 65 85)" : "rgb(100 116 139)"}
+        stroke-width="1.5"
+        stroke-dasharray={e.dim ? "4 4" : "0"}
+        marker-end={e.dim ? "url(#concept-arrow-dim)" : "url(#concept-arrow)"}
+      />
+    ))}
+
+    {nodes.map((n) => {
+      const x = n.cx - NODE_W / 2;
+      const y = n.cy - NODE_H / 2;
+      const common = (
+        <g>
+          <rect
+            x={x}
+            y={y}
+            width={NODE_W}
+            height={NODE_H}
+            rx={NODE_R}
+            fill={nodeFill(n.tier)}
+            stroke={nodeStroke(n.tier)}
+            stroke-width="1.5"
+          />
+          <text
+            x={n.cx}
+            y={n.cy + 5}
+            text-anchor="middle"
+            font-family="ui-sans-serif, system-ui, sans-serif"
+            font-size="16"
+            font-weight="500"
+            fill={nodeText(n.tier)}
+          >{n.label}{n.tier === "v2" ? " · v2" : ""}</text>
+        </g>
+      );
+
+      if (n.href) {
+        return (
+          <a
+            href={n.href}
+            class="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+            aria-label={`Read: ${n.label}`}
+          >{common}</a>
+        );
+      }
+      return (
+        <g aria-disabled="true" aria-label={`${n.label} (coming in v2)`}>
+          {common}
+        </g>
+      );
+    })}
+  </svg>
+
+  <!-- Mobile fallback: stacked list, same hrefs -->
+  <ol class="sm:hidden flex flex-col gap-3 not-prose">
+    {nodes.filter((n) => n.tier === "primary").map((n, i) => (
+      <li>
+        <a
+          href={n.href!}
+          class="flex items-baseline gap-3 rounded-md border border-slate-800 bg-slate-900/60 px-4 py-3 hover:border-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+        >
+          <span class="text-xs uppercase tracking-widest text-indigo-400 tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+          <span class="text-slate-100 font-medium">{n.label}</span>
+        </a>
+      </li>
+    ))}
+    {nodes.filter((n) => n.tier === "utility").map((n) => (
+      <li>
+        <a
+          href={n.href!}
+          class="flex items-baseline gap-3 rounded-md border border-emerald-700/40 bg-emerald-950/30 px-4 py-3 hover:border-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+        >
+          <span class="text-xs uppercase tracking-widest text-emerald-300">play</span>
+          <span class="text-emerald-100 font-medium">{n.label}</span>
+        </a>
+      </li>
+    ))}
+    {nodes.filter((n) => n.tier === "v2").map((n) => (
+      <li
+        aria-disabled="true"
+        class="flex items-baseline gap-3 rounded-md border border-slate-800 bg-slate-950/60 px-4 py-3"
+      >
+        <span class="text-xs uppercase tracking-widest text-slate-600">v2</span>
+        <span class="text-slate-500">{n.label}</span>
+      </li>
+    ))}
+  </ol>
+</nav>

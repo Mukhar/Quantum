@@ -1,4 +1,5 @@
 ---
+import ConceptMap from "../components/ConceptMap.astro";
 const title = "Quantum — taught like you're a working developer";
 ---
 
@@ -10,65 +11,62 @@ const title = "Quantum — taught like you're a working developer";
     <title>{title}</title>
     <meta
       name="description"
-      content="Quantum computing, taught like you're a working developer. Interactive essays backed by a real in-browser quantum simulator."
+      content="Quantum computing, taught like you're a working developer. Five interactive essays + an open-ended sandbox, all backed by a real in-browser simulator."
     />
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased">
-    <main class="mx-auto max-w-3xl px-6 py-24">
+    <main class="mx-auto max-w-5xl px-6 py-16 sm:py-20">
       <p class="mb-4 text-sm uppercase tracking-widest text-indigo-400">
-        Phase 2 — the qubit essay is live
+        Quantum
       </p>
-      <h1 class="mb-6 text-5xl font-semibold leading-tight">
+      <h1 class="mb-5 text-4xl sm:text-5xl font-semibold leading-tight">
         Quantum computing,<br />taught like you're a working developer.
       </h1>
-      <p class="mb-10 text-xl text-slate-300">
-        Interactive scrollytelling essays backed by a real, tiny, in-browser
-        quantum simulator. No PhD required. No hand-wavy coin-spinning
-        analogies.
+      <p class="mb-12 max-w-2xl text-lg text-slate-300">
+        Five interactive scrollytelling essays, an open-ended Quantum
+        Sandbox, and challenge puzzles — all backed by a real, tiny,
+        in-browser quantum simulator. Pick a starting point.
       </p>
 
-      <section class="rounded-lg border border-slate-800 bg-slate-900/50 p-6 mb-8">
-        <h2 class="mb-3 text-lg font-medium text-slate-100">
-          Read the flagship essay
+      <section
+        aria-labelledby="map-title"
+        class="rounded-lg border border-slate-800 bg-slate-900/30 p-4 sm:p-8 mb-12"
+      >
+        <h2
+          id="map-title"
+          class="mb-4 sm:mb-6 text-sm uppercase tracking-widest text-slate-400"
+        >
+          The map
         </h2>
-        <p class="text-slate-300 mb-4">
-          Press gates, drag the Bloch sphere arrow, sweep continuous
-          rotation sliders, and pin sticky notes wherever something
-          clicks.
-        </p>
+        <ConceptMap />
+      </section>
+
+      <section class="grid gap-4 sm:grid-cols-2 mb-12">
         <a
           href="/qubit"
-          class="inline-block rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+          class="rounded-lg border border-indigo-700/40 bg-indigo-950/30 p-5 hover:border-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
         >
-          What is a Qubit? →
+          <p class="mb-2 text-xs uppercase tracking-widest text-indigo-300">Start here</p>
+          <p class="text-lg font-medium text-slate-100">What is a Qubit?</p>
+          <p class="mt-1 text-sm text-slate-400">Press gates, drag the Bloch sphere arrow, sweep continuous rotation sliders.</p>
         </a>
-      </section>
-
-      <section class="rounded-lg border border-emerald-700/40 bg-emerald-950/30 p-6 mb-8">
-        <h2 class="mb-3 text-lg font-medium text-emerald-200">
-          Or skip ahead and play
-        </h2>
-        <p class="text-slate-300 mb-4">
-          The Quantum Sandbox is an open canvas: drop gates onto a circuit
-          grid, sweep rotation angles, share what you build via URL.
-        </p>
         <a
           href="/sandbox"
-          class="inline-block rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+          class="rounded-lg border border-emerald-700/40 bg-emerald-950/30 p-5 hover:border-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
         >
-          Open the Sandbox →
+          <p class="mb-2 text-xs uppercase tracking-widest text-emerald-300">Or skip ahead</p>
+          <p class="text-lg font-medium text-slate-100">Quantum Sandbox</p>
+          <p class="mt-1 text-sm text-slate-400">Drop gates onto a circuit grid, sweep rotation angles, share what you build via URL.</p>
         </a>
       </section>
 
-      <section class="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-        <h2 class="mb-3 text-lg font-medium text-slate-100">
-          Status
-        </h2>
-        <ul class="space-y-1 text-slate-400">
+      <section class="rounded-lg border border-slate-800 bg-slate-900/40 p-5">
+        <h2 class="mb-3 text-sm uppercase tracking-widest text-slate-400">Status</h2>
+        <ul class="space-y-1 text-slate-400 text-sm">
           <li>[done] Phase 1 — simulator (X/Y/Z/H/S/T/CNOT/Rx/Ry/Rz + measurement)</li>
-          <li>[done] Phase 2 — flagship "What is a Qubit?" essay</li>
-          <li>[next] Phase 3 — Quantum Sandbox + creative outputs</li>
-          <li>[planned] Phase 4 — full foundations essay track</li>
+          <li>[done] Phase 2 — flagship &ldquo;What is a Qubit?&rdquo; essay</li>
+          <li>[done] Phase 3 — Quantum Sandbox + creative outputs</li>
+          <li>[in-flight] Phase 4 — full foundations essay track</li>
           <li>[planned] Phase 5 — algorithm track + v1 launch</li>
         </ul>
       </section>

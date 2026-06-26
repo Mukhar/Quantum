@@ -1,0 +1,58 @@
+---
+/**
+ * SandboxLink — build-time deep link into the Quantum Sandbox.
+ *
+ * Why a component at all (vs. an inline <a> per essay)?
+ *  1. Single source of truth for the styling, so every essay's CTA
+ *     looks like every other essay's CTA without copy-paste drift.
+ *  2. Encodes the circuit *at build time* using `encodeCircuit` from
+ *     the same codec the sandbox itself uses on the receiving end —
+ *     so if the codec ever changes, every essay's deep link breaks at
+ *     CI time (test) rather than at user-click time (silent regression).
+ *  3. Keeps essay frontmatter tidy: authors hand us a `Circuit` literal,
+ *     not a base64 blob.
+ *
+ * The href is fully static — no client JS — so the link works in
+ * view-source, in feed readers, and with JS disabled.
+ */
+import { encodeCircuit, type Circuit } from "../lib/quantum";
+
+interface Props {
+  /** The starter circuit the reader lands on inside /sandbox. */
+  circuit: Circuit;
+  /** Visible label. Defaults to "Open in sandbox →". */
+  label?: string;
+  /**
+   * Optional sub-route. Default "/sandbox". Set to
+   * "/sandbox/challenges" to deep-link a starter into challenges
+   * (currently unused by essays, kept for symmetry with the codec).
+   */
+  base?: "/sandbox" | "/sandbox/challenges";
+  /** Extra Tailwind classes the call site can layer on. */
+  class?: string;
+}
+
+const {
+  circuit,
+  label = "Open in sandbox →",
+  base = "/sandbox",
+  class: extraClass = "",
+} = Astro.props as Props;
+
+// Encode once at build time. If this throws, the whole build fails —
+// which is exactly what we want for a broken starter circuit.
+const fragment = encodeCircuit(circuit);
+const href = `${base}#${fragment}`;
+---
+
+<a
+  href={href}
+  class:list={[
+    "inline-block rounded-md bg-emerald-600 hover:bg-emerald-500",
+    "px-4 py-2 text-sm font-medium text-white no-underline",
+    "focus-visible:outline focus-visible:outline-2",
+    "focus-visible:outline-offset-2 focus-visible:outline-emerald-300",
+    extraClass,
+  ]}
+  data-sandbox-link
+>{label}</a>
