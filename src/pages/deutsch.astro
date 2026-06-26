@@ -1,0 +1,497 @@
+---
+/**
+ * "Deutsch's algorithm" — Phase 5 algorithm essay (Plan 05-03).
+ *
+ * The first textbook quantum routine that strictly beats every
+ * classical circuit. Speedup is 2 → 1, which is tiny in absolute
+ * terms but huge pedagogically: it's the first place where the
+ * resource is *interference*, not parallelism. Everything that comes
+ * later (Deutsch-Jozsa, Grover, Shor) is this trick at scale.
+ *
+ * Voice: foundations-essay rhythm + the "why should I care" opener
+ * (classical pain point first, locked in 05-CONTEXT.md).
+ *
+ * Convention: qubit register is `|q₁ q₀⟩` (Qiskit / LSB-first),
+ * matching the rest of this codebase. q₀ is the "data" qubit (the
+ * one we read the verdict off), q₁ is the ancilla we prep into |−⟩
+ * to make the phase kickback work.
+ *
+ * Oracle implementations, all specialised to the |+⟩|−⟩ input:
+ *   f₀ (constant 0): identity — no oracle gates at all
+ *   f₁ (constant 1): X on q₁ (flips the ancilla regardless of x)
+ *   f₂ (balanced, identity): CNOT(0, 1) (flips ancilla iff x = 1)
+ *   f₃ (balanced, NOT):     X on q₁, then CNOT(0, 1) (flips iff x = 0)
+ *
+ * Each "Run with oracle fₖ" button resets the store and replays:
+ *   X q₁ → H q₀, H q₁ → <oracle> → H q₀, then reads the marginal of
+ *   q₀ off the snapshot. P(q₀ = 0) ≈ 1 ⇒ "constant ",
+ *   P(q₀ = 1) ≈ 1 ⇒ "balanced ". Verified by a hand-rolled vitest
+ *   sweep before commit — all four oracles produce the correct
+ *   verdict with probability 1.
+ *
+ * Widget plumbing mirrors `/entanglement` and `/cnot-bell`:
+ *   - one essay-level store, key "deutsch-essay", 2 qubits
+ *   - ProbabilityBars subscribes to it
+ *   - inline "Run with oracle …" buttons + Reset dispatch into it
+ *   - CircuitView is pure server-rendered SVG, zero hydration cost
+ *   - SandboxLink encodes the same circuit at build time
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import ProbabilityBars from "../components/ProbabilityBars.astro";
+import CircuitView from "../components/CircuitView.astro";
+import SandboxLink from "../components/SandboxLink.astro";
+import { gateOp, cnotOp, measureOp, type Circuit } from "../lib/quantum";
+
+const KEY = "deutsch-essay";
+
+/** The canonical Deutsch circuit specialised to the balanced oracle
+ *  f₂(x) = x. Step order matches what the "Run with oracle f₂" button
+ *  replays in the browser; the SandboxLink at the bottom and the
+ *  CircuitView mid-essay both encode this exact constant. */
+const DEUTSCH_F2_CIRCUIT: Circuit = {
+  qubits: 2,
+  steps: [
+    [gateOp("X", 1)],                  // prep ancilla in |1⟩
+    [gateOp("H", 0), gateOp("H", 1)],  // |+⟩|−⟩
+    [cnotOp(0, 1)],                    // the f₂(x) = x oracle
+    [gateOp("H", 0)],                  // interfere on the data qubit
+    [measureOp(0)],                    // read the verdict
+  ],
+};
+---
+
+<EssayLayout
+  title="Deutsch's Algorithm"
+  subtitle="The first place quantum strictly beats classical, even if only by one oracle query. The lesson isn't the speedup — it's that interference, not parallelism, is the resource."
+  description="Walk through the four single-bit oracles, the phase-kickback trick, and the full Deutsch circuit. Press a button per oracle, watch the verdict, and see why 'tries both inputs at once' is the wrong mental model."
+>
+  <p>
+    Suppose someone hands you a black-box function <code>f</code> that
+    takes a single bit and returns a single bit. You can call
+    <code>f</code> as many times as you want, but you don't get to
+    peek inside. There are exactly four functions it could be: one
+    that returns 0 no matter what you give it; one that always returns
+    1; one that returns its input unchanged; and one that returns the
+    input flipped. Call them <code>f₀</code>, <code>f₁</code>,
+    <code>f₂</code>, <code>f₃</code>. Two of them — <code>f₀</code>
+    and <code>f₁</code> — are <strong>constant</strong>: they ignore
+    the input. The other two — <code>f₂</code> and <code>f₃</code> —
+    are <strong>balanced</strong>: half the inputs return 0, half
+    return 1.
+  </p>
+
+  <p data-step="0">
+    The classical question: how many queries do you need to decide
+    whether <code>f</code> is constant or balanced? You query
+    <code>f(0)</code>. Suppose it returns 0. Could the function be
+    constant (<code>f₀</code>)? Yes. Could it be balanced
+    (<code>f₂</code>)? Also yes. Same input, same output, two
+    different classes. You need <code>f(1)</code> as well to break
+    the tie. Same story whatever <code>f(0)</code> turns out to be.
+    Two queries, every time. No clever encoding gets you out of it.
+  </p>
+
+  <p>
+    Deutsch's algorithm — the first textbook quantum routine where
+    the math comes out strictly ahead of the classical lower bound —
+    does it in one. The speedup is small in absolute terms (2 → 1 is
+    not going to break RSA), but it's the first place a quantum
+    circuit beats every possible classical circuit, and the trick
+    behind it is the trick behind every quantum algorithm that came
+    later. The resource Deutsch's circuit exploits isn't parallelism.
+    It is not &ldquo;the qubit tries both inputs at once and reports
+    back.&rdquo; The resource is <em>interference</em>: two
+    computational paths through a superposition, set up so the answer
+    you want stays loud and the one you don't cancels itself out.
+  </p>
+
+  <h2>The four oracles</h2>
+
+  <p data-step="1">
+    There are only four single-bit functions, and the classical
+    classification splits them cleanly into two pairs:
+  </p>
+
+  <div class="not-prose my-6 overflow-x-auto">
+    <table class="w-full border-collapse text-sm">
+      <thead>
+        <tr class="border-b border-slate-700 text-left text-slate-400">
+          <th class="px-3 py-2 font-medium">Oracle</th>
+          <th class="px-3 py-2 font-medium">f(0)</th>
+          <th class="px-3 py-2 font-medium">f(1)</th>
+          <th class="px-3 py-2 font-medium">Class</th>
+        </tr>
+      </thead>
+      <tbody class="font-mono text-slate-200">
+        <tr class="border-b border-slate-800">
+          <td class="px-3 py-2">f₀ (zero)</td><td class="px-3 py-2">0</td><td class="px-3 py-2">0</td><td class="px-3 py-2 text-emerald-300">constant</td>
+        </tr>
+        <tr class="border-b border-slate-800">
+          <td class="px-3 py-2">f₁ (one)</td><td class="px-3 py-2">1</td><td class="px-3 py-2">1</td><td class="px-3 py-2 text-emerald-300">constant</td>
+        </tr>
+        <tr class="border-b border-slate-800">
+          <td class="px-3 py-2">f₂ (identity)</td><td class="px-3 py-2">0</td><td class="px-3 py-2">1</td><td class="px-3 py-2 text-fuchsia-300">balanced</td>
+        </tr>
+        <tr>
+          <td class="px-3 py-2">f₃ (NOT)</td><td class="px-3 py-2">1</td><td class="px-3 py-2">0</td><td class="px-3 py-2 text-fuchsia-300">balanced</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    The quantum version of an oracle has to be reversible — every
+    quantum gate is — so we can't just have a one-input, one-output
+    box. The standard trick is to give the oracle <em>two</em>
+    qubits: a data qubit <code>x</code> and an ancilla
+    <code>y</code>. The oracle <code>U<sub>f</sub></code> acts as
+    <code>|x⟩|y⟩ ↦ |x⟩|y ⊕ f(x)⟩</code>. It leaves the data alone
+    and XORs <code>f(x)</code> into the ancilla. Setting
+    <code>y = 0</code> recovers a regular query: read the ancilla,
+    get <code>f(x)</code>.
+  </p>
+
+  <h2>Phase kickback: the actual trick</h2>
+
+  <p data-step="2">
+    Prepare the ancilla in the state <code>|−⟩ = (|0⟩ − |1⟩)/√2</code>
+    instead of <code>|0⟩</code>. Now ask what <code>U<sub>f</sub></code>
+    does to <code>|x⟩|−⟩</code>. The oracle XORs <code>f(x)</code>
+    into the ancilla. If <code>f(x) = 0</code>, the ancilla is
+    untouched. If <code>f(x) = 1</code>, the XOR swaps
+    <code>|0⟩ ↔ |1⟩</code>, which negates <code>|−⟩</code> (because
+    its <code>|1⟩</code> coefficient is the negative one). Either way,
+    the ancilla comes out as <code>|−⟩</code>; the only thing that
+    happens is a sign on the whole register:
+  </p>
+
+  <MathBlock tex="U_f \\bigl(|x\\rangle\\,|-\\rangle\\bigr) \\;=\\; (-1)^{f(x)}\\,|x\\rangle\\,|-\\rangle" />
+
+  <p>
+    Read that again. The output of <code>f</code> ended up as a
+    <em>phase on the data qubit</em>. The ancilla is just a workspace
+    we used to convert function output into a sign. This is
+    <strong>phase kickback</strong>, and it's the whole engine.
+    Without an ancilla in <code>|−⟩</code> there's no kickback, no
+    sign, nothing to interfere — and Deutsch's algorithm doesn't
+    work. With it, we can prepare the data qubit in a superposition
+    of <code>|0⟩</code> and <code>|1⟩</code> and the oracle stamps
+    a sign in front of each branch in a single call.
+  </p>
+
+  <h2>The full circuit</h2>
+
+  <p data-step="3">
+    Five steps. Two qubits. One oracle query.
+  </p>
+
+  <ol class="my-5 list-decimal space-y-2 pl-6 text-slate-200">
+    <li>Start in <code>|0⟩|0⟩</code>.</li>
+    <li>Apply <code>X</code> to q₁ — the register is now <code>|0⟩|1⟩</code> (ancilla in <code>|1⟩</code>).</li>
+    <li>Apply <code>H</code> to both qubits — the register is now <code>|+⟩|−⟩</code>.</li>
+    <li>Apply the oracle <code>U<sub>f</sub></code>. Phase kickback stamps <code>(-1)<sup>f(x)</sup></code> on each branch of q₀.</li>
+    <li>Apply <code>H</code> to q₀. The two branches interfere.</li>
+    <li>Measure q₀. If you get 0, <code>f</code> is constant. If you get 1, <code>f</code> is balanced.</li>
+  </ol>
+
+  <p>
+    Here's the circuit drawn out, specialised to <code>f₂(x) = x</code>
+    (the &ldquo;identity&rdquo; oracle, which is just a CNOT with
+    q₀ as control and q₁ as target):
+  </p>
+
+  <CircuitView
+    circuit={DEUTSCH_F2_CIRCUIT}
+    caption="The Deutsch circuit specialised to the balanced oracle f₂(x) = x. The CNOT in the middle is the oracle."
+  />
+
+  <h2>Run it yourself</h2>
+
+  <p data-step="4">
+    Each button below resets the simulator and replays the full
+    Deutsch circuit with one of the four oracles spliced in. Watch the
+    probability bars and the verdict label. The bars show all four
+    basis states <code>|q₁ q₀⟩</code>; q₁ ends up in a 50/50 mix
+    because it's still in <code>|−⟩</code> (the kickback target),
+    so what matters is the q₀ marginal — sum the bars where q₀ = 0
+    versus where q₀ = 1. Or just read the verdict; we summed for you.
+  </p>
+
+  <div
+    data-deutsch-controls
+    class="my-4 flex flex-wrap items-center gap-2"
+    aria-label="Run Deutsch's algorithm with a chosen oracle"
+  >
+    <button
+      type="button"
+      data-oracle="f0"
+      class="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-mono text-emerald-200 hover:bg-emerald-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 transition-colors"
+    >Run f₀ (constant 0)</button>
+    <button
+      type="button"
+      data-oracle="f1"
+      class="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-mono text-emerald-200 hover:bg-emerald-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 transition-colors"
+    >Run f₁ (constant 1)</button>
+    <button
+      type="button"
+      data-oracle="f2"
+      class="rounded-md border border-fuchsia-500/40 bg-fuchsia-500/10 px-3 py-1.5 text-sm font-mono text-fuchsia-200 hover:bg-fuchsia-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-400 transition-colors"
+    >Run f₂ (identity)</button>
+    <button
+      type="button"
+      data-oracle="f3"
+      class="rounded-md border border-fuchsia-500/40 bg-fuchsia-500/10 px-3 py-1.5 text-sm font-mono text-fuchsia-200 hover:bg-fuchsia-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-400 transition-colors"
+    >Run f₃ (NOT)</button>
+    <button
+      type="button"
+      data-oracle="reset"
+      class="ml-2 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+    >Reset</button>
+    <p
+      data-deutsch-verdict
+      class="ml-auto text-sm font-mono text-slate-400"
+      aria-live="polite"
+    >Verdict: press a button.</p>
+  </div>
+
+  <ProbabilityBars
+    storeKey={KEY}
+    qubits={2}
+    caption="P over the four basis states |q₁ q₀⟩, in order |00⟩, |01⟩, |10⟩, |11⟩. The verdict reads the q₀ marginal."
+  />
+
+  <p>
+    <strong>Try this:</strong> run <code>f₀</code> then <code>f₂</code>
+    back to back. Both end with q₀ in a definite state (probability
+    1), but a different one. <code>f₀</code> sends q₀ to
+    <code>|0⟩</code> — constant. <code>f₂</code> sends q₀ to
+    <code>|1⟩</code> — balanced. The simulator never &ldquo;tried
+    both inputs at once.&rdquo; It evaluated the oracle exactly once,
+    on a superposition, and the second Hadamard turned the resulting
+    phase pattern into a deterministic measurement.
+  </p>
+
+  <h2>Why it works</h2>
+
+  <p data-step="5">
+    After step 3 the register sits in <code>|+⟩|−⟩</code>, which we
+    can rewrite as <code>(|0⟩ + |1⟩)/√2 ⊗ |−⟩</code>. The oracle
+    multiplies each <code>|x⟩</code> branch by
+    <code>(-1)<sup>f(x)</sup></code>. The data qubit is now in the
+    state <code>(-1)<sup>f(0)</sup>|0⟩ + (-1)<sup>f(1)</sup>|1⟩</code>,
+    up to normalisation. Two cases:
+  </p>
+
+  <ul>
+    <li>If <code>f</code> is <strong>constant</strong>, both signs
+      agree. The data qubit is <code>±|+⟩</code> — an equal
+      superposition. Apply <code>H</code> and you get <code>|0⟩</code>.
+      Measurement: 0.</li>
+    <li>If <code>f</code> is <strong>balanced</strong>, the signs
+      disagree. The data qubit is <code>±|−⟩</code>. Apply
+      <code>H</code> and you get <code>|1⟩</code>. Measurement: 1.</li>
+  </ul>
+
+  <p>
+    The final Hadamard is the interferometer. The <code>|+⟩</code>
+    and <code>|−⟩</code> branches that the oracle prepared
+    interfere constructively or destructively at <code>|0⟩</code>
+    and <code>|1⟩</code>, and the answer falls out as a bit. We
+    queried the oracle exactly once. We learned a global property of
+    the function — its parity — that no single classical query can
+    distinguish. The catch, of course, is that we learn <em>only</em>
+    the parity; we don't get to ask &ldquo;what is <code>f(0)</code>?&rdquo;
+    on the side. The single quantum query buys us one global question,
+    not two local ones. That trade-off — global properties cheap,
+    individual values still expensive — is the shape of every quantum
+    speedup that came after.
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+    <li>
+      Without running the simulator: if <code>U<sub>f</sub></code> is
+      literally the identity (no oracle gates at all), what state
+      does the data qubit end in after the final Hadamard, and why
+      does that measurement outcome correctly say
+      &ldquo;constant&rdquo;? (Check yourself by clicking
+      <em>Run f₀</em>.)
+    </li>
+    <li>
+      The four oracle buttons all leave q₁ in a 50/50 mix between
+      <code>|0⟩</code> and <code>|1⟩</code>. Why isn't that a problem
+      for reading the verdict — and what would happen if we'd
+      prepared the ancilla in <code>|0⟩</code> instead of <code>|−⟩</code>?
+      (Hint: no kickback.)
+    </li>
+  </ol>
+
+  <p class="my-6">
+    <SandboxLink circuit={DEUTSCH_F2_CIRCUIT} label="Open the Deutsch circuit (f₂) in the sandbox →" />
+  </p>
+
+  <MathNerds title="Phase kickback, formally, and the Deutsch-Jozsa generalisation">
+    <p>
+      Start from the oracle's defining action on the computational basis:
+    </p>
+    <MathBlock tex="U_f\\,|x\\rangle|y\\rangle \\;=\\; |x\\rangle\\,|y \\oplus f(x)\\rangle" />
+    <p>
+      Apply it to <MathBlock display={false} tex="|x\\rangle\\,|-\\rangle" /> with
+      <MathBlock display={false} tex="|-\\rangle = (|0\\rangle - |1\\rangle)/\\sqrt{2}" />:
+    </p>
+    <MathBlock tex="U_f\\,|x\\rangle\\tfrac{1}{\\sqrt{2}}(|0\\rangle - |1\\rangle) \\;=\\; \\tfrac{1}{\\sqrt{2}}\\bigl(|x\\rangle|f(x)\\rangle - |x\\rangle|1 \\oplus f(x)\\rangle\\bigr)" />
+    <p>
+      If <MathBlock display={false} tex="f(x)=0" /> the two terms are
+      <MathBlock display={false} tex="|x\\rangle|0\\rangle - |x\\rangle|1\\rangle = |x\\rangle|-\\rangle" />.
+      If <MathBlock display={false} tex="f(x)=1" /> they are
+      <MathBlock display={false} tex="|x\\rangle|1\\rangle - |x\\rangle|0\\rangle = -|x\\rangle|-\\rangle" />.
+      In both cases:
+    </p>
+    <MathBlock tex="U_f\\,|x\\rangle|-\\rangle \\;=\\; (-1)^{f(x)}\\,|x\\rangle|-\\rangle" />
+    <p>
+      That's the kickback identity. The data qubit picks up a sign
+      that depends on a value of <em>f</em>; the ancilla goes along
+      for the ride.
+    </p>
+    <p>
+      Plugging it into the Deutsch circuit, after the oracle the data
+      qubit is
+      <MathBlock display={false} tex="\\tfrac{1}{\\sqrt{2}}\\bigl((-1)^{f(0)}|0\\rangle + (-1)^{f(1)}|1\\rangle\\bigr)" />.
+      Pull out a global sign and you're looking at
+      <MathBlock display={false} tex="\\pm|+\\rangle" /> when
+      <em>f</em> is constant and
+      <MathBlock display={false} tex="\\pm|-\\rangle" /> when
+      <em>f</em> is balanced. A final Hadamard sends those to
+      <MathBlock display={false} tex="\\pm|0\\rangle" /> and
+      <MathBlock display={false} tex="\\pm|1\\rangle" /> respectively
+      — and measurement is invariant under the global sign.
+    </p>
+    <p>
+      <strong>Deutsch-Jozsa</strong> generalises this to an
+      <em>n</em>-bit input. Promised that <em>f</em> from <em>n</em>
+      bits to one is either constant or balanced (exactly half the
+      inputs map to 0, half to 1), the quantum routine — same
+      pattern, with <em>n</em> data qubits in
+      <MathBlock display={false} tex="|+\\rangle^{\\otimes n}" /> —
+      decides in a single oracle query. The classical worst case
+      requires <MathBlock display={false} tex="2^{n-1}+1" /> queries
+      (you might get unlucky and see the same output for the first
+      <MathBlock display={false} tex="2^{n-1}" /> inputs). That's
+      where exponential separations first show up in the textbook.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="footer-nav">
+    <a href="/cnot-bell" class="hover:text-slate-200">← CNOT + Bell</a>
+    <a href="/sandbox" class="hover:text-slate-200">Next: open the Sandbox →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  import { attachScrolly } from "../lib/scrolly";
+  import { mountAnnotations } from "../lib/annotations";
+  import { ensureStore } from "../lib/quantum/store";
+
+  const KEY = "deutsch-essay";
+
+  const root = document.querySelector("article");
+  if (root) {
+    attachScrolly(root, {
+      stepSelector: "[data-step]",
+      onStep: (i) => console.debug(`[scrolly] step ${i}`),
+    });
+  }
+
+  const ann = mountAnnotations();
+  document.getElementById("reset-annotations")?.addEventListener("click", () => {
+    ann.reset();
+  });
+
+  // Deutsch's algorithm controls. Each oracle button resets the store
+  // and replays the full Deutsch circuit with a different middle slice
+  // (the U_f implementation). After replay we read the q₀ marginal
+  // off the snapshot and label the verdict. Mirror of the inline-
+  // button pattern from /entanglement.
+  const store = ensureStore(KEY, { qubits: 2 });
+
+  /** Apply the prep half: ancilla into |1⟩, then H on both. State = |+⟩|−⟩. */
+  function prep() {
+    store.reset();
+    store.apply("X", 1);
+    store.apply("H", 0);
+    store.apply("H", 1);
+  }
+
+  /** Apply the closing Hadamard on the data qubit (the interferometer). */
+  function finish() {
+    store.apply("H", 0);
+  }
+
+  /** The four oracles, each as a function that mutates the store in place. */
+  const ORACLES: Record<string, () => void> = {
+    // f₀(x) = 0: identity oracle, no gates.
+    f0: () => { /* nothing */ },
+    // f₁(x) = 1: flip the ancilla regardless of x.
+    f1: () => { store.apply("X", 1); },
+    // f₂(x) = x: CNOT with q₀ as control, q₁ as target.
+    f2: () => { store.applyCNOT(0, 1); },
+    // f₃(x) = ¬x: flip ancilla iff x = 0. X on q₁ then CNOT(0,1).
+    f3: () => { store.apply("X", 1); store.applyCNOT(0, 1); },
+  };
+
+  function runOracle(name: string) {
+    prep();
+    ORACLES[name]();
+    finish();
+  }
+
+  function updateVerdict(name: string) {
+    const el = document.querySelector<HTMLElement>("[data-deutsch-verdict]");
+    if (!el) return;
+    const snap = store.snapshot();
+    // |q₁ q₀⟩ ordering: q₀ is the LSB, so q₀ = 0 lives in basis
+    // indices 0 (|00⟩) and 2 (|10⟩); q₀ = 1 in 1 (|01⟩) and 3 (|11⟩).
+    const p0 = snap.probabilities[0] + snap.probabilities[2];
+    const p1 = snap.probabilities[1] + snap.probabilities[3];
+    const verdict =
+      p0 > 0.99 ? "constant " :
+      p1 > 0.99 ? "balanced " :
+      "ambiguous";
+    const labels: Record<string, string> = {
+      f0: "f₀", f1: "f₁", f2: "f₂", f3: "f₃",
+    };
+    el.textContent = `Verdict for ${labels[name] ?? name}: ${verdict}`;
+    el.classList.remove("text-slate-400", "text-emerald-300", "text-fuchsia-300");
+    if (verdict.startsWith("constant")) el.classList.add("text-emerald-300");
+    else if (verdict.startsWith("balanced")) el.classList.add("text-fuchsia-300");
+    else el.classList.add("text-slate-400");
+  }
+
+  function clearVerdict() {
+    const el = document.querySelector<HTMLElement>("[data-deutsch-verdict]");
+    if (!el) return;
+    el.textContent = "Verdict: press a button.";
+    el.classList.remove("text-emerald-300", "text-fuchsia-300");
+    el.classList.add("text-slate-400");
+  }
+
+  const controls = document.querySelector<HTMLElement>("[data-deutsch-controls]");
+  controls?.addEventListener("click", (event) => {
+    const target = (event.target as HTMLElement).closest("button");
+    if (!target) return;
+    const oracle = target.dataset.oracle;
+    if (!oracle) return;
+    if (oracle === "reset") {
+      store.reset();
+      clearVerdict();
+      return;
+    }
+    if (ORACLES[oracle]) {
+      runOracle(oracle);
+      updateVerdict(oracle);
+    }
+  });
+</script>
