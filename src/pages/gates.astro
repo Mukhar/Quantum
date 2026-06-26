@@ -1,0 +1,320 @@
+---
+/**
+ * "Gates" — Phase 4 essay (Plan 04-04).
+ *
+ * Pedagogy arc:
+ *   discrete gates aren't magic ops → they're unitaries → unitaries are
+ *   rotations on the Bloch sphere → continuous Rx/Ry/Rz interpolate
+ *   between named landmarks → arbitrary single-qubit gates are products
+ *   of these.
+ *
+ * Same template as /qubit: hook → press-a-gate → geometric anchor →
+ * continuous slider → walkthrough (X ≈ Ry(π) up to global phase) →
+ * stacking section + sandbox CTA → self-test → math nerds → next link.
+ *
+ * Every claim is followed by a "Try this:" using the on-page widgets.
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import GateButtons from "../components/GateButtons.astro";
+import BlochSphere from "../components/BlochSphere/index.astro";
+import RotationSlider from "../components/RotationSlider.astro";
+import SandboxLink from "../components/SandboxLink.astro";
+import { rotOp, type Circuit } from "../lib/quantum";
+
+const KEY = "gates-essay";
+
+// Starter circuit for the sandbox CTA. Two rotations on q0, one per
+// step — the reader lands on a state that's already stacked from two
+// different axes, ready to remix.
+//
+// Note on θ: encodeCircuit quantizes to 10 bits per angle, so the
+// decoded θ on the receiving end will be very close to (but not
+// bit-identical to) π/3 and π/4. Documented behavior; the codec
+// round-trip tests in Phase 4's regression pass assert the op
+// kind/axis/qubit, not the exact float.
+const STARTER: Circuit = {
+  qubits: 1,
+  steps: [
+    [rotOp("X", 0, Math.PI / 3)],
+    [rotOp("Y", 0, Math.PI / 4)],
+  ],
+};
+---
+
+<EssayLayout
+  title="Gates"
+  subtitle="Every gate is a rotation — and rotations stack."
+  description="Quantum gates aren't magic ops on bits. They're unitaries — rotations of the Bloch sphere. Press the buttons, sweep the sliders, and watch the same operation from two angles."
+>
+  <p>
+    The first time someone hands you a list of quantum gates — X, Y, Z,
+    H, S, T, plus the rotation families Rx, Ry, Rz — it looks like a
+    grab-bag. There are <em>so many</em>. Each one comes with a
+    different matrix, a different effect, and a different name pulled
+    from a different decade of physics history. It's tempting to just
+    memorize the matrices and move on.
+  </p>
+
+  <p data-step="0">
+    Don't. There is exactly one thing a single-qubit gate does: it
+    <strong>rotates the Bloch sphere</strong>. That's it. Every named
+    gate you'll ever meet is a particular rotation — either a fixed
+    one (X, Y, Z, H, S, T) or a knob you can dial (Rx, Ry, Rz). Once
+    that picture sticks, the grab-bag stops being a grab-bag.
+  </p>
+
+  <p>
+    On this page, we're going to use the Bloch sphere as the geometric
+    anchor and watch every claim with our own eyes. Reach for the
+    buttons, grab the sliders, drag the arrow. Everything here is
+    driven by the same simulator that's running on every other essay
+    in this site.
+  </p>
+
+  <h2>The discrete gates, geometrically</h2>
+
+  <p data-step="1">
+    Start with <code>|0⟩</code> — the arrow at the north pole. Press
+    <strong>X</strong>. The arrow flips to the south pole:
+    <code>|1⟩</code>. Press <strong>X</strong> again — back to the
+    north. <code>X</code> is a half-turn (180°) about the horizontal
+    X axis. Press <strong>Y</strong> from <code>|0⟩</code>: same
+    endpoint as X, but the rotation axis is different. Press
+    <strong>Z</strong> from <code>|0⟩</code>: nothing visible happens,
+    because <code>|0⟩</code> sits exactly <em>on</em> the Z axis and a
+    rotation about an axis leaves points on that axis alone.
+  </p>
+
+  <BlochSphere
+    storeKey={KEY}
+    caption="The Bloch sphere — your geometric scoreboard. Every gate below moves this arrow."
+  />
+
+  <GateButtons storeKey={KEY} qubits={1} gates={["X", "Y", "Z", "H"]} />
+
+  <p>
+    <strong>Try this:</strong> reset, press <strong>H</strong>. The
+    arrow lands on the equator pointing along +X. The Hadamard isn't
+    a 180° flip about a single coordinate axis — it's a 180° flip
+    about the diagonal axis halfway between X and Z. That's why it
+    sends <code>|0⟩</code> (north pole) and <code>|+⟩</code>
+    (equator, +X direction) into each other: they're swapped across
+    that diagonal.
+  </p>
+
+  <p>
+    <strong>Try this:</strong> reset, drag the arrow to anywhere on
+    the equator, then press <strong>Z</strong>. The arrow spins 180°
+    around the vertical axis. <code>Z</code> doesn't change which pole
+    you're closer to — that's why it leaves measurement probabilities
+    in the computational basis untouched — but it absolutely is a
+    rotation, and the equatorial states feel it.
+  </p>
+
+  <h2>Continuous rotations: the knobs underneath</h2>
+
+  <p data-step="2">
+    The discrete gates are convenient names for a few useful angles.
+    The <strong>rotation gates</strong> let you dial the angle
+    yourself. <code>Rx(θ)</code> is a rotation by θ radians about the
+    X axis of the Bloch sphere; <code>Ry(θ)</code> and
+    <code>Rz(θ)</code> are the same idea for Y and Z. Sweep a slider
+    and watch the arrow trace a smooth arc.
+  </p>
+
+  <RotationSlider storeKey={KEY} qubits={1} axis="Rx" />
+  <RotationSlider storeKey={KEY} qubits={1} axis="Ry" />
+  <RotationSlider storeKey={KEY} qubits={1} axis="Rz" />
+
+  <p>
+    Two important things about these sliders, because they're going
+    to drive the next section. First: they're keyboard-friendly —
+    focus a slider and arrow keys nudge by one step (Page Up / Page
+    Down jumps in larger increments). Second: each slider
+    <strong>snapshots the state when you grab it</strong>, then
+    restores that snapshot and re-applies the rotation on every input.
+    Sweeping a slider back to <code>0</code> always returns you to the
+    state you started from. Sliders don't compound.
+  </p>
+
+  <p>
+    That last fact matters: it means you can compare &ldquo;press
+    discrete gate X&rdquo; against &ldquo;sweep Ry to π&rdquo; from
+    the <em>same starting point</em> without one polluting the other.
+    Which is exactly what we're about to do.
+  </p>
+
+  <h2>X equals Ry(π). Mostly.</h2>
+
+  <p data-step="3">
+    Here is the punchline of the whole essay. The discrete <code>X</code>
+    gate and the continuous <code>Ry(π)</code> rotation produce the
+    <strong>same final state</strong> when applied to <code>|0⟩</code>.
+    They differ only by a global phase — a unit complex scalar in
+    front of the whole state vector — which is physically
+    undetectable. Watch:
+  </p>
+
+  <p>
+    <strong>Try this (part 1):</strong> press <strong>Reset</strong>
+    on the gate buttons. The arrow returns to the north pole. Now
+    press <strong>X</strong>. The arrow flips to the south pole —
+    you're at <code>|1⟩</code>.
+  </p>
+
+  <p>
+    <strong>Try this (part 2):</strong> press <strong>Reset</strong>
+    again. Then grab the <code>Ry(θ)</code> slider and sweep it all
+    the way to <code>θ = π</code> (about 3.142 rad — halfway across
+    the track). The arrow swings smoothly down to the south pole.
+    Same destination. <em>Same state</em>, give or take an invisible
+    phase factor.
+  </p>
+
+  <p>
+    Now sweep <code>Ry</code> back to <code>0</code>. The arrow
+    returns to the north pole (because of the snapshot semantics we
+    just discussed). The <code>Ry</code> slider didn't &ldquo;commit&rdquo;
+    anything; it just let you dial through a one-parameter family of
+    rotations and look at the result.
+  </p>
+
+  <p>
+    This is the bridge: every named discrete gate is a member of some
+    continuous family. <code>X = Rx(π)</code> up to phase.
+    <code>Y = Ry(π)</code> up to phase. <code>Z = Rz(π)</code> up to
+    phase. The phase factor is what the formal definition picks up
+    from the half-angle in the exponent — see the math-nerds box
+    below — but you'll never measure it.
+  </p>
+
+  <h2>Stacking rotations</h2>
+
+  <p data-step="4">
+    Once you accept that every gate is a rotation, an old theorem
+    from 19th-century geometry takes over: <strong>any rotation in
+    three dimensions can be written as three rotations about
+    coordinate axes</strong> (Euler angles). For us that means every
+    single-qubit gate — every 2×2 unitary, no matter how exotic —
+    is a product of at most three rotations from the Rx/Ry/Rz
+    families. Mathematica's collection of named gates is just a set
+    of conveniently named recipes.
+  </p>
+
+  <p>
+    <strong>Try this:</strong> sweep <code>Rx</code> partway, release
+    it (the rotation stays applied because we restored from the
+    snapshot at that angle). Then grab <code>Ry</code> and sweep it.
+    The second rotation snapshots <em>the state you just made with
+    Rx</em> and rotates that. Stacking is exactly composition.
+  </p>
+
+  <p>
+    Want to keep stacking past two rotations, with the full sandbox
+    composer? The button below opens the Quantum Sandbox loaded with
+    a 1-qubit, two-step circuit: <code>Rx(π/3)</code> followed by
+    <code>Ry(π/4)</code>. Add a third step, a fourth, swap an axis,
+    insert a discrete gate between them. The simulator answers in
+    real time.
+  </p>
+
+  <p class="not-prose my-6">
+    <SandboxLink circuit={STARTER} label="Open in sandbox — stack your own rotations →" />
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+    <li>
+      Using only the sliders above, find an angle θ for
+      <code>Rx(θ)</code> that takes <code>|0⟩</code> to an
+      equal-superposition state (50/50 along the equator in the
+      Y direction). What value of θ is that, and why isn't it
+      <code>π</code>?
+    </li>
+    <li>
+      <code>Rz(θ)</code> applied to <code>|0⟩</code> never moves the
+      arrow off the north pole — sweep the <code>Rz</code> slider
+      and confirm. Why? (Hint: rotation about an axis fixes points
+      on that axis.) Then press <code>H</code> first and sweep
+      <code>Rz</code> again. What changes?
+    </li>
+  </ol>
+
+  <MathNerds title="The matrices, the half-angle, and Euler decomposition">
+    <p>
+      A single-qubit gate is a unitary 2×2 matrix — an element of
+      the unitary group <MathBlock display={false} tex="U(2)" />.
+      Two unitaries that differ only by a unit complex scalar
+      (<MathBlock display={false} tex="e^{i\\phi}" />) act
+      identically on every measurable quantity, so we usually quotient
+      by that global phase and work inside the special unitary group
+      <MathBlock display={false} tex="SU(2)" /> (determinant 1).
+    </p>
+    <p>The three rotation generators are the Pauli matrices:</p>
+    <MathBlock tex="X = \\begin{bmatrix}0 & 1\\\\1 & 0\\end{bmatrix},\\quad Y = \\begin{bmatrix}0 & -i\\\\i & 0\\end{bmatrix},\\quad Z = \\begin{bmatrix}1 & 0\\\\0 & -1\\end{bmatrix}" />
+    <p>and the continuous families exponentiate them:</p>
+    <MathBlock tex="R_x(\\theta) = e^{-i\\theta X / 2} = \\cos(\\theta/2)\\, I - i \\sin(\\theta/2)\\, X" />
+    <MathBlock tex="R_y(\\theta) = \\cos(\\theta/2)\\, I - i \\sin(\\theta/2)\\, Y" />
+    <MathBlock tex="R_z(\\theta) = \\cos(\\theta/2)\\, I - i \\sin(\\theta/2)\\, Z" />
+    <p>
+      Notice the <strong>θ/2</strong>. It's the headline weirdness of
+      this whole subject: a 360° rotation on the Bloch sphere
+      (<MathBlock display={false} tex="\\theta = 2\\pi" />) returns
+      <code>R</code> to <MathBlock display={false} tex="-I" />, not
+      <MathBlock display={false} tex="+I" />. You need
+      <MathBlock display={false} tex="\\theta = 4\\pi" /> for the
+      identity. The reason: SU(2) is a <em>double cover</em> of the
+      rotation group SO(3) — there are two distinct SU(2) elements
+      sitting above every physical rotation of the sphere.
+    </p>
+    <p>
+      Plugging <MathBlock display={false} tex="\\theta = \\pi" /> into
+      <MathBlock display={false} tex="R_y" />:
+    </p>
+    <MathBlock tex="R_y(\\pi) = \\cos(\\pi/2)\\, I - i \\sin(\\pi/2)\\, Y = -i Y" />
+    <p>
+      so <MathBlock display={false} tex="R_y(\\pi)" /> equals
+      <MathBlock display={false} tex="Y" /> up to a global phase of
+      <MathBlock display={false} tex="-i" />. The same trick gives
+      <MathBlock display={false} tex="R_x(\\pi) = -i X" /> and
+      <MathBlock display={false} tex="R_z(\\pi) = -i Z" />. Up to
+      phase, the named discrete gates are π-rotations of their
+      corresponding continuous family — which is what the
+      walkthrough above let you see.
+    </p>
+    <p>The Euler decomposition theorem says it all in one line:</p>
+    <MathBlock tex="\\text{Every } U \\in SU(2) = R_z(\\alpha)\\, R_y(\\beta)\\, R_z(\\gamma)" />
+    <p>
+      for some triple <MathBlock display={false} tex="(\\alpha, \\beta, \\gamma)" />.
+      So the discrete gate zoo (H, S, T, and friends) is
+      pedagogically useful but mathematically redundant: every single
+      one is a fixed product of three rotations you've already met.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="footer-nav">
+    <a href="/measurement" class="hover:text-slate-200">← Measurement</a>
+    <a href="/entanglement" class="hover:text-slate-200">Next: Entanglement →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  import { attachScrolly } from "../lib/scrolly";
+  import { mountAnnotations } from "../lib/annotations";
+
+  const root = document.querySelector("article");
+  if (root) {
+    attachScrolly(root, {
+      stepSelector: "[data-step]",
+      onStep: (i) => console.debug(`[scrolly] step ${i}`),
+    });
+  }
+
+  const ann = mountAnnotations();
+  document.getElementById("reset-annotations")?.addEventListener("click", () => {
+    ann.reset();
+  });
+</script>
