@@ -1,0 +1,252 @@
+---
+/**
+ * "Superposition" — Phase 4, Plan 04-02.
+ *
+ * The natural sequel to /qubit. The qubit essay introduced the state
+ * vector and let the reader press H to see a 50/50 split. This essay
+ * unpacks WHY pressing H matters: superposition is a *linear
+ * combination* of basis states, the coefficients (amplitudes) can be
+ * negative, and the magnitudes — not the amplitudes themselves — are
+ * the probabilities. That gap between amplitude and probability is the
+ * crack everything quantum eventually pries open.
+ *
+ * Arc: hook → intuition → widget (H/Z + Rx slider) → math → self-test
+ * → "Open in sandbox" CTA with a 1-qubit [H] starter → /measurement.
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import ProbabilityBars from "../components/ProbabilityBars.astro";
+import StateVector from "../components/StateVector.astro";
+import GateButtons from "../components/GateButtons.astro";
+import RotationSlider from "../components/RotationSlider.astro";
+import SandboxLink from "../components/SandboxLink.astro";
+import { gateOp, type Circuit } from "../lib/quantum";
+
+const KEY = "superposition-essay";
+
+// Starter circuit for the sandbox CTA: a single H on q0. The canonical
+// superposition state |+⟩. Encoded at build time by SandboxLink.
+const STARTER: Circuit = {
+  qubits: 1,
+  steps: [[gateOp("H", 0)]],
+};
+---
+
+<EssayLayout
+  title="Superposition"
+  subtitle="A qubit can be in two states at once — but the interesting word in that sentence is not “two,” it's “at.” The amplitudes do the work."
+  description="An interactive essay on quantum superposition: amplitudes vs. probabilities, why sign matters, and the first hint of interference. Press the gates, sweep the slider, and watch the state vector."
+>
+  <p>
+    The qubit essay ended with a small magic trick: press <code>H</code>
+    on <code>|0⟩</code> and the probability bars split 50/50. That's
+    superposition, technically. But &ldquo;50/50&rdquo; is also what a fair
+    coin gives you, and a fair coin is not interesting. The
+    interesting part of superposition isn't that two probabilities
+    appear at once. It's <em>what's underneath the bars</em>.
+  </p>
+
+  <p data-step="0">
+    Under the bars sits a pair of complex numbers
+    <code>(α, β)</code> — the <strong>amplitudes</strong> — and the
+    state of the qubit is the linear combination
+    <code>α|0⟩ + β|1⟩</code>. The probabilities you read off the bars
+    are <code>|α|²</code> and <code>|β|²</code>: the squared magnitudes.
+    Two different state vectors can give you the same bars and behave
+    completely differently the moment you apply another gate. The
+    amplitudes are the real story; the probabilities are a lossy
+    summary.
+  </p>
+
+  <p>
+    This page is going to make you feel that gap. We're going to press
+    two buttons that move the amplitudes around <em>without changing
+    the bars</em>, and then sweep a slider to watch the amplitudes vary
+    continuously. Everything here runs the same in-browser simulator as
+    the qubit page — open the StateVector readout, keep an eye on the
+    signs.
+  </p>
+
+  <h2>Press a gate, then look <em>past</em> the bars</h2>
+
+  <p data-step="1">
+    Start from <code>|0⟩</code>. Press <strong>H</strong>: bars split,
+    state vector reads <code>(0.707, 0.707)</code>. So far this is the
+    qubit-essay story. Now press <strong>Z</strong>.
+  </p>
+
+  <GateButtons storeKey={KEY} qubits={1} gates={["H", "Z"]} />
+  <ProbabilityBars storeKey={KEY} qubits={1} caption="P(outcome) — note what doesn't change when you press Z." />
+  <StateVector storeKey={KEY} qubits={1} caption="The complex amplitudes. The story lives here, not in the bars above." />
+
+  <p>
+    <strong>Try this:</strong> from <code>|0⟩</code>, press
+    <code>H</code>, then <code>Z</code>. The probability bars do not
+    budge. The state-vector readout, on the other hand, just went from
+    <code>(0.707, 0.707)</code> to <code>(0.707, −0.707)</code>. The
+    <code>|1⟩</code> amplitude flipped sign. That minus sign is not
+    cosmetic — it's a different physical state from the one you had a
+    moment ago. The bars cannot tell you that. <code>Z</code> can.
+  </p>
+
+  <p>
+    <strong>Try this:</strong> press <code>H</code> again. With no
+    minus sign you'd be back at <code>|0⟩</code> (because
+    <code>H · H = I</code>). With the minus sign, you land on
+    <code>|1⟩</code> instead — the bars swing all the way to the right.
+    The two amplitudes you couldn't distinguish by probability alone
+    behave oppositely under the next gate. This is the bare-bones
+    preview of <strong>interference</strong>: amplitudes can add or
+    cancel, and the sign tells you which.
+  </p>
+
+  <p>
+    A workable rule of thumb, then: <em>magnitudes are what you measure;
+    amplitudes are what evolves.</em> Treat the bars as a status light.
+    Treat the state vector as the wiring.
+  </p>
+
+  <h2>Amplitudes vary continuously</h2>
+
+  <p data-step="2">
+    Discrete gates jump between named states. To get a feel for
+    amplitudes as <em>numbers</em>, sweep this <code>Rx(θ)</code>
+    slider. Each slider snapshots the state when you grab it, so
+    returning to <code>θ = 0</code> always restores the state you
+    started from — these don't compound.
+  </p>
+
+  <RotationSlider storeKey={KEY} qubits={1} axis="Rx" />
+
+  <p>
+    <strong>Try this:</strong> from <code>|0⟩</code>, sweep
+    <code>Rx(θ)</code> from <code>0</code> to <code>π</code>. The
+    <code>|0⟩</code> amplitude shrinks smoothly to zero while the
+    <code>|1⟩</code> amplitude grows. Halfway through, at
+    <code>θ = π/2</code>, the bars hit 50/50 — same statistical picture
+    as <code>H|0⟩</code>, but you got there with a continuous knob
+    instead of a button press, and the amplitudes are
+    <em>imaginary</em>, not real-and-positive. (Watch the
+    <code>i</code> in the StateVector readout.) Superposition isn't a
+    binary mode the qubit is &ldquo;in&rdquo;; it's a two-dimensional
+    continuum.
+  </p>
+
+  <p>
+    <strong>Try this:</strong> press <code>H</code> first, then sweep
+    <code>Rx</code>. The slider rotates the state vector around the
+    same axis the gate buttons act on, but starting from somewhere
+    other than <code>|0⟩</code> — so the amplitudes mix differently.
+    There is no &ldquo;the&rdquo; superposition state; there's a whole
+    sphere of them, and you've just been touring a great circle.
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+    <li>
+      From <code>|0⟩</code>, you apply <code>HZH</code>. What do the
+      probability bars read, and what does the state vector read? Why
+      are those two answers not contradictory? (Try it with the
+      buttons. Then explain to yourself, in one sentence, what the
+      middle <code>Z</code> bought you.)
+    </li>
+    <li>
+      Find two different positions of the <code>Rx</code> slider that
+      give the <em>same</em> probability bars but visibly different
+      state-vector readouts. What would have to be true about a follow-up
+      gate for those two states to behave differently under it?
+    </li>
+  </ol>
+
+  <h2>Open it up</h2>
+
+  <p>
+    The starter below drops you into the sandbox with a single
+    <code>H</code> on one qubit — the canonical superposition state,
+    <code>|+⟩</code>. Add a <code>Z</code> after it to set up the sign
+    flip you've been poking at; or stack rotations and find your own
+    pair of indistinguishable-by-bars states. The next essay,
+    <a href="/measurement">measurement</a>, asks the obvious follow-up:
+    if amplitudes are what evolves and magnitudes are what you measure,
+    what is <em>measurement</em> actually doing to the wiring?
+  </p>
+
+  <p class="not-prose my-6">
+    <SandboxLink circuit={STARTER} label="Open this in the sandbox →" />
+  </p>
+
+  <MathNerds title="α|0⟩ + β|1⟩, formally">
+    <p>A single-qubit pure state is a unit vector in <MathBlock display={false} tex="\\mathbb{C}^2" />:</p>
+    <MathBlock tex="|\\psi\\rangle = \\alpha|0\\rangle + \\beta|1\\rangle, \\quad \\alpha,\\beta \\in \\mathbb{C}, \\quad |\\alpha|^2 + |\\beta|^2 = 1" />
+    <p>
+      The basis vectors are orthonormal under the standard Hermitian
+      inner product — the one-liner you'll lean on every time you
+      compute a probability or a transition amplitude:
+    </p>
+    <MathBlock tex="\\langle i | j \\rangle = \\delta_{ij}, \\quad \\langle\\psi|\\psi\\rangle = |\\alpha|^2 + |\\beta|^2 = 1" />
+    <p>
+      <strong>Amplitudes vs. probabilities.</strong> The Born rule
+      collapses the complex amplitude <MathBlock display={false} tex="\\alpha" /> into a single
+      real probability <MathBlock display={false} tex="|\\alpha|^2" />.
+      That map is lossy in two ways: it discards the sign (and, more
+      generally, the global phase factor
+      <MathBlock display={false} tex="e^{i\\varphi}" />) and it discards
+      the <em>relative</em> phase between
+      <MathBlock display={false} tex="\\alpha" /> and
+      <MathBlock display={false} tex="\\beta" />. Relative phase is what
+      <code>Z</code> changes on this page; it is invisible to the
+      probability bars and decisive for what the next gate does. Hold
+      onto this — every interference-driven algorithm is, at heart, a
+      careful choreography of relative phases.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="math-nerds">
+    <p>
+      Two states <MathBlock display={false} tex="|\\psi\\rangle" /> and
+      <MathBlock display={false} tex="e^{i\\varphi}|\\psi\\rangle" />
+      give identical measurement statistics in every basis and under
+      every subsequent unitary — they are the same physical state, with
+      different mathematical representatives. This is why we say
+      single-qubit states live on the Bloch <em>sphere</em> (a 2-sphere)
+      rather than on the unit sphere in
+      <MathBlock display={false} tex="\\mathbb{C}^2" /> (a 3-sphere): we
+      quotient out the global-phase circle.
+    </p>
+    <p>
+      Relative phase is what survives that quotient. When you flipped
+      the sign of <MathBlock display={false} tex="\\beta" /> with
+      <code>Z</code> above, the global phase didn't change — the
+      <em>relative</em> phase between
+      <MathBlock display={false} tex="\\alpha" /> and
+      <MathBlock display={false} tex="\\beta" /> rotated by
+      <MathBlock display={false} tex="\\pi" />. That's the physically
+      observable change.
+    </p>
+  </Fragment>
+
+  <Fragment slot="footer-nav">
+    <a href="/qubit" class="hover:text-slate-200">← Qubit</a>
+    <a href="/measurement" class="hover:text-slate-200">Next: Measurement →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  import { attachScrolly } from "../lib/scrolly";
+  import { mountAnnotations } from "../lib/annotations";
+
+  const root = document.querySelector("article");
+  if (root) {
+    attachScrolly(root, {
+      stepSelector: "[data-step]",
+      onStep: (i) => console.debug(`[scrolly] step ${i}`),
+    });
+  }
+
+  const ann = mountAnnotations();
+  document.getElementById("reset-annotations")?.addEventListener("click", () => {
+    ann.reset();
+  });
+</script>
