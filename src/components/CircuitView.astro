@@ -1,0 +1,252 @@
+---
+/**
+ * CircuitView — read-only inline diagram of a Circuit.
+ *
+ * Why this exists (vs. reusing the sandbox composer):
+ *   The sandbox composer (composer.client.ts) is a hydrated, editable
+ *   widget tightly coupled to the singleton `circuit` signal. Essays
+ *   that just want to SHOW a circuit alongside live widgets don't
+ *   want any of that — they want a static diagram with no JS cost.
+ *   See .planning/phases/05-algorithms/05-CONTEXT.md, "Embed primitive"
+ *   decision.
+ *
+ * Renders as inline SVG so the CNOT control/target connector line
+ * draws cleanly across rows. Zero client JS. Gate-label vocabulary
+ * mirrors the composer (cellLabel in composer.client.ts) so readers
+ * see the same symbols on both surfaces.
+ *
+ * If `showRemixLink` is true (default), a small "Remix in sandbox →"
+ * link sits below the diagram. Encoded at build time via the same
+ * codec the sandbox uses on the receiving end — see SandboxLink.astro
+ * for the rationale.
+ */
+import { encodeCircuit, type Circuit, type Op } from "../lib/quantum";
+
+interface Props {
+  circuit: Circuit;
+  caption?: string;
+  /** Bake a "Remix in sandbox →" link below the diagram. Default true. */
+  showRemixLink?: boolean;
+  class?: string;
+}
+
+const {
+  circuit,
+  caption,
+  showRemixLink = true,
+  class: extraClass = "",
+} = Astro.props as Props;
+
+const N = circuit.qubits;
+const S = Math.max(circuit.steps.length, 1);
+
+// Geometry. Kept in one place so it's easy to retune.
+const LABEL_W = 36;
+const STEP_W = 56;
+const ROW_H = 44;
+const PAD = 12;
+const GATE_W = 36;
+const GATE_H = 28;
+
+const width = LABEL_W + S * STEP_W + PAD * 2;
+const height = PAD * 2 + N * ROW_H;
+
+/** Mirrors composer.client.ts `cellLabel`. */
+function cellLabel(op: Op, q: number): string {
+  switch (op.kind) {
+    case "gate":   return op.gate;
+    case "rot":    return `R${op.axis.toLowerCase()}`;
+    case "measure": return "M";
+    case "cnot":   return op.control === q ? "•" : "⊕";
+  }
+}
+
+/** Color family for the gate body — keeps Pauli, H, phase, rot visually distinct. */
+function cellFill(op: Op): string {
+  switch (op.kind) {
+    case "gate":
+      if (["X", "Y", "Z", "I"].includes(op.gate)) return "rgb(51 65 85)";   // slate-700
+      if (op.gate === "H")                         return "rgb(67 56 202)"; // indigo-700
+      return "rgb(91 33 182)";                                              // violet-800 (S/T)
+    case "rot":     return "rgb(15 118 110)";                               // teal-700
+    case "measure": return "rgb(120 53 15)";                                // amber-900
+    case "cnot":    return "transparent"; // dot / xor symbol, no body
+  }
+}
+
+/** All cells the diagram needs to render, with their resolved geometry. */
+interface Cell {
+  q: number;
+  t: number;
+  op: Op;
+  /** For CNOTs we draw the connecting line once per step, not per row. */
+  isCnot: boolean;
+  cnotControl?: number;
+  cnotTarget?: number;
+}
+
+const cells: Cell[] = [];
+for (let t = 0; t < circuit.steps.length; t++) {
+  for (const op of circuit.steps[t]) {
+    if (op.kind === "cnot") {
+      cells.push({ q: op.control, t, op, isCnot: true, cnotControl: op.control, cnotTarget: op.target });
+      cells.push({ q: op.target,  t, op, isCnot: true, cnotControl: op.control, cnotTarget: op.target });
+    } else {
+      cells.push({ q: op.qubit, t, op, isCnot: false });
+    }
+  }
+}
+
+/** CNOT connector segments — drawn once per (step, control, target) triple. */
+const cnotConnectors: Array<{ t: number; control: number; target: number }> = [];
+for (let t = 0; t < circuit.steps.length; t++) {
+  for (const op of circuit.steps[t]) {
+    if (op.kind === "cnot") {
+      cnotConnectors.push({ t, control: op.control, target: op.target });
+    }
+  }
+}
+
+const cx = (t: number) => LABEL_W + PAD + t * STEP_W + STEP_W / 2;
+const cy = (q: number) => PAD + q * ROW_H + ROW_H / 2;
+
+const a11yLabel = caption
+  ? `Circuit diagram: ${caption}`
+  : `Circuit diagram with ${N} qubit${N === 1 ? "" : "s"} and ${circuit.steps.length} step${circuit.steps.length === 1 ? "" : "s"}`;
+
+// Remix link, if enabled. Encode at build time so the link is static.
+const remixHref = showRemixLink ? `/sandbox#${encodeCircuit(circuit)}` : null;
+---
+
+<figure class:list={["not-prose my-6", extraClass]}>
+  <div class="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+    <svg
+      role="img"
+      aria-label={a11yLabel}
+      viewBox={`0 0 ${width} ${height}`}
+      class="w-full h-auto max-w-full"
+      style={`max-height: ${height + 8}px`}
+    >
+      <!-- Qubit wire rows -->
+      {Array.from({ length: N }, (_, q) => (
+        <g>
+          <text
+            x={LABEL_W - 6}
+            y={cy(q) + 4}
+            text-anchor="end"
+            font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+            font-size="13"
+            fill="rgb(148 163 184)"
+          >q{q}</text>
+          <line
+            x1={LABEL_W}
+            y1={cy(q)}
+            x2={width - PAD}
+            y2={cy(q)}
+            stroke="rgb(71 85 105)"
+            stroke-width="1.5"
+          />
+        </g>
+      ))}
+
+      <!-- CNOT connector lines (drawn behind cells) -->
+      {cnotConnectors.map((c) => (
+        <line
+          x1={cx(c.t)}
+          y1={cy(c.control)}
+          x2={cx(c.t)}
+          y2={cy(c.target)}
+          stroke="rgb(148 163 184)"
+          stroke-width="1.5"
+        />
+      ))}
+
+      <!-- Gate cells -->
+      {cells.map((cell) => {
+        const x = cx(cell.t);
+        const y = cy(cell.q);
+        const label = cellLabel(cell.op, cell.q);
+
+        // CNOT control dot
+        if (cell.isCnot && cell.cnotControl === cell.q) {
+          return (
+            <circle
+              cx={x}
+              cy={y}
+              r={6}
+              fill="rgb(226 232 240)"
+              stroke="rgb(71 85 105)"
+              stroke-width="1"
+            />
+          );
+        }
+        // CNOT target XOR symbol
+        if (cell.isCnot && cell.cnotTarget === cell.q) {
+          return (
+            <g>
+              <circle
+                cx={x}
+                cy={y}
+                r={11}
+                fill="rgb(15 23 42)"
+                stroke="rgb(226 232 240)"
+                stroke-width="1.5"
+              />
+              <line x1={x - 7} y1={y}     x2={x + 7} y2={y}     stroke="rgb(226 232 240)" stroke-width="1.5" />
+              <line x1={x}     y1={y - 7} x2={x}     y2={y + 7} stroke="rgb(226 232 240)" stroke-width="1.5" />
+            </g>
+          );
+        }
+        // Standard gate body
+        return (
+          <g>
+            <rect
+              x={x - GATE_W / 2}
+              y={y - GATE_H / 2}
+              width={GATE_W}
+              height={GATE_H}
+              rx={4}
+              fill={cellFill(cell.op)}
+              stroke="rgb(148 163 184)"
+              stroke-width="1"
+            />
+            <text
+              x={x}
+              y={y + 4}
+              text-anchor="middle"
+              font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+              font-size="13"
+              font-weight="600"
+              fill="rgb(241 245 249)"
+            >{label}</text>
+          </g>
+        );
+      })}
+
+      <!-- Empty-circuit placeholder text -->
+      {circuit.steps.length === 0 && (
+        <text
+          x={width / 2}
+          y={height / 2 + 4}
+          text-anchor="middle"
+          font-family="ui-sans-serif, system-ui, sans-serif"
+          font-size="13"
+          fill="rgb(100 116 139)"
+        >(empty circuit)</text>
+      )}
+    </svg>
+
+    {remixHref && (
+      <div class="mt-2 text-right">
+        <a
+          href={remixHref}
+          class="text-xs text-emerald-300 hover:text-emerald-200 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+          data-circuit-view-remix
+        >Remix in sandbox →</a>
+      </div>
+    )}
+  </div>
+  {caption && (
+    <figcaption class="mt-2 text-sm text-slate-400">{caption}</figcaption>
+  )}
+</figure>
