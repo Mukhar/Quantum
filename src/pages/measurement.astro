@@ -1,0 +1,338 @@
+---
+/**
+ * "Measurement" — Phase 4 essay (Plan 04-03).
+ *
+ * Pedagogy arc: hook → intuition → widget → math → check → next.
+ * Voice: matches /qubit — formal-but-friendly, opinionated, every
+ * claim earns its keep via a "Try this:" prompt the reader can run
+ * against a real simulator running in their browser.
+ *
+ * Headline insight: collapse is real, it's a *rule* (the Born rule
+ * plus projection), and it's basis-dependent. `[measure]` against
+ * |0⟩ always returns 0. `[H, measure]` returns ~50/50. Same circuit
+ * shape, different gates → different distributions.
+ *
+ * The Run-100× button (wired up in the bottom <script>) records the
+ * gate sequence the reader applies via GateButtons, appends a
+ * measurement op, then runs `runCircuit` 100 times with fresh
+ * Math.random and tallies the outcomes into a tiny two-bar histogram
+ * next to the button — convergence as a one-click experiment.
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import ProbabilityBars from "../components/ProbabilityBars.astro";
+import StateVector from "../components/StateVector.astro";
+import GateButtons from "../components/GateButtons.astro";
+import SandboxLink from "../components/SandboxLink.astro";
+import { gateOp, measureOp, type Circuit } from "../lib/quantum";
+
+const KEY = "measurement-essay";
+
+const STARTER: Circuit = {
+  qubits: 1,
+  steps: [[gateOp("H", 0)], [measureOp(0)]],
+};
+---
+
+<EssayLayout
+  title="Measurement"
+  subtitle="Collapse isn't mystical — it's a rule. The rule has two parts, and the second one depends on which question you ask."
+  description="An interactive essay on quantum measurement: the Born rule, post-measurement collapse, basis dependence, and why the same state can give wildly different distributions depending on what you measure."
+>
+  <p>
+    The standard story about quantum measurement goes like this:
+    &ldquo;the wavefunction collapses.&rdquo; Then the storyteller
+    waves a hand vaguely and you're supposed to nod along. This is
+    a bad story. It doesn't tell you <em>which</em> outcome you get,
+    <em>how often</em>, or — and this is the part that breaks most
+    people's intuition — <em>what counts as a measurement at all</em>.
+  </p>
+
+  <p data-step="0">
+    Here is the real rule, in two parts. <strong>(1) Born:</strong>
+    the probability of measuring outcome <code>k</code> is
+    <code>|⟨k|ψ⟩|²</code> — the squared magnitude of the amplitude
+    sitting in front of the basis state you're asking about.
+    <strong>(2) Projection:</strong> once you've gotten outcome
+    <code>k</code>, the state <em>is</em> <code>|k⟩</code>. The other
+    amplitudes vanish. Same particle, different state — you changed
+    it by looking at it.
+  </p>
+
+  <p>
+    That's it. No consciousness, no observers, no philosophy. A
+    measurement is any interaction that correlates a quantum amplitude
+    with a classical record, and the rule above tells you what the
+    record will say and what the state looks like afterwards. The
+    only knobs are: which state you started in, and which basis you
+    measure in.
+  </p>
+
+  <h2>Press a gate, then measure</h2>
+
+  <p data-step="1">
+    Start from <code>|0⟩</code>. The probability bars show one
+    outcome with probability 1. If you measured right now, you would
+    get <code>0</code>. Every single time. Forever.
+  </p>
+
+  <GateButtons storeKey={KEY} qubits={1} gates={["H", "X", "Z"]} />
+  <ProbabilityBars storeKey={KEY} qubits={1} caption="P(outcome) — Born's rule rendered live." />
+  <StateVector storeKey={KEY} qubits={1} caption="The amplitudes the rule reads from." />
+
+  <p>
+    <strong>Try this:</strong> press <strong>Run 100×</strong>
+    without touching any gates. The little histogram below the
+    button fills up with 100 zeros and zero ones. The simulator runs
+    a real measurement 100 times against the current state, and the
+    Born rule says <code>P(0) = 1</code>, so… every roll comes back
+    <code>0</code>. The randomness is mathematically there; it just
+    isn't <em>doing anything</em> when one outcome has probability 1.
+  </p>
+
+  <div class="my-6 rounded-lg border border-slate-800 bg-slate-900/40 p-5">
+    <div class="flex flex-wrap items-center gap-4">
+      <button
+        type="button"
+        data-action="run-100"
+        class="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-mono text-emerald-200 hover:bg-emerald-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 transition-colors"
+      >
+        Run 100×
+      </button>
+      <p class="m-0 text-sm text-slate-400">
+        Re-runs the circuit you've built (current gates, then a
+        measurement) 100 times against fresh randomness.
+      </p>
+    </div>
+    <div class="mt-4 space-y-2 font-mono text-xs text-slate-300">
+      <div class="flex items-center gap-3">
+        <span class="w-10 text-right">|0⟩</span>
+        <div class="relative h-4 flex-1 rounded bg-slate-800/70">
+          <div data-run-bar="0" class="h-full rounded bg-indigo-500/70" style="width: 0%"></div>
+        </div>
+        <output data-run-count="0" class="w-10 text-right tabular-nums">0</output>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="w-10 text-right">|1⟩</span>
+        <div class="relative h-4 flex-1 rounded bg-slate-800/70">
+          <div data-run-bar="1" class="h-full rounded bg-cyan-400/70" style="width: 0%"></div>
+        </div>
+        <output data-run-count="1" class="w-10 text-right tabular-nums">0</output>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    <strong>Try this:</strong> press <strong>Reset</strong>, then
+    <strong>H</strong>, then <strong>Run 100×</strong>. The bars
+    split close to 50/50 — not exactly, because 100 flips of a fair
+    coin doesn't land on 50-50, but close. Press it a few more times
+    and watch the numbers wobble in the 40–60 band. <em>That's</em>
+    the Born rule meeting the law of large numbers. The wobble shrinks
+    like <code>1/√N</code>; at 10,000 shots you'd see numbers in the
+    49–51 band.
+  </p>
+
+  <h2 data-step="2">Same state, different question</h2>
+
+  <p>
+    Here's where most quantum-curious developers get tripped up.
+    People talk about &ldquo;measuring a qubit&rdquo; as if there's
+    one way to do it. There isn't. Every measurement happens
+    <em>in a basis</em> — a choice of two orthogonal states you're
+    asking the qubit to commit to. Our buttons measure in the
+    computational (<code>Z</code>) basis: <code>|0⟩</code> vs.
+    <code>|1⟩</code>. But you could equally well measure in the
+    <code>X</code> basis (<code>|+⟩</code> vs. <code>|−⟩</code>), or
+    any other.
+  </p>
+
+  <p>
+    The Born rule cares which basis you picked. So does the
+    projection step. <strong>Same state, different basis, different
+    distribution.</strong> This is not a paradox — it's the whole
+    point of being a vector in a 2D complex space. There are infinitely
+    many orthogonal axes you can decompose along.
+  </p>
+
+  <p>
+    We don't have a basis-switching button up there, but we have the
+    next best thing: rotate the state instead of rotating the
+    measurement axis. Measuring <code>H|ψ⟩</code> in the
+    <code>Z</code> basis is mathematically identical to measuring
+    <code>|ψ⟩</code> in the <code>X</code> basis — applying <code>H</code>
+    swaps the two bases for you.
+  </p>
+
+  <p>
+    <strong>Try this:</strong> reset, press <strong>X</strong> (so
+    you're in <code>|1⟩</code>), then <strong>Run 100×</strong>.
+    You'll get 100 ones. Now press <strong>H</strong> and run again.
+    The bars split — the deterministic <code>|1⟩</code> answer in
+    one basis is a fair coin flip in another. Nothing about the
+    underlying state has &ldquo;become random&rdquo;; you just asked
+    a different question of the same vector.
+  </p>
+
+  <h2>Open it in the sandbox</h2>
+
+  <p data-step="3">
+    The Run-100 button above is a shortcut that recreates whatever
+    gate sequence you've clicked on this page. The sandbox is the
+    full thing: a real composer where you can drag ops around, swap
+    the order of <code>H</code> and <code>measure</code>, or add an
+    <code>X</code> in front and watch the histogram flip.
+  </p>
+
+  <p>
+    Open this circuit and try swapping the order of the two ops, or
+    removing the <code>H</code> entirely:
+  </p>
+
+  <SandboxLink circuit={STARTER} label="Open [H, measure] in sandbox →" />
+
+  <p class="mt-4">
+    The headline observation: <code>[measure]</code> on <code>|0⟩</code>
+    is deterministic. <code>[H, measure]</code> on <code>|0⟩</code> is
+    a fair coin. Same hardware. Same act of measuring. The only
+    difference is one gate sitting one column to the left.
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+    <li>
+      You apply <code>H</code>, measure, get the outcome <code>1</code>,
+      and then immediately apply <code>H</code> and measure again.
+      What's the probability of getting <code>1</code> on the second
+      measurement, and why? (Hint: the first measurement projected
+      the state. The second <code>H</code> is acting on the
+      <em>collapsed</em> state, not the original superposition.)
+    </li>
+    <li>
+      You're handed a qubit in an unknown state. You measure 100
+      times in the Z basis with no gate first and get 100 zeros.
+      Can you conclude the state was <code>|0⟩</code>? (Hint: what
+      would the superposition state <code>|+⟩ = (|0⟩+|1⟩)/√2</code>
+      give you? What about the same state with a phase flip on the
+      <code>|1⟩</code> component? The Z basis only sees probabilities,
+      not phases — so which states does it actually distinguish?)
+    </li>
+  </ol>
+
+  <MathNerds title="The rule, formally">
+    <p>
+      Let <MathBlock display={false} tex="|\\psi\\rangle = \\sum_k \\alpha_k |k\\rangle" />
+      in some orthonormal basis <MathBlock display={false} tex="\\{|k\\rangle\\}" />.
+      The Born rule:
+    </p>
+    <MathBlock tex="P(k) = |\\langle k | \\psi \\rangle|^2 = |\\alpha_k|^2" />
+    <p>
+      The projector onto outcome <MathBlock display={false} tex="k" /> is
+      <MathBlock display={false} tex="\\Pi_k = |k\\rangle\\langle k|" />.
+      The post-measurement state, given outcome <MathBlock display={false} tex="k" />,
+      is the projection renormalized:
+    </p>
+    <MathBlock tex="|\\psi'\\rangle = \\frac{\\Pi_k |\\psi\\rangle}{\\sqrt{\\langle \\psi | \\Pi_k | \\psi \\rangle}} = |k\\rangle" />
+    <p>
+      That renormalization is doing the &ldquo;collapse&rdquo; work:
+      after the measurement, every amplitude except the one you
+      observed is zeroed out, and the surviving amplitude is rescaled
+      so the new vector is still a unit vector. This is exactly what
+      <code>runCircuit</code>'s measurement path does in code — pick
+      an outcome with weight <code>|α_k|²</code>, zero the rest,
+      divide by the surviving norm.
+    </p>
+    <p>
+      Basis dependence falls out for free. Measuring
+      <MathBlock display={false} tex="|\\psi\\rangle" /> in the X basis
+      is the same calculation with
+      <MathBlock display={false} tex="\\{|+\\rangle, |-\\rangle\\}" />
+      in place of
+      <MathBlock display={false} tex="\\{|0\\rangle, |1\\rangle\\}" />.
+      Equivalently — and this is the identity the Run-100 demo
+      leans on — applying <MathBlock display={false} tex="H" /> first
+      and then measuring in the Z basis gives the same statistics as
+      measuring the original state in the X basis directly.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="math-nerds">
+    <p>
+      A philosophical aside that often comes up in office hours:
+      &ldquo;is the collapse <em>real</em>, or is it just the
+      observer updating their beliefs?&rdquo; This essay takes the
+      pragmatic line. The post-measurement state, whatever its
+      ultimate ontology, is the right object to plug into your next
+      gate. Every single working interpretation of quantum mechanics
+      — Copenhagen, many-worlds, Bohmian, QBism — agrees on the
+      Born rule and on what follow-up gates do to the projected
+      state. That's the part we can simulate and the part this essay
+      is teaching.
+    </p>
+    <p>
+      A keyboard-only note: the <strong>Run 100×</strong> button is
+      reachable via <kbd>Tab</kbd> and activates with <kbd>Enter</kbd> or
+      <kbd>Space</kbd>. The histogram updates in place — its readouts
+      are inside <code>&lt;output&gt;</code> elements so assistive
+      tech announces the new counts on each run.
+    </p>
+  </Fragment>
+
+  <Fragment slot="footer-nav">
+    <a href="/superposition" class="hover:text-slate-200">← Superposition</a>
+    <a href="/gates" class="hover:text-slate-200">Next: Gates →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  import { attachScrolly } from "../lib/scrolly";
+  import { mountAnnotations } from "../lib/annotations";
+  import { runCircuit, gateOp, measureOp, type Op } from "../lib/quantum";
+
+  const root = document.querySelector("article");
+  if (root) {
+    attachScrolly(root, {
+      stepSelector: "[data-step]",
+      onStep: (i) => console.debug(`[scrolly] step ${i}`),
+    });
+  }
+
+  const ann = mountAnnotations();
+  document.getElementById("reset-annotations")?.addEventListener("click", () => ann.reset());
+
+  // --- Run-100× ------------------------------------------------------------
+  // We can't re-derive the user's gate sequence from the store snapshot
+  // (the store only knows the *resulting* state vector), so we shadow
+  // the GateButtons widget's clicks and keep a parallel op log. Reset
+  // clears it; H/X/Z append a gateOp on qubit 0. The Run button then
+  // builds `[...ops, measure(0)]` and runs it 100× with fresh randomness.
+  const ops: Op[] = [];
+  const gateBtns = document.querySelector<HTMLElement>('[data-widget="gate-buttons"]');
+  gateBtns?.addEventListener("click", (event) => {
+    const btn = (event.target as HTMLElement).closest("button");
+    if (!btn) return;
+    if (btn.dataset.action === "reset") { ops.length = 0; return; }
+    const g = btn.dataset.gate;
+    if (g === "H" || g === "X" || g === "Z") ops.push(gateOp(g, 0));
+  });
+
+  const runBtn = document.querySelector<HTMLButtonElement>('[data-action="run-100"]');
+  const bar0 = document.querySelector<HTMLElement>('[data-run-bar="0"]');
+  const bar1 = document.querySelector<HTMLElement>('[data-run-bar="1"]');
+  const out0 = document.querySelector<HTMLElement>('[data-run-count="0"]');
+  const out1 = document.querySelector<HTMLElement>('[data-run-count="1"]');
+  runBtn?.addEventListener("click", () => {
+    const circuit = { qubits: 1, steps: [...ops.map((o) => [o]), [measureOp(0)]] };
+    let c0 = 0, c1 = 0;
+    for (let i = 0; i < 100; i++) {
+      const { measurements } = runCircuit(circuit);
+      if (measurements[0]?.outcome === 0) c0++; else c1++;
+    }
+    if (bar0) bar0.style.width = `${c0}%`;
+    if (bar1) bar1.style.width = `${c1}%`;
+    if (out0) out0.textContent = String(c0);
+    if (out1) out1.textContent = String(c1);
+  });
+</script>
