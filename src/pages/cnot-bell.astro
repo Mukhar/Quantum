@@ -1,0 +1,398 @@
+---
+/**
+ * "CNOT + Bell states" — Phase 5 algorithm essay (Plan 05-02).
+ *
+ * Sequel to `/entanglement`. Where that essay showed entanglement as
+ * a visualization phenomenon (Bloch arrows shrink to the origin),
+ * this essay promotes it to a usable resource: CNOT is the canonical
+ * entangler, the four Bell states form an orthonormal basis, and EPR
+ * + teleportation are the headline applications that depend on them.
+ *
+ * Voice: foundations-essay rhythm + "why should I care" opener
+ * (classical pain point first, then the quantum demonstration that
+ * breaks it). Decision locked in 05-CONTEXT.md.
+ *
+ * Convention: qubit register is `|q₁ q₀⟩` (Qiskit / LSB-first),
+ * matching the rest of this codebase. Because textbooks usually
+ * present Bell preps in MSB-first order, the "four Bell states"
+ * section calls the convention out explicitly so readers can
+ * cross-reference Wikipedia without panic.
+ *
+ * Widget plumbing mirrors `/entanglement` exactly:
+ *   - one essay-level store, key "cnot-bell-essay", 2 qubits
+ *   - ProbabilityBars + two MiniBloch cards subscribe to it
+ *   - inline H/X/CNOT/Reset buttons dispatch into it
+ *   - CircuitView is pure server-rendered SVG, zero hydration cost
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import ProbabilityBars from "../components/ProbabilityBars.astro";
+import MiniBloch from "../components/MiniBloch.astro";
+import CircuitView from "../components/CircuitView.astro";
+import SandboxLink from "../components/SandboxLink.astro";
+import { gateOp, cnotOp, type Circuit } from "../lib/quantum";
+
+const KEY = "cnot-bell-essay";
+
+/** The canonical Bell-Φ⁺ recipe: H on q₀, then CNOT(0, 1). Reused
+ *  by the inline CircuitView and the bottom SandboxLink. */
+const bellStarter: Circuit = {
+  qubits: 2,
+  steps: [[gateOp("H", 0)], [cnotOp(0, 1)]],
+};
+---
+
+<EssayLayout
+  title="CNOT and the Bell States"
+  subtitle="One gate, four states, the entire foundation of quantum communication. CNOT is where a pair of qubits stops behaving like two coins and starts behaving like one shared fact."
+  description="Build all four Bell states from H + CNOT, see why classical 2-bit logic can't reproduce their correlations, and meet the gate every interesting two-qubit protocol depends on."
+>
+  <p>
+    Classical 2-bit logic is, in a real sense, finished. With AND, OR,
+    and NOT you can build any boolean function of any number of bits.
+    Add a clock and some memory and you have a CPU. The whole edifice
+    of digital computing rides on the fact that two bits have four
+    possible joint states and any deterministic function between bit
+    strings can be wired up as a circuit of those three gates.
+  </p>
+
+  <p>
+    What classical logic <em>can't</em> do is reproduce a particular
+    set of correlations between two coins. Specifically: hand Alice
+    and Bob each one of a pair of correlated coins, separate them by
+    a light-year, let them each pick from one of two measurement
+    settings, and ask how often their outcomes match. There is a hard
+    mathematical ceiling — the CHSH bound, |S| ≤ 2 — on how strong
+    those correlations can be if the coins were prepared by any
+    classical process: a shared random seed, a hidden agreement, a
+    lookup table, anything &ldquo;local&rdquo; you want to invent.
+    Quantum-mechanical pairs of particles routinely measure
+    |S| ≈ 2√2. The classical bound isn't violated by a little. It's
+    violated by something nature can apparently produce and no
+    deterministic two-bit circuit ever will.
+  </p>
+
+  <p>
+    Those pairs of particles are <strong>entangled</strong>. The
+    quantum operation that produces them — that lifts a pair of qubits
+    from &ldquo;two independent coins&rdquo; to &ldquo;one shared
+    fate&rdquo; — is the <strong>CNOT</strong> gate, fed a qubit
+    already in superposition. That's the whole essay. Read on for the
+    matrix, the four canonical entangled states, and a recipe for
+    building each one with the buttons below.
+  </p>
+
+  <h2>CNOT is a controlled flip</h2>
+
+  <p data-step="0">
+    CNOT takes two qubits — a <em>control</em> and a <em>target</em> —
+    and does exactly one thing: flip the target when the control is
+    |1⟩, leave it alone when the control is |0⟩. On classical inputs
+    it's the same gate you've seen in textbooks under the name
+    &ldquo;controlled NOT&rdquo;; the truth table is the XOR you'd
+    expect:
+  </p>
+
+  <ul class="my-4 font-mono text-sm text-slate-300">
+    <li>|00⟩ → |00⟩ &nbsp; <span class="text-slate-500">(control = 0, target unchanged)</span></li>
+    <li>|01⟩ → |11⟩ &nbsp; <span class="text-slate-500">(control = 1, target flipped from 0 to 1)</span></li>
+    <li>|10⟩ → |10⟩ &nbsp; <span class="text-slate-500">(control = 0, target unchanged)</span></li>
+    <li>|11⟩ → |01⟩ &nbsp; <span class="text-slate-500">(control = 1, target flipped from 1 to 0)</span></li>
+  </ul>
+
+  <p>
+    Register order: <code>|q₁ q₀⟩</code>, LSB-first, q₀ as control,
+    q₁ as target. As a 4×4 matrix in the basis
+    <MathBlock display={false} tex="\\{|00\\rangle, |01\\rangle, |10\\rangle, |11\\rangle\\}" />
+    it's just a permutation — swap the last two columns of the
+    identity — and that fact is the source of every bit of confusion
+    you've ever had about CNOT. Read on the computational basis it
+    does <em>nothing interesting</em>. It's a 4×4 rearrangement of
+    classical bits.
+  </p>
+
+  <p>
+    The interesting behavior shows up the moment the control isn't
+    classical. If q₀ is in superposition <code>(|0⟩ + |1⟩)/√2</code>,
+    the &ldquo;flip or don't&rdquo; question has no determinate answer
+    yet — and CNOT, being linear, applies <em>both branches at
+    once</em>. The result is a state in which q₁'s value is bound to
+    q₀'s value: not because q₀ has been measured, but because no
+    factorization into &ldquo;a state for q₀&rdquo; ⊗ &ldquo;a state
+    for q₁&rdquo; can describe what just happened. That's
+    entanglement; that's the Bell pair.
+  </p>
+
+  <h2>Build the four Bell states</h2>
+
+  <p data-step="1">
+    The four <strong>Bell states</strong> are the orthonormal basis of
+    maximally entangled two-qubit states. You build all four from the
+    same two-gate recipe — Hadamard on q₀, then CNOT(0, 1) — just by
+    varying the input. Here's the canonical circuit for the first one,
+    <code>|Φ⁺⟩ = (|00⟩ + |11⟩)/√2</code>:
+  </p>
+
+  <CircuitView
+    circuit={bellStarter}
+    caption="The canonical Bell-state preparation. H on q₀ creates the superposition; CNOT(0, 1) ties q₁'s fate to it."
+  />
+
+  <p>
+    Below are the live widgets. <code>ProbabilityBars</code> shows
+    P(outcome) over the four basis states; the two <code>MiniBloch</code>
+    cards show the per-qubit reduced state — they'll shrink to the
+    origin and flash an &ldquo;Entangled&rdquo; badge once you've
+    built any Bell pair. The buttons let you set up an input state
+    (X flips a qubit; H + CNOT runs the recipe).
+  </p>
+
+  <ProbabilityBars
+    storeKey={KEY}
+    qubits={2}
+    caption="P over |q₁ q₀⟩, in order |00⟩, |01⟩, |10⟩, |11⟩."
+  />
+
+  <div class="my-4 grid grid-cols-2 gap-3 max-w-md mx-auto">
+    <MiniBloch storeKey={KEY} qubit={0} qubits={2} caption="Reduced state of q₀" />
+    <MiniBloch storeKey={KEY} qubit={1} qubits={2} caption="Reduced state of q₁" />
+  </div>
+
+  <div
+    data-bell-controls
+    class="my-4 flex flex-wrap items-center gap-2"
+    aria-label="Build the Bell pair"
+  >
+    <button
+      type="button"
+      data-action="x0"
+      class="rounded-md border border-slate-600 bg-slate-700/30 px-3 py-1.5 text-sm font-mono text-slate-200 hover:bg-slate-700/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+    >X on q₀</button>
+    <button
+      type="button"
+      data-action="x1"
+      class="rounded-md border border-slate-600 bg-slate-700/30 px-3 py-1.5 text-sm font-mono text-slate-200 hover:bg-slate-700/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+    >X on q₁</button>
+    <button
+      type="button"
+      data-action="h"
+      class="rounded-md border border-indigo-500/40 bg-indigo-500/10 px-3 py-1.5 text-sm font-mono text-indigo-200 hover:bg-indigo-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 transition-colors"
+    >H on q₀</button>
+    <button
+      type="button"
+      data-action="cnot"
+      class="rounded-md border border-fuchsia-500/40 bg-fuchsia-500/10 px-3 py-1.5 text-sm font-mono text-fuchsia-200 hover:bg-fuchsia-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-400 transition-colors"
+    >CNOT(0, 1)</button>
+    <button
+      type="button"
+      data-action="reset"
+      class="ml-2 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+    >Reset</button>
+  </div>
+
+  <p data-step="2">
+    <strong>Try this:</strong> reset, then press <em>H on q₀</em>, then
+    <em>CNOT(0, 1)</em>. The bars collapse to exactly two outcomes,
+    <code>|00⟩</code> and <code>|11⟩</code>, each at 50%. Both Bloch
+    cards shrink to the origin and light up &ldquo;Entangled.&rdquo;
+    That's <code>|Φ⁺⟩</code>.
+  </p>
+
+  <p>
+    Now vary the input. The full mapping, in our LSB-first register
+    convention, is:
+  </p>
+
+  <ul class="my-4 font-mono text-sm text-slate-300 space-y-1">
+    <li>|00⟩ &nbsp;→ H, CNOT →&nbsp; |Φ⁺⟩ = (|00⟩ + |11⟩) / √2</li>
+    <li>|01⟩ &nbsp;→ H, CNOT →&nbsp; |Φ⁻⟩ = (|00⟩ − |11⟩) / √2</li>
+    <li>|10⟩ &nbsp;→ H, CNOT →&nbsp; |Ψ⁺⟩ = (|01⟩ + |10⟩) / √2</li>
+    <li>|11⟩ &nbsp;→ H, CNOT →&nbsp; |Ψ⁻⟩ = (|01⟩ − |10⟩) / √2</li>
+  </ul>
+
+  <p>
+    <strong>Try this:</strong> reset, press <em>X on q₀</em> to load
+    <code>|01⟩</code>, then <em>H on q₀</em>, then <em>CNOT(0, 1)</em>.
+    The probability bars look identical to <code>|Φ⁺⟩</code> — same
+    two outcomes, same 50/50 split — but the state vector that
+    produced them is <code>|Φ⁻⟩</code>, with a minus sign hiding in
+    the phase. The bars can't see it; an interferometric measurement
+    (the Bell-state-discrimination protocol you'd use in teleportation)
+    can.
+  </p>
+
+  <p>
+    Two notes on convention. First: textbooks usually write the Bell
+    table in MSB-first order, so they'll say
+    &ldquo;|10⟩ → |Φ⁻⟩.&rdquo; That's the same physics — they just
+    label the qubits the other way around. Our q₀ is their second
+    bit. Second: every recipe above uses H on q₀ and CNOT with q₀ as
+    control. There are nine other equivalent prep circuits (swap
+    roles, use H on q₁, etc.); they all reach the same four-state
+    basis.
+  </p>
+
+  <h2>Why CNOT, and what it unlocks</h2>
+
+  <p data-step="3">
+    Per-qubit Bloch cards going to the origin is the visual you saw in
+    <a href="/entanglement">the entanglement essay</a> — the
+    <em>reduced density matrix</em> of either qubit in a Bell pair is
+    the maximally mixed state <code>I/2</code>, which sits at the
+    center of the sphere. From q₀ alone, the Bell pair is
+    indistinguishable from a fair coin. The whole information content
+    of the joint state lives in the <em>correlation between</em> q₀
+    and q₁, and partial tracing — &ldquo;please summarize what one
+    qubit looks like on its own&rdquo; — throws exactly that
+    information away. A measurement on q₀ alone is genuinely random.
+    A measurement on the pair is perfectly correlated. Both facts are
+    simultaneously true; this is the geometric face of entanglement.
+  </p>
+
+  <p>
+    Once you have the Bell pair, you can do things classical bits
+    can't.
+    <strong>EPR (Einstein–Podolsky–Rosen)</strong>: Alice and Bob
+    each take one half of a |Φ⁺⟩ pair, fly arbitrarily far apart, and
+    when either of them measures in the Z basis they instantly know
+    the other's outcome. No signal is sent (the result on each end is
+    50/50 random; you need to compare notes to see the correlation),
+    but the joint statistics are stronger than any local-hidden-
+    variable model can reproduce — the CHSH violation again.
+  </p>
+
+  <p>
+    <strong>Quantum teleportation</strong>: Alice has an unknown qubit
+    she wants to send Bob. They share a |Φ⁺⟩. Alice performs a
+    Bell-basis measurement on her unknown qubit + her half of the
+    pair, gets one of four classical 2-bit outcomes, and phones it to
+    Bob. Bob applies one of four corrective single-qubit gates
+    determined by Alice's bits, and his half of the pair becomes the
+    state Alice started with. No qubits travel; one Bell pair plus
+    two classical bits carries one qubit of information. The protocol
+    is impossible without the shared entanglement.
+  </p>
+
+  <p>
+    Both protocols boil down to: the four-element Bell basis is the
+    natural language two qubits speak to each other, and CNOT is the
+    only gate in the standard kit that can rotate between the
+    product-state basis and the Bell basis. That's why CNOT — and not
+    its cousins SWAP or Toffoli — is the entangling gate every
+    universal gate set picks first.
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+    <li>
+      Build <code>|Ψ⁻⟩ = (|01⟩ − |10⟩) / √2</code> from
+      <code>|00⟩</code> using only the four operation buttons above.
+      What order do you press them in? (Verify: both Bloch cards
+      should be at the origin and the probability bars should show
+      <code>|01⟩</code> and <code>|10⟩</code> at 50% each.)
+    </li>
+    <li>
+      <code>|Φ⁺⟩</code> and <code>|Φ⁻⟩</code> are perfectly
+      orthogonal — they're different basis states. But the probability
+      bars look identical for both. Where, exactly, does the
+      distinguishing information live, and what kind of measurement
+      would you have to do to read it out? (Hint: H on q₀ before
+      measuring is the start of an answer.)
+    </li>
+  </ol>
+
+  <p class="my-6">
+    <SandboxLink circuit={bellStarter} label="Open the Bell pair in the sandbox →" />
+  </p>
+
+  <MathNerds title="The Bell basis, the CNOT matrix, and the CHSH bound">
+    <p>The four Bell states, written out in the computational basis:</p>
+    <MathBlock tex="|\\Phi^\\pm\\rangle \\;=\\; \\tfrac{1}{\\sqrt{2}} \\bigl(|00\\rangle \\pm |11\\rangle\\bigr), \\qquad |\\Psi^\\pm\\rangle \\;=\\; \\tfrac{1}{\\sqrt{2}} \\bigl(|01\\rangle \\pm |10\\rangle\\bigr)" />
+    <p>
+      They form an orthonormal basis of the two-qubit Hilbert space
+      <MathBlock display={false} tex="\\mathbb{C}^2 \\otimes \\mathbb{C}^2" />,
+      and every one of them is maximally entangled: the reduced state
+      of either qubit is <MathBlock display={false} tex="I/2" />.
+    </p>
+    <p>
+      CNOT with q₀ as control and q₁ as target, in the basis
+      <MathBlock display={false} tex="\\{|00\\rangle, |01\\rangle, |10\\rangle, |11\\rangle\\}" />:
+    </p>
+    <MathBlock tex="\\text{CNOT}_{0 \\to 1} \\;=\\; \\begin{bmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 0 & 0 & 1 \\\\ 0 & 0 & 1 & 0 \\\\ 0 & 1 & 0 & 0 \\end{bmatrix}" />
+    <p>
+      It permutes <MathBlock display={false} tex="|01\\rangle \\leftrightarrow |11\\rangle" />
+      and leaves the other two basis vectors alone — exactly the truth
+      table at the top of the essay, written as a 4×4 matrix.
+    </p>
+    <p>
+      The CHSH inequality (Clauser–Horne–Shimony–Holt, 1969) is the
+      tightest two-party, two-setting, two-outcome Bell inequality.
+      For any local-hidden-variable model the correlation sum is
+      bounded by
+      <MathBlock display={false} tex="|S| \\leq 2" />;
+      quantum mechanics with a shared
+      <MathBlock display={false} tex="|\\Phi^+\\rangle" /> reaches
+      <MathBlock display={false} tex="|S| = 2\\sqrt{2}" />
+      (Tsirelson's bound). Experimentally confirmed many times over,
+      most decisively in the 2015 loophole-free tests by Hensen et al.
+      and Giustina et al. — the result that, more than any other,
+      shut the door on local realism.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="footer-nav">
+    <a href="/entanglement" class="hover:text-slate-200">← Entanglement</a>
+    <a href="/deutsch" class="hover:text-slate-200">Next: Deutsch →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  import { attachScrolly } from "../lib/scrolly";
+  import { mountAnnotations } from "../lib/annotations";
+  import { ensureStore } from "../lib/quantum/store";
+
+  const KEY = "cnot-bell-essay";
+
+  const root = document.querySelector("article");
+  if (root) {
+    attachScrolly(root, {
+      stepSelector: "[data-step]",
+      onStep: (i) => console.debug(`[scrolly] step ${i}`),
+    });
+  }
+
+  const ann = mountAnnotations();
+  document.getElementById("reset-annotations")?.addEventListener("click", () => {
+    ann.reset();
+  });
+
+  // Inline Bell-prep controls. Same pattern as /entanglement: one
+  // store per page, every widget on the page subscribes, button
+  // presses dispatch into the same store so bars + Bloch cards
+  // update atomically.
+  const store = ensureStore(KEY, { qubits: 2 });
+  const controls = document.querySelector<HTMLElement>("[data-bell-controls]");
+  controls?.addEventListener("click", (event) => {
+    const target = (event.target as HTMLElement).closest("button");
+    if (!target) return;
+    switch (target.dataset.action) {
+      case "x0":
+        store.apply("X", 0);
+        break;
+      case "x1":
+        store.apply("X", 1);
+        break;
+      case "h":
+        store.apply("H", 0);
+        break;
+      case "cnot":
+        store.applyCNOT(0, 1);
+        break;
+      case "reset":
+        store.reset();
+        break;
+    }
+  });
+</script>
