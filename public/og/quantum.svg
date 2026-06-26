@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- Dark slate background, indigo-to-violet diagonal gradient for depth -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgb(2 6 23)"/>
+      <stop offset="100%" stop-color="rgb(15 23 42)"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="rgb(99 102 241)"/>
+      <stop offset="100%" stop-color="rgb(167 139 250)"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle Bloch-sphere style ellipses, decorative -->
+  <g opacity="0.18" stroke="rgb(129 140 248)" stroke-width="1.5" fill="none">
+    <ellipse cx="950" cy="315" rx="220" ry="220"/>
+    <ellipse cx="950" cy="315" rx="220" ry="80"/>
+    <ellipse cx="950" cy="315" rx="80" ry="220"/>
+    <line x1="730" y1="315" x2="1170" y2="315"/>
+    <line x1="950" y1="95" x2="950" y2="535"/>
+  </g>
+  <!-- State arrow on the decorative sphere -->
+  <g opacity="0.55">
+    <line x1="950" y1="315" x2="1080" y2="225" stroke="rgb(167 139 250)" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="1080" cy="225" r="6" fill="rgb(167 139 250)"/>
+  </g>
+
+  <!-- Wordmark eyebrow -->
+  <text
+    x="80" y="180"
+    font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+    font-size="28"
+    font-weight="500"
+    letter-spacing="6"
+    fill="rgb(129 140 248)"
+  >QUANTUM</text>
+
+  <!-- Main title — two lines so it breathes -->
+  <text
+    x="80" y="290"
+    font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+    font-size="68"
+    font-weight="600"
+    fill="rgb(241 245 249)"
+  >Quantum computing,</text>
+  <text
+    x="80" y="370"
+    font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+    font-size="68"
+    font-weight="600"
+    fill="url(#accent)"
+  >for working devs.</text>
+
+  <!-- Subtitle / tagline -->
+  <text
+    x="80" y="450"
+    font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+    font-size="26"
+    font-weight="400"
+    fill="rgb(148 163 184)"
+  >7 interactive essays + a real in-browser simulator.</text>
+  <text
+    x="80" y="488"
+    font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+    font-size="26"
+    font-weight="400"
+    fill="rgb(148 163 184)"
+  >No PhD. No coin-spinning analogies. No tracking.</text>
+
+  <!-- Footer rule + URL placeholder -->
+  <line x1="80" y1="555" x2="1120" y2="555" stroke="rgb(51 65 85)" stroke-width="1"/>
+  <text
+    x="80" y="590"
+    font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+    font-size="20"
+    font-weight="500"
+    fill="rgb(100 116 139)"
+  >$ open the map</text>
+</svg>

@@ -1,0 +1,7 @@
+# Quantum — taught like you're a working developer.
+# Robots.txt: permissive, just point at the sitemap.
+
+User-agent: *
+Allow: /
+
+Sitemap: /sitemap.xml
