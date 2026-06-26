@@ -1,0 +1,146 @@
+---
+/**
+ * MiniBloch — per-qubit reduced-density Bloch projection as a static
+ * inline SVG, driven by the essay-level store registry.
+ *
+ * Why this exists (Plan 04-05, Path B):
+ *  - The sandbox's `ResultsPanel.astro` knows how to render exactly
+ *    this picture, but its hydrator (`lib/sandbox/results.client.ts`)
+ *    imports the sandbox singleton `circuit` signal directly from
+ *    `lib/sandbox/store.ts`. Reusing it from an essay would require
+ *    either touching that hydrator (out of scope for this plan) or
+ *    standing up a parallel sandbox store on the essay page.
+ *  - Per-essay widgets in this repo use `ensureStore(key, { qubits })`
+ *    from `lib/quantum/store.ts`. That's the contract every other
+ *    widget on this page (`GateButtons`, `ProbabilityBars`, …) plugs
+ *    into, so MiniBloch follows it too — one store per essay, one key.
+ *
+ * Visual contract mirrors `ResultsPanel.astro`: 100×100 viewBox, |0⟩
+ * at top, |1⟩ at bottom, +x = |+⟩ to the right. Arrow length scales
+ * with r; r < 0.98 ⇒ "entangled" badge. y is projected away (2D card,
+ * same as the sandbox). All math via `reducedDensityMatrix` +
+ * `blochVectorFromRho` from `lib/quantum/reducedDensity.ts`.
+ */
+
+interface Props {
+  /** Store key shared by every widget on the essay page. */
+  storeKey: string;
+  /** Which qubit (0-indexed, LSB) to project. */
+  qubit: number;
+  /** Total qubits in the register — must match the store. */
+  qubits: number;
+  /** Optional label above the card. */
+  caption?: string;
+}
+
+const { storeKey, qubit, qubits, caption } = Astro.props as Props;
+---
+
+<figure
+  class="my-4 rounded-md border border-slate-800 bg-slate-950/60 p-3 space-y-2"
+  data-widget="mini-bloch"
+  data-store-key={storeKey}
+  data-qubit={qubit}
+  data-qubits={qubits}
+  aria-label={`Reduced-density Bloch projection for qubit ${qubit}`}
+>
+  <div class="flex items-center justify-between">
+    <p class="font-mono text-xs uppercase tracking-wider text-slate-400">
+      q<span class="text-indigo-300">{qubit}</span>
+    </p>
+    <span
+      data-role="entangled-badge"
+      class="hidden rounded-full bg-amber-500/15 text-amber-300 text-[10px] uppercase tracking-wider px-2 py-0.5"
+      title="r < 0.98 — this qubit shares information with another. No single-qubit picture is exact."
+    >Entangled</span>
+  </div>
+
+  <div class="relative aspect-square w-full max-w-[180px] mx-auto">
+    <svg
+      viewBox="0 0 100 100"
+      class="w-full h-full"
+      role="img"
+      aria-label={`Bloch projection for qubit ${qubit}`}
+    >
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#334155" stroke-width="1" />
+      <line x1="50" y1="10" x2="50" y2="90" stroke="#1e293b" stroke-width="1" />
+      <line x1="10" y1="50" x2="90" y2="50" stroke="#1e293b" stroke-width="1" />
+      <text x="50" y="8" text-anchor="middle" font-size="6" fill="#64748b" font-family="ui-monospace, monospace">|0⟩</text>
+      <text x="50" y="97" text-anchor="middle" font-size="6" fill="#64748b" font-family="ui-monospace, monospace">|1⟩</text>
+      <line
+        data-role="arrow"
+        x1="50" y1="50" x2="50" y2="10"
+        stroke="#818cf8" stroke-width="2.5" stroke-linecap="round"
+      />
+      <circle data-role="tip" cx="50" cy="10" r="3" fill="#818cf8" />
+    </svg>
+  </div>
+
+  {caption && <figcaption class="text-center text-xs text-slate-500">{caption}</figcaption>}
+
+  <p class="text-center font-mono text-[10px] text-slate-500">
+    r = <span data-role="r-readout" class="tabular-nums text-slate-300">1.000</span>
+  </p>
+</figure>
+
+<script>
+  import { ensureStore } from "../lib/quantum/store";
+  import {
+    reducedDensityMatrix,
+    blochVectorFromRho,
+  } from "../lib/quantum/reducedDensity";
+
+  /** r below this ⇒ flag the qubit as entangled / mixed. Same as the
+   *  sandbox results panel — keep these in sync if either ever moves. */
+  const ENTANGLED_THRESHOLD = 0.98;
+  const SVG_CENTER = 50;
+  const SVG_RADIUS = 40;
+
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function mount(el: HTMLElement) {
+    const storeKey = el.dataset.storeKey!;
+    const qubit = Number(el.dataset.qubit ?? "0");
+    const qubits = Number(el.dataset.qubits ?? "1");
+    const store = ensureStore(storeKey, { qubits });
+
+    const arrow = el.querySelector<SVGLineElement>('[data-role="arrow"]')!;
+    const tip = el.querySelector<SVGCircleElement>('[data-role="tip"]')!;
+    const badge = el.querySelector<HTMLElement>('[data-role="entangled-badge"]')!;
+    const rReadout = el.querySelector<HTMLElement>('[data-role="r-readout"]')!;
+
+    if (!reduceMotion) {
+      arrow.style.transition = "x2 180ms ease-out, y2 180ms ease-out, stroke-opacity 180ms ease-out";
+      tip.style.transition = "cx 180ms ease-out, cy 180ms ease-out, fill-opacity 180ms ease-out";
+    }
+
+    return store.subscribe((snap) => {
+      const rho = reducedDensityMatrix(snap.state, qubit, snap.qubits);
+      const v = blochVectorFromRho(rho);
+
+      const tipX = SVG_CENTER + v.x * SVG_RADIUS;
+      const tipY = SVG_CENTER - v.z * SVG_RADIUS;
+      arrow.setAttribute("x2", tipX.toFixed(2));
+      arrow.setAttribute("y2", tipY.toFixed(2));
+      tip.setAttribute("cx", tipX.toFixed(2));
+      tip.setAttribute("cy", tipY.toFixed(2));
+
+      const entangled = v.r < ENTANGLED_THRESHOLD;
+      badge.classList.toggle("hidden", !entangled);
+
+      // Fade as r shrinks — the single-qubit picture is partial info.
+      const opacity = (0.3 + 0.7 * v.r).toFixed(3);
+      arrow.setAttribute("stroke-opacity", opacity);
+      tip.setAttribute("fill-opacity", opacity);
+
+      rReadout.textContent = v.r.toFixed(3);
+    });
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="mini-bloch"]')
+    .forEach(mount);
+</script>

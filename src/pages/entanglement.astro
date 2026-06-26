@@ -1,0 +1,340 @@
+---
+/**
+ * "Entanglement" — Phase 4 marquee essay.
+ *
+ * The first essay where one qubit isn't enough. Builds the Bell pair
+ * with H + CNOT and shows the reader, geometrically, what "no
+ * separate state for q0" means: the per-qubit Bloch arrow shrinks to
+ * the origin and the "entangled" badge appears.
+ *
+ * Plan 04-05 decision log:
+ *   Bloch path = (B) — extracted `MiniBloch.astro`.
+ *
+ *   WHY: `ResultsPanel.astro`'s hydrator (`results.client.ts`) imports
+ *   the sandbox singleton `circuit` signal directly from
+ *   `lib/sandbox/store.ts`. Reusing it from an essay would require
+ *   either editing that hydrator (out of scope for this plan — the
+ *   guardrails restrict touches to `entanglement.astro` and a new
+ *   `MiniBloch.astro`) or standing up a parallel sandbox store on the
+ *   essay page (heavyweight: drags in `composer.client`, persistence,
+ *   history, signals — and re-pipes essay store events into it).
+ *   Path B reuses the pure math (`reducedDensityMatrix` +
+ *   `blochVectorFromRho`) inside a 145-line SVG component that plugs
+ *   straight into `ensureStore` — the same contract every other widget
+ *   on this page (GateButtons, ProbabilityBars) already uses. Zero
+ *   sandbox chrome reaches the essay bundle.
+ *
+ * Convention: qubit register is written `|q1 q0⟩` (Qiskit / LSB-first),
+ * matching the simulator and the rest of this codebase.
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import ProbabilityBars from "../components/ProbabilityBars.astro";
+import GateButtons from "../components/GateButtons.astro";
+import MiniBloch from "../components/MiniBloch.astro";
+import SandboxLink from "../components/SandboxLink.astro";
+import { gateOp, cnotOp, type Circuit } from "../lib/quantum";
+
+const KEY = "entanglement-essay";
+
+/** Starter circuit for the sandbox deep-link: the canonical Bell pair.
+ *  Step 1 puts q0 into superposition, step 2 entangles q1 with q0. */
+const bellStarter: Circuit = {
+  qubits: 2,
+  steps: [[gateOp("H", 0)], [cnotOp(0, 1)]],
+};
+---
+
+<EssayLayout
+  title="Entanglement"
+  subtitle="Two qubits, one shared fate. The Bell pair is the first place 'no separate state for q0' stops being abstract — and starts being visible."
+  description="Build a Bell pair with H + CNOT, watch each qubit's Bloch arrow collapse to the origin, and learn why the reduced density matrix is the right tool for thinking about parts of a composite system."
+>
+  <p>
+    Every essay before this one fit on a single qubit. One Bloch
+    sphere, two amplitudes, a handful of gates. That's been enough to
+    cover superposition, phase, measurement, and rotation — most of
+    what's surprising about a <em>single</em> quantum particle.
+  </p>
+
+  <p>
+    None of that prepares you for what happens when you have two.
+  </p>
+
+  <h2>Two qubits, calmly</h2>
+
+  <p data-step="0">
+    A two-qubit register has four computational-basis states:
+    <code>|00⟩</code>, <code>|01⟩</code>, <code>|10⟩</code>,
+    <code>|11⟩</code>. We write the register
+    <code>|q<sub>1</sub> q<sub>0</sub>⟩</code> — qubit 0 is the
+    least-significant bit, matching Qiskit and the simulator under the
+    hood here. So <code>|10⟩</code> means "q<sub>1</sub> = 1,
+    q<sub>0</sub> = 0", which is the only place that convention ever
+    bites you and now we've named it.
+  </p>
+
+  <p>
+    A general two-qubit state is a unit vector with four complex
+    components — one amplitude per basis state — instead of two. Most
+    of the time, this is no big deal: if q<sub>0</sub> is in some
+    state <code>|ψ⟩</code> and q<sub>1</sub> is in some state
+    <code>|φ⟩</code>, the joint state is just their <em>tensor
+    product</em> <code>|φ⟩ ⊗ |ψ⟩</code>. You can read either qubit
+    separately, you can act on either qubit separately, and the bars
+    below behave exactly like two independent single-qubit bars
+    pressed up against each other.
+  </p>
+
+  <ProbabilityBars
+    storeKey={KEY}
+    qubits={2}
+    caption="P over the four basis states |q₁ q₀⟩, in order |00⟩, |01⟩, |10⟩, |11⟩."
+  />
+
+  <div class="my-4 grid grid-cols-2 gap-3 max-w-md mx-auto">
+    <MiniBloch storeKey={KEY} qubit={0} qubits={2} caption="Reduced state of q₀" />
+    <MiniBloch storeKey={KEY} qubit={1} qubits={2} caption="Reduced state of q₁" />
+  </div>
+
+  <GateButtons storeKey={KEY} qubits={2} gates={["H", "X", "Z"]} qubit={0} />
+
+  <p>
+    <strong>Try this:</strong> press <code>H</code>. Only q<sub>0</sub>
+    moves — the H buttons here are wired to act on q<sub>0</sub>. The
+    bars split four ways into two equal pairs (because q<sub>1</sub>
+    is still firmly <code>|0⟩</code>, only <code>|00⟩</code> and
+    <code>|01⟩</code> light up). The left Bloch card sweeps to the
+    equator. The right one stays at the north pole. Both cards still
+    show <code>r = 1</code>: each qubit has a perfectly well-defined
+    individual state. The joint state is a product, the two pictures
+    add up to the whole story, life is fine.
+  </p>
+
+  <p>
+    Press <strong>Reset</strong> before reading on, so we're starting
+    fresh from <code>|00⟩</code>.
+  </p>
+
+  <h2>Build the Bell pair</h2>
+
+  <p data-step="1">
+    Now we apply two gates in sequence. First, <code>H</code> on
+    q<sub>0</sub> — the move we just did, taking us to
+    <code>(|00⟩ + |01⟩)/√2</code>. Then a <strong>CNOT</strong> with
+    q<sub>0</sub> as the control and q<sub>1</sub> as the target. CNOT
+    flips q<sub>1</sub> exactly when q<sub>0</sub> is <code>|1⟩</code>;
+    it does nothing when q<sub>0</sub> is <code>|0⟩</code>. The result
+    is the most famous two-qubit state in physics:
+  </p>
+
+  <MathBlock tex="|\\Phi^+\\rangle \\;=\\; \\frac{1}{\\sqrt{2}} \\bigl(|00\\rangle + |11\\rangle\\bigr)" />
+
+  <p>
+    The bars now show exactly two outcomes, each at 50%: either both
+    qubits read 0, or both read 1. Never one of each. That's already
+    a striking correlation — but the bars alone don't tell you why
+    it's <em>quantum</em>. The Bloch cards do.
+  </p>
+
+  <div
+    data-bell-controls
+    class="my-4 flex flex-wrap items-center gap-2"
+    aria-label="Build the Bell pair"
+  >
+    <button
+      type="button"
+      data-action="h"
+      class="rounded-md border border-indigo-500/40 bg-indigo-500/10 px-3 py-1.5 text-sm font-mono text-indigo-200 hover:bg-indigo-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 transition-colors"
+    >Apply H to q₀</button>
+    <button
+      type="button"
+      data-action="cnot"
+      class="rounded-md border border-fuchsia-500/40 bg-fuchsia-500/10 px-3 py-1.5 text-sm font-mono text-fuchsia-200 hover:bg-fuchsia-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-400 transition-colors"
+    >Apply CNOT(0, 1)</button>
+    <button
+      type="button"
+      data-action="reset"
+      class="ml-2 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+    >Reset</button>
+  </div>
+
+  <p data-step="2">
+    <strong>Try this:</strong> reset, then press
+    <em>Apply H to q<sub>0</sub></em>, then <em>Apply CNOT(0, 1)</em>.
+    Watch both Bloch arrows. They don't move to the equator. They
+    don't pick up phase. They <em>shrink to the origin</em>, and the
+    little amber <strong>"Entangled"</strong> badge lights up on both
+    cards.
+  </p>
+
+  <p>
+    The arrow length <code>r = √(x² + y² + z²)</code> measures how
+    much of the qubit's state can be captured by a single-qubit Bloch
+    picture. <code>r = 1</code> means a pure state — the arrow is the
+    whole truth. <code>r = 0</code> means the maximally mixed state
+    <code>I / 2</code>: no preferred direction, no preferred basis.
+    From the perspective of q<sub>0</sub> alone, after the H and the
+    CNOT, every measurement outcome in every basis is 50/50.
+    Q<sub>0</sub> looks like a fair coin.
+  </p>
+
+  <p>
+    That's not because the joint state is uncertain. The joint state
+    <code>(|00⟩ + |11⟩)/√2</code> is a perfectly pure, unit-norm
+    vector — it's just <em>not factorable</em>. There is no
+    <code>|ψ⟩</code> and <code>|φ⟩</code> such that
+    <code>|ψ⟩ ⊗ |φ⟩</code> equals the Bell pair. The information
+    isn't distributed unevenly between q<sub>0</sub> and
+    q<sub>1</sub>; it's distributed in the <em>correlations between
+    them</em>, in a place no per-qubit picture can reach.
+  </p>
+
+  <p>
+    <strong>Try this:</strong> with the Bell pair set up, press
+    <code>H</code> on q<sub>0</sub> again. The bars rearrange — the
+    individual outcomes shift — but watch the Bloch cards. Both arrows
+    stay near the origin. You can rotate either qubit all you like;
+    you can't unscramble what H + CNOT did. The only way to recover
+    full single-qubit states is to either undo the CNOT, measure one
+    qubit (which collapses the joint state and pulls the other into a
+    definite outcome), or perform a joint operation that touches both
+    qubits at once.
+  </p>
+
+  <h2>Why this matters</h2>
+
+  <p data-step="3">
+    Entanglement is the resource that makes quantum computers
+    interesting. Superdense coding, quantum teleportation, the speedup
+    in Grover's and Shor's algorithms, the security argument behind
+    BB84 — none of them work on product states. They all need at
+    least one pair of qubits that can't be described separately.
+  </p>
+
+  <p>
+    The "Bloch arrow shrinks to the origin" picture is the cheapest,
+    most honest single-qubit visualization of that fact, and it's the
+    one the Sandbox uses on its results panel for any circuit you build.
+    The math behind the shrinking arrow is the <em>reduced density
+    matrix</em>: take the joint state, trace out every qubit except
+    the one you care about, and you're left with a 2×2 matrix that
+    captures everything a measurement on that single qubit could ever
+    reveal. For the Bell pair, that matrix is <code>I / 2</code> —
+    maximally mixed. Hence the origin.
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+    <li>
+      After <code>H</code> on q<sub>0</sub> and <code>CNOT(0, 1)</code>,
+      what does the Bloch arrow for q<sub>0</sub> look like, and what
+      does that <em>not</em> tell you about the joint state? (Press the
+      buttons; then explain the picture to a friend.)
+    </li>
+    <li>
+      The probability bars after the Bell pair show only
+      <code>|00⟩</code> and <code>|11⟩</code>, each at 50%. If
+      entanglement is a "shared fate," what would change if we'd built
+      <code>(|01⟩ + |10⟩)/√2</code> instead? (Hint: try
+      <code>X</code> on q<sub>1</sub> first, then H + CNOT.)
+    </li>
+  </ol>
+
+  <p class="my-6">
+    <SandboxLink circuit={bellStarter} label="Open the Bell pair in the sandbox →" />
+  </p>
+
+  <MathNerds title="Tensor products, partial traces, and why ρ_q₀ = I/2">
+    <p>
+      Two single-qubit states <code>|ψ⟩, |φ⟩ ∈ ℂ²</code> combine into a
+      two-qubit state by the <em>tensor product</em>:
+    </p>
+    <MathBlock tex="|\\psi\\rangle \\otimes |\\varphi\\rangle \\;=\\; \\begin{bmatrix}\\psi_0\\varphi_0\\\\ \\psi_0\\varphi_1\\\\ \\psi_1\\varphi_0\\\\ \\psi_1\\varphi_1\\end{bmatrix}" />
+    <p>
+      Every product state has this shape. A state that <em>can't</em>
+      be written this way for any choice of <code>|ψ⟩</code> and
+      <code>|φ⟩</code> is, by definition, entangled. The Bell pair is
+      the canonical example — try to solve
+      <code>ψ₀φ₀ = ψ₁φ₁ = 1/√2</code> with
+      <code>ψ₀φ₁ = ψ₁φ₀ = 0</code> and you'll fail.
+    </p>
+    <p>
+      To get a single-qubit picture out of a joint state we take a
+      <em>partial trace</em>. For qubit 0 of a two-qubit state
+      <code>|Ψ⟩</code>:
+    </p>
+    <MathBlock tex="\\rho_{q_0} \\;=\\; \\operatorname{Tr}_{q_1}\\bigl(|\\Psi\\rangle\\langle\\Psi|\\bigr) \\;=\\; \\sum_{k \\in \\{0,1\\}} \\langle k|_{q_1}\\, |\\Psi\\rangle\\langle\\Psi|\\, |k\\rangle_{q_1}" />
+    <p>
+      For the Bell pair, both terms contribute <code>½ |k⟩⟨k|</code>,
+      and the sum is the maximally mixed state:
+    </p>
+    <MathBlock tex="\\rho_{q_0} \\;=\\; \\tfrac{1}{2}|0\\rangle\\langle 0| + \\tfrac{1}{2}|1\\rangle\\langle 1| \\;=\\; \\tfrac{1}{2} I" />
+    <p>
+      Bloch coordinates of a density matrix
+      <code>ρ = ½(I + r·σ)</code> are <code>x = 2 Re ρ₀₁</code>,
+      <code>y = −2 Im ρ₀₁</code>, <code>z = ρ₀₀ − ρ₁₁</code>. Plug in
+      <code>ρ = I/2</code> and you get <code>(0, 0, 0)</code> — the
+      arrow at the origin.
+    </p>
+    <p>
+      One-liner the texts call <em>Schmidt decomposition</em>: every
+      pure two-qubit state can be written as
+      <code>|Ψ⟩ = Σᵢ λᵢ |aᵢ⟩ ⊗ |bᵢ⟩</code> for some pair of
+      orthonormal bases <code>&#123;|aᵢ⟩&#125;</code> on q<sub>0</sub> and
+      <code>&#123;|bᵢ⟩&#125;</code> on q<sub>1</sub>. The number of nonzero
+      <code>λᵢ</code> is the <em>Schmidt rank</em> — 1 for product
+      states, 2 for the Bell pair. That's the cleanest single number
+      that tells you whether a state is entangled, and how much.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="footer-nav">
+    <a href="/gates" class="hover:text-slate-200">← Gates</a>
+    <a href="/sandbox" class="hover:text-slate-200">Next: open the Sandbox →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  import { attachScrolly } from "../lib/scrolly";
+  import { mountAnnotations } from "../lib/annotations";
+  import { ensureStore } from "../lib/quantum/store";
+
+  const KEY = "entanglement-essay";
+
+  const root = document.querySelector("article");
+  if (root) {
+    attachScrolly(root, {
+      stepSelector: "[data-step]",
+      onStep: (i) => console.debug(`[scrolly] step ${i}`),
+    });
+  }
+
+  const ann = mountAnnotations();
+  document.getElementById("reset-annotations")?.addEventListener("click", () => {
+    ann.reset();
+  });
+
+  // "Build the Bell pair" controls. We talk to the same store every
+  // widget on this page registered with, so a press here updates the
+  // bars, the Bloch cards, and any annotations atomically.
+  const store = ensureStore(KEY, { qubits: 2 });
+  const controls = document.querySelector<HTMLElement>("[data-bell-controls]");
+  controls?.addEventListener("click", (event) => {
+    const target = (event.target as HTMLElement).closest("button");
+    if (!target) return;
+    switch (target.dataset.action) {
+      case "h":
+        store.apply("H", 0);
+        break;
+      case "cnot":
+        store.applyCNOT(0, 1);
+        break;
+      case "reset":
+        store.reset();
+        break;
+    }
+  });
+</script>
