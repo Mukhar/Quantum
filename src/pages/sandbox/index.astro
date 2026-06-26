@@ -2,6 +2,7 @@
 import SandboxLayout from "../../layouts/SandboxLayout.astro";
 import ResultsPanel from "../../components/sandbox/ResultsPanel.astro";
 import QuantumCanvas from "../../components/sandbox/QuantumCanvas.astro";
+import QuantumTones from "../../components/sandbox/QuantumTones.astro";
 ---
 
 <SandboxLayout
@@ -66,6 +67,7 @@ import QuantumCanvas from "../../components/sandbox/QuantumCanvas.astro";
       </div>
       <ResultsPanel />
       <QuantumCanvas />
+      <QuantumTones />
     </section>
 
     <aside aria-label="Tools" class="space-y-4">
@@ -101,30 +103,50 @@ import QuantumCanvas from "../../components/sandbox/QuantumCanvas.astro";
     mountToast();
     mountResults(root as HTMLElement);
 
-    // Quantum Canvas pays for its Web Worker chunk only when it scrolls
-    // into view — the composer up top stays the fast critical path.
-    const canvasRoot = root.querySelector<HTMLElement>("[data-quantum-canvas-root]");
-    if (canvasRoot) {
-      const hydrate = () => import("../../lib/sandbox/canvas.client")
-        .then(({ mountCanvas }) => mountCanvas(canvasRoot))
-        .catch((err) => console.warn("[QuantumCanvas] mount failed", err));
-
-      if (typeof IntersectionObserver === "function") {
-        const io = new IntersectionObserver((entries) => {
-          for (const e of entries) {
-            if (e.isIntersecting) {
-              io.disconnect();
-              hydrate();
-              return;
-            }
-          }
-        }, { rootMargin: "200px" });
-        io.observe(canvasRoot);
-      } else {
-        hydrate();
-      }
-    }
+    // Both creative widgets are lazy-mounted via IntersectionObserver
+    // so the composer up top stays the fast critical path. Each pays
+    // for its own JS chunk only when it scrolls into view.
+    lazyMount(
+      root.querySelector<HTMLElement>("[data-quantum-canvas-root]"),
+      () => import("../../lib/sandbox/canvas.client").then(
+        ({ mountCanvas }) => mountCanvas,
+      ),
+      "QuantumCanvas",
+    );
+    lazyMount(
+      root.querySelector<HTMLElement>("[data-quantum-tones-root]"),
+      () => import("../../lib/sandbox/tones.client").then(
+        ({ mountTones }) => mountTones,
+      ),
+      "QuantumTones",
+    );
   };
+
+  function lazyMount(
+    target: HTMLElement | null,
+    loader: () => Promise<(el: HTMLElement) => void>,
+    label: string,
+  ): void {
+    if (!target) return;
+    const hydrate = () => loader()
+      .then((mount) => mount(target))
+      .catch((err) => console.warn(`[${label}] mount failed`, err));
+
+    if (typeof IntersectionObserver === "function") {
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            io.disconnect();
+            hydrate();
+            return;
+          }
+        }
+      }, { rootMargin: "200px" });
+      io.observe(target);
+    } else {
+      hydrate();
+    }
+  }
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
