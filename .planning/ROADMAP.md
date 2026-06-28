@@ -1,180 +1,135 @@
-# Roadmap: Quantum
+# Roadmap: Quantum v2.0 — Return, Comfort, Voice
 
 ## Overview
 
-Ship a v1 quantum-computing learning **and playground** site for working
-devs across five phases. After foundation, we ship the flagship qubit
-essay (proving the pedagogy works), then we ship the Quantum Sandbox
-(unlocking the creativity pillar), then we backfill the remaining essays
-(each one linking out to sandbox remixes), then we cap it with the
-algorithm track and launch.
+v2.0 closes the three obvious gaps that will be visible the moment v1
+hits readers — no way to save circuits, no theme choice, no in-site
+feedback channel — without breaking the static-site, no-backend posture
+that defines the project.
 
-The sandbox lands **second** on purpose: every essay we write afterward
-can include "remix this in the sandbox" CTAs, deep-linking readers
-straight into a pre-loaded creative space.
+Phase order is deliberate, smallest-blast-radius first → biggest:
+
+1. **Theme system first.** Touches every page, so subsequent phases
+   are theme-aware from birth and we avoid auditing widgets twice.
+2. **Feedback form second.** Tiny and self-contained, plus it gives
+   us a feedback channel *during* the rest of v2 dev.
+3. **Circuit gallery third.** The meatiest feature; depends on the
+   existing sandbox circuit codec from v1 Phase 3.
+4. **Launch polish fourth.** Closing-the-loop: a11y/Lighthouse audit,
+   dark-mode visual QA pass, v2 announcement.
+
+Phase numbering is **reset** for v2 — v1's phases 1–5 are archived
+under `.planning/phases/_archive-v1/`. v1 historical context lives in
+`.planning/MILESTONES.md`.
 
 ## Phases
 
-- [x] **Phase 1: Foundation** — Astro/Tailwind shell + simulator skeleton + tests
-- [x] **Phase 2: Flagship interactive qubit essay** — End-to-end M1 with direct-manipulation widgets, parameterized rotations, draggable Bloch sphere, annotations (deploy + feedback round folded into Phase 5 launch checklist)
-- [x] **Phase 3: Quantum Sandbox + Creative Outputs** — `/sandbox` circuit composer with URL sharing, challenge mode, Quantum Canvas (art), Quantum Tones (audio)
-- [x] **Phase 4: Foundations essay track** — Superposition, measurement, gates, entanglement essays + homepage concept map; each essay deep-links to sandbox remixes
-- [x] **Phase 5: Algorithm track + v1 launch** — CNOT+Bell essay, Deutsch's algorithm essay, in-essay drag-drop circuits, launch polish
+- [ ] **Phase 1: Theme system** — Tailwind class-based dark mode, persisted user override, FOUC-killer, full widget audit, Playwright visual regression
+- [ ] **Phase 2: Feedback form** — `/feedback` page + Apps Script + private Google Sheet + honeypot + mailto fallback
+- [ ] **Phase 3: Circuit gallery** — IndexedDB-backed save/load shelf, `/gallery` page, sandbox save drawer, export/import, schema migrations
+- [ ] **Phase 4: v2 launch polish** — Lighthouse + a11y audit, dark-mode visual QA, v2 announcement draft
 
 ## Phase Details
 
-### Phase 1: Foundation [done]
+### Phase 1: Theme system
 
-**Goal**: Astro + Tailwind scaffolding and an inspectable, tested simulator.
-**Depends on**: Nothing
-**Requirements**: REQ-02, REQ-11, REQ-13
-**Success Criteria**:
-  1. `npm test` passes with simulator covering X/Y/Z/H/S/T/CNOT + measurement
-  2. `npm run dev` serves the homepage shell
-  3. Simulator enforces 4-qubit hard cap
+**Goal:** Class-based dark mode with `localStorage`-persisted user
+override, FOUC-free first paint, and AA contrast across every existing
+widget on both themes.
+**Depends on:** v1.0 (every existing page).
+**Requirements:** THEME-01, THEME-02, THEME-03, THEME-04, THEME-05
+**Success Criteria:**
+  1. Header has a 3-state toggle (Light / Dark / System); choice
+     persists across reloads in `localStorage["quantum/theme"]`
+  2. First paint is FOUC-free in both themes (inline `<head>` script
+     runs before CSS applies)
+  3. KaTeX, Three.js Bloch, ProbabilityBars, StateVector, sandbox
+     grid + palette, Quantum Canvas, Quantum Tones, annotations,
+     ConceptMap, and Shiki code blocks all hit WCAG 2.2 AA contrast
+     in both themes
+  4. Three.js Bloch scene re-reads background/axis colors from CSS
+     vars on toggle — no reload required
+  5. Playwright snapshots every route in both themes and fails CI on
+     contrast/layout regression
 
-**Plans** (shipped, retroactively listed):
-- [x] 01-01: Astro/Tailwind scaffold + status homepage
-- [x] 01-02: Complex/Gate/Simulator modules under `src/lib/quantum/`
-- [x] 01-03: Vitest suite with textbook tests + guard tests
+**Plans:** TBD (created by `/gsd-plan-phase 1`)
 
-### Phase 2: Flagship interactive qubit essay
+### Phase 2: Feedback form
 
-**Goal**: Ship one polished essay end-to-end, validating *both* pedagogy
-and the interactivity-first widget pattern. Every widget on the page is
-directly manipulable (drag, slider, alternate initial state). Adds the
-parameterized rotation gates the rest of the site will depend on.
-**Depends on**: Phase 1
-**Requirements**: REQ-01, REQ-05, REQ-06 (Bloch + ProbabilityBars + StateVector),
-  REQ-07, REQ-08, REQ-09, REQ-10, REQ-12, REQ-14, REQ-15, REQ-16, REQ-19, REQ-22
-**Success Criteria**:
-  1. `/qubit` route renders the full essay with scrollytelling layout
-  2. Bloch sphere widget rotates in 3D on desktop; falls back to 2D
-     polar on small screens / no-WebGL
-  3. **Users can drag the Bloch state-vector arrow** to set the
-     initial state; gate applications act on whatever they dragged to
-  4. **Rx(θ), Ry(θ), Rz(θ) sliders** sweep continuously and update
-     all widgets in real time (<= 16 ms per frame)
-  5. ProbabilityBars + StateVector widgets share state via a per-page
-     simulator store and re-render on every state change
-  6. **Annotations**: users can pin a sticky note to any widget,
-     persisted to `localStorage`
-  7. KaTeX renders inline math in the "for the math nerds" collapsible
-  8. Site is deployed to a static host with a public URL
-  9. `prefers-reduced-motion` disables scroll-tied + Bloch animation
-  10. Page weighs in under the 2s-LCP-on-4G budget (measured)
-  11. ≥ 3 working devs have read the essay + actually played with the
-      widgets; ≥ 1 iteration pass made on their feedback
+**Goal:** A single `/feedback` page POSTs to a Google Apps Script Web
+App that appends rows to a private Google Sheet you own. Mailto
+fallback on failure; honeypot for spam.
+**Depends on:** Phase 1 (theme system) — form should ship theme-aware.
+**Requirements:** FB-01, FB-02, FB-03, FB-04, FB-05
+**Success Criteria:**
+  1. `/feedback` renders the form with Type / Subject / Message /
+     optional Email fields and submits to the Apps Script URL
+  2. Submission appends a row with `(timestamp, type, subject, message,
+     email, page_referrer)` to the configured Sheet
+  3. `/feedback/thanks` confirms success; a "send another" link returns
+     to the form
+  4. Honeypot drops bot submissions silently
+  5. Apps Script failure or network error surfaces a `mailto:` fallback
+     link with prefilled subject/body
+  6. `docs/apps-script.md` documents the one-time Apps Script setup
 
-**Plans**: 6 plans
-- [x] 02-01: Astro page shell + KaTeX + scrolly helper + per-essay layout
-- [x] 02-02: **Param rotation gates Rx/Ry/Rz in the simulator** + tests
-- [x] 02-03: ProbabilityBars + StateVector widgets + per-page sim store
-- [x] 02-04: BlochSphere widget (Three.js, draggable arrow) + 2D polar fallback
-- [x] 02-05: Param-gate sliders + annotations system (pin notes to widgets)
-- [x] 02-06: Essay copy + a11y/perf shipped (deploy + dev-friend feedback round folded into Phase 5 launch checklist)
+**Plans:** TBD (created by `/gsd-plan-phase 2`)
 
-### Phase 3: Quantum Sandbox + Creative Outputs
+### Phase 3: Circuit gallery
 
-**Goal**: The marquee creativity feature. A dedicated `/sandbox` route
-with an open-ended circuit composer, full URL-fragment shareability,
-a challenge-puzzle mode, and two creative output channels (Quantum
-Canvas = generative art, Quantum Tones = audio). This is the pillar
-that turns the site from "tutorial" into "playground."
-**Depends on**: Phase 2 (param gates, sim store, widget primitives)
-**Requirements**: REQ-17, REQ-18, REQ-19, REQ-20, REQ-21, REQ-23,
-  and re-uses REQ-06 + REQ-15 + REQ-16
-**Success Criteria**:
-  1. `/sandbox` lets a user drag gates onto a qubit×timestep grid
-     (1–4 qubits, up to ~20 timesteps), with X/Y/Z/H/S/T/CNOT/Rx/Ry/Rz
-  2. Live Bloch sphere(s) + ProbabilityBars update on every edit
-  3. **URL fragment encodes the full circuit**; pasting the URL into
-     a new tab reconstructs it exactly. Round-trip test in CI.
-  4. Undo/redo (≥ 20 deep) + keyboard shortcuts (z, ⇧z, del, ←/→)
-  5. **Challenge mode** at `/sandbox/challenges` with ≥ 5 starter
-     puzzles ("reach |+⟩", "build a Bell pair", "produce equal
-     superposition over all 4 basis states", etc.) with hint
-     progression and state-similarity success detection (fidelity > 0.999)
-  6. **Quantum Canvas** widget: maps repeated measurements over a
-     parameter sweep to a 2D color grid; exportable as PNG
-  7. **Quantum Tones** widget: maps measurement outcomes to a short
-     Web Audio sequence; exportable as WAV (≤ 4s)
-  8. Sandbox bundle stays under 250 KB gzipped; lazy-loaded
-  9. Sandbox is fully keyboard-operable (a11y AA)
+**Goal:** Local "my saved circuits" shelf at `/gallery` plus a save
+drawer in `/sandbox`. IndexedDB-backed, schema-versioned, exportable.
+Loading a gallery entry reuses the existing URL-fragment codec — no
+new hydration path.
+**Depends on:** Phase 1 (theme), Phase 2 (feedback channel handy for
+beta-testers reporting gallery issues), plus the v1 URL-fragment codec.
+**Requirements:** GAL-01, GAL-02, GAL-03, GAL-04, GAL-05, GAL-06,
+  GAL-07, GAL-08, GAL-09
+**Success Criteria:**
+  1. User can save the current sandbox circuit with a name + optional
+     tags; save renders an ≤ 8 KB PNG thumbnail
+  2. `/gallery` grid shows all saved circuits (thumbnail, name,
+     `qubits·steps`, relative updated-at) with a clear empty state
+  3. Clicking a gallery card opens it in `/sandbox` via the existing
+     URL-fragment codec (no separate "load circuit" code path)
+  4. Rename / duplicate / delete actions work and persist to IndexedDB
+  5. Export entire gallery (or a single entry) to JSON; re-import
+     validates schema and never overwrites existing entries
+  6. Schema is versioned with migration tests (fake-indexeddb)
+  7. Private-browsing fallback: banner + in-memory list for the session
+  8. Gallery bundle lazy-loaded; essay bundles unchanged
+  9. Soft warning at 100 entries; storage-quota error surfaces a toast
 
-**Plans**: 7 plans
-- [x] 03-01: Circuit data model + URL-fragment codec + round-trip tests
-- [x] 03-02: Sandbox shell page + drag-drop gate palette (qubit×step grid)
-- [x] 03-03: Sandbox state store + undo/redo + keyboard shortcuts
-- [x] 03-04: Live multi-qubit Bloch + ProbabilityBars panel for sandbox
-- [x] 03-05: Challenge mode + 5 starter puzzles + fidelity success detector
-- [x] 03-06: Quantum Canvas widget (parameter-sweep art + PNG export)
-- [x] 03-07: Quantum Tones widget (Web Audio + WAV export) + sandbox a11y/perf pass
+**Plans:** TBD (created by `/gsd-plan-phase 3`)
 
-### Phase 4: Foundations essay track
+### Phase 4: v2 launch polish
 
-**Goal**: Round out the conceptual foundations (superposition, measurement,
-gates, entanglement) and replace the homepage shell with the visual
-concept map. Each essay includes one or more **"remix this in the
-sandbox"** CTAs that deep-link to pre-loaded circuits.
-**Depends on**: Phase 3 (sandbox + URL codec)
-**Requirements**: REQ-03 (4 of 7 essays), REQ-04
-**Success Criteria**:
-  1. Four new essays live: `/superposition`, `/measurement`, `/gates`,
-     `/entanglement` — each following the qubit-essay template
-  2. Each essay has at least one widget with a "Open in sandbox →"
-     button that deep-links to a pre-loaded circuit
-  3. Homepage replaces the "coming soon" shell with the concept-map nav,
-     including a node for the sandbox and a node for the challenges
-  4. Multi-qubit Bloch + probability panels (built in Phase 3) reused
-     in the entanglement essay
-  5. Cross-essay nav (prev/next based on prereq graph) works
+**Goal:** Final audit + announcement.
+**Depends on:** Phase 3
+**Requirements:** OPS-01, OPS-02, OPS-03
+**Success Criteria:**
+  1. Lighthouse mobile a11y ≥ 95 on `/gallery` and `/feedback` in both
+     themes
+  2. Dark-mode visual QA walkthrough recorded against the §3.2 widget
+     checklist in `docs/plans/2026-06-26-v2-design.md`
+  3. v2 announcement draft committed (mirrors v1's `LAUNCH-ANNOUNCEMENT.md`
+     structure)
+  4. Bundle size delta vs v1 captured; no essay bundle regresses
 
-**Plans**: 6 plans
-- [x] 04-01: Concept map component for homepage (essays + sandbox + challenges)
-- [x] 04-02: Superposition essay (+ sandbox remix CTA)
-- [x] 04-03: Measurement essay (+ sandbox remix CTA)
-- [x] 04-04: Gates essay (+ sandbox remix CTA — sweep slider for arbitrary rotations)
-- [x] 04-05: Entanglement essay (+ multi-qubit widgets + sandbox remix CTA)
-- [x] 04-06: Cross-essay nav, concept-map polish, regression pass on Phase 2+3
-
-### Phase 5: Algorithm track + v1 launch
-
-**Goal**: Final two essays (CNOT+Bell, Deutsch's algorithm) plus drag-drop
-circuit embedding directly inside essays (re-using the sandbox composer).
-v1 launches at the end of this phase.
-**Depends on**: Phase 4
-**Requirements**: REQ-03 (final 2 of 7 essays), REQ-06 (CircuitBuilder)
-**Success Criteria**:
-  1. CNOT + Bell-state essay live with two-qubit interactive widgets
-     and a "remix this Bell pair" CTA
-  2. Deutsch's algorithm essay live with an embedded circuit-builder
-     widget (re-using the sandbox composer in read+edit mode)
-  3. All seven essays cross-linked through the concept map
-  4. v1 launch announcement post drafted; analytics opt-in decision made
-  5. End-to-end Lighthouse pass: all essays meet the 2s-LCP budget,
-     sandbox meets its 3s-LCP budget, a11y ≥ 95 everywhere
-
-**Plans**: 5 plans
-- [x] 05-01: CircuitBuilder essay-embed mode (re-uses sandbox composer, read-only by default)
-- [x] 05-02: CNOT + Bell-state essay
-- [x] 05-03: Deutsch's algorithm essay
-- [x] 05-04: v1 launch polish — analytics decision, og-images, robots/sitemap
-- [x] 05-05: Launch announcement draft + final Lighthouse + retro (formal Lighthouse run pending deploy)
+**Plans:** TBD (created by `/gsd-plan-phase 4`)
 
 ## Progress
 
-**Execution Order:** Phases run in numeric order: 1 → 2 → 3 → 4 → 5.
+**Execution Order:** Phases run in numeric order: 1 → 2 → 3 → 4.
 
 | Phase | Plans Complete | Status      | Completed  |
 |-------|----------------|-------------|------------|
-| 1. Foundation                         | 3/3 | Done           | 2026-06-24 |
-| 2. Flagship interactive qubit essay   | 6/6 | Done (deploy + feedback folded into Phase 5 launch checklist) | 2026-06-25 |
-| 3. Quantum Sandbox + Creative Outputs | 7/7 | Done           | 2026-06-26 |
-| 4. Foundations essay track            | 6/6 | Done           | 2026-06-26 |
-| 5. Algorithm track + v1 launch        | 5/5 | Code-complete (deploy task pending — see STATE.md) | 2026-06-26 |
+| 1. Theme system        | 0/TBD | Not started | — |
+| 2. Feedback form       | 0/TBD | Not started | — |
+| 3. Circuit gallery     | 0/TBD | Not started | — |
+| 4. v2 launch polish    | 0/TBD | Not started | — |
 
-**v1 status:** All 5 phases code-complete. Remaining work is a
-deployment + post-launch feedback round, tracked as a task (not a
-phase) in `.planning/STATE.md` and
-`.planning/phases/05-algorithms/LAUNCH-ANNOUNCEMENT.md`.
+**Parallel ops task (not a phase):** v1 deploy + post-launch feedback
+round. Tracked in
+`.planning/phases/_archive-v1/05-algorithms/LAUNCH-ANNOUNCEMENT.md`.
+Runs whenever ready; does not block v2 phase work.
