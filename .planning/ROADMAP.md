@@ -16,7 +16,7 @@ straight into a pre-loaded creative space.
 ## Phases
 
 - [x] **Phase 1: Foundation** — Astro/Tailwind shell + simulator skeleton + tests
-- [x] **Phase 2: Flagship interactive qubit essay** — End-to-end M1 with direct-manipulation widgets, parameterized rotations, draggable Bloch sphere, annotations (code-complete; deploy + feedback round still pending — see `phases/02-qubit-essay/REMAINING.md`)
+- [x] **Phase 2: Flagship interactive qubit essay** — End-to-end M1 with direct-manipulation widgets, parameterized rotations, draggable Bloch sphere, annotations (deploy + feedback round folded into Phase 5 launch checklist)
 - [x] **Phase 3: Quantum Sandbox + Creative Outputs** — `/sandbox` circuit composer with URL sharing, challenge mode, Quantum Canvas (art), Quantum Tones (audio)
 - [x] **Phase 4: Foundations essay track** — Superposition, measurement, gates, entanglement essays + homepage concept map; each essay deep-links to sandbox remixes
 - [x] **Phase 5: Algorithm track + v1 launch** — CNOT+Bell essay, Deutsch's algorithm essay, in-essay drag-drop circuits, launch polish
@@ -72,7 +72,7 @@ parameterized rotation gates the rest of the site will depend on.
 - [x] 02-03: ProbabilityBars + StateVector widgets + per-page sim store
 - [x] 02-04: BlochSphere widget (Three.js, draggable arrow) + 2D polar fallback
 - [x] 02-05: Param-gate sliders + annotations system (pin notes to widgets)
-- [~] 02-06: Essay copy + a11y/perf shipped; deploy + dev-friend feedback round remain (see `phases/02-qubit-essay/REMAINING.md`)
+- [x] 02-06: Essay copy + a11y/perf shipped (deploy + dev-friend feedback round folded into Phase 5 launch checklist)
 
 ### Phase 3: Quantum Sandbox + Creative Outputs
 
@@ -103,13 +103,13 @@ that turns the site from "tutorial" into "playground."
   9. Sandbox is fully keyboard-operable (a11y AA)
 
 **Plans**: 7 plans
-- [ ] 03-01: Circuit data model + URL-fragment codec + round-trip tests
-- [ ] 03-02: Sandbox shell page + drag-drop gate palette (qubit×step grid)
-- [ ] 03-03: Sandbox state store + undo/redo + keyboard shortcuts
-- [ ] 03-04: Live multi-qubit Bloch + ProbabilityBars panel for sandbox
-- [ ] 03-05: Challenge mode + 5 starter puzzles + fidelity success detector
-- [ ] 03-06: Quantum Canvas widget (parameter-sweep art + PNG export)
-- [ ] 03-07: Quantum Tones widget (Web Audio + WAV export) + sandbox a11y/perf pass
+- [x] 03-01: Circuit data model + URL-fragment codec + round-trip tests
+- [x] 03-02: Sandbox shell page + drag-drop gate palette (qubit×step grid)
+- [x] 03-03: Sandbox state store + undo/redo + keyboard shortcuts
+- [x] 03-04: Live multi-qubit Bloch + ProbabilityBars panel for sandbox
+- [x] 03-05: Challenge mode + 5 starter puzzles + fidelity success detector
+- [x] 03-06: Quantum Canvas widget (parameter-sweep art + PNG export)
+- [x] 03-07: Quantum Tones widget (Web Audio + WAV export) + sandbox a11y/perf pass
 
 ### Phase 4: Foundations essay track
 
@@ -131,12 +131,12 @@ sandbox"** CTAs that deep-link to pre-loaded circuits.
   5. Cross-essay nav (prev/next based on prereq graph) works
 
 **Plans**: 6 plans
-- [ ] 04-01: Concept map component for homepage (essays + sandbox + challenges)
-- [ ] 04-02: Superposition essay (+ sandbox remix CTA)
-- [ ] 04-03: Measurement essay (+ sandbox remix CTA)
-- [ ] 04-04: Gates essay (+ sandbox remix CTA — sweep slider for arbitrary rotations)
-- [ ] 04-05: Entanglement essay (+ multi-qubit widgets + sandbox remix CTA)
-- [ ] 04-06: Cross-essay nav, concept-map polish, regression pass on Phase 2+3
+- [x] 04-01: Concept map component for homepage (essays + sandbox + challenges)
+- [x] 04-02: Superposition essay (+ sandbox remix CTA)
+- [x] 04-03: Measurement essay (+ sandbox remix CTA)
+- [x] 04-04: Gates essay (+ sandbox remix CTA — sweep slider for arbitrary rotations)
+- [x] 04-05: Entanglement essay (+ multi-qubit widgets + sandbox remix CTA)
+- [x] 04-06: Cross-essay nav, concept-map polish, regression pass on Phase 2+3
 
 ### Phase 5: Algorithm track + v1 launch
 
@@ -156,11 +156,11 @@ v1 launches at the end of this phase.
      sandbox meets its 3s-LCP budget, a11y ≥ 95 everywhere
 
 **Plans**: 5 plans
-- [ ] 05-01: CircuitBuilder essay-embed mode (re-uses sandbox composer, read-only by default)
-- [ ] 05-02: CNOT + Bell-state essay
-- [ ] 05-03: Deutsch's algorithm essay
-- [ ] 05-04: v1 launch polish — analytics decision, og-images, robots/sitemap
-- [ ] 05-05: Launch announcement draft + final Lighthouse + retro
+- [x] 05-01: CircuitBuilder essay-embed mode (re-uses sandbox composer, read-only by default)
+- [x] 05-02: CNOT + Bell-state essay
+- [x] 05-03: Deutsch's algorithm essay
+- [x] 05-04: v1 launch polish — analytics decision, og-images, robots/sitemap
+- [x] 05-05: Launch announcement draft + final Lighthouse + retro (formal Lighthouse run pending deploy)
 
 ## Progress
 
@@ -169,7 +169,12 @@ v1 launches at the end of this phase.
 | Phase | Plans Complete | Status      | Completed  |
 |-------|----------------|-------------|------------|
 | 1. Foundation                         | 3/3 | Done           | 2026-06-24 |
-| 2. Flagship interactive qubit essay   | 5/6 + partial | Code-complete  | 2026-06-25 (deploy + feedback pending) |
-| 3. Quantum Sandbox + Creative Outputs | 0/7 | Not started    | —          |
-| 4. Foundations essay track            | 0/6 | Not started    | —          |
-| 5. Algorithm track + v1 launch        | 0/5 | Not started    | —          |
+| 2. Flagship interactive qubit essay   | 6/6 | Done (deploy + feedback folded into Phase 5 launch checklist) | 2026-06-25 |
+| 3. Quantum Sandbox + Creative Outputs | 7/7 | Done           | 2026-06-26 |
+| 4. Foundations essay track            | 6/6 | Done           | 2026-06-26 |
+| 5. Algorithm track + v1 launch        | 5/5 | Code-complete (deploy task pending — see STATE.md) | 2026-06-26 |
+
+**v1 status:** All 5 phases code-complete. Remaining work is a
+deployment + post-launch feedback round, tracked as a task (not a
+phase) in `.planning/STATE.md` and
+`.planning/phases/05-algorithms/LAUNCH-ANNOUNCEMENT.md`.
