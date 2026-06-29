@@ -20,7 +20,7 @@
  * codec the sandbox uses on the receiving end — see SandboxLink.astro
  * for the rationale.
  */
-import { encodeCircuit, type Circuit, type Op } from "../lib/quantum";
+import { encodeCircuit, toQiskit, type Circuit, type Op } from "../lib/quantum";
 
 interface Props {
   circuit: Circuit;
@@ -116,6 +116,12 @@ const a11yLabel = caption
 
 // Remix link, if enabled. Encode at build time so the link is static.
 const remixHref = showRemixLink ? `/sandbox#${encodeCircuit(circuit)}` : null;
+
+// Qiskit snippet baked at build time (QSK-02) — the inline hydrator
+// below reads `data-qiskit` and copies it to clipboard. Zero client
+// JS cost for the encoder; one event-delegated click handler does
+// the dispatch for every CircuitView on the page.
+const qiskitText = toQiskit(circuit, caption ? { headerComment: caption } : undefined);
 ---
 
 <figure class:list={["not-prose my-6", extraClass]}>
@@ -237,7 +243,14 @@ const remixHref = showRemixLink ? `/sandbox#${encodeCircuit(circuit)}` : null;
     </svg>
 
     {remixHref && (
-      <div class="mt-2 text-right">
+      <div class="mt-2 flex flex-wrap items-center justify-end gap-3">
+        <button
+          type="button"
+          data-action="copy-qiskit"
+          data-qiskit={qiskitText}
+          class="text-xs text-positive hover:text-positive underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-positive"
+          aria-label="Copy this circuit as Qiskit Python"
+        >Copy as Qiskit</button>
         <a
           href={remixHref}
           class="text-xs text-positive hover:text-positive underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-positive"
@@ -245,8 +258,42 @@ const remixHref = showRemixLink ? `/sandbox#${encodeCircuit(circuit)}` : null;
         >Remix in sandbox →</a>
       </div>
     )}
+    {!remixHref && (
+      <div class="mt-2 text-right">
+        <button
+          type="button"
+          data-action="copy-qiskit"
+          data-qiskit={qiskitText}
+          class="text-xs text-positive hover:text-positive underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-positive"
+          aria-label="Copy this circuit as Qiskit Python"
+        >Copy as Qiskit</button>
+      </div>
+    )}
   </div>
   {caption && (
     <figcaption class="mt-2 text-sm text-ink-subtle">{caption}</figcaption>
   )}
 </figure>
+
+<script>
+  // QSK-02 click hydrator. Event-delegated so a single bundle entry
+  // serves every CircuitView on the page (Astro dedupes identical
+  // <script> blocks to one chunk per page).
+  document.addEventListener("click", async (ev) => {
+    const target = ev.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.dataset.action !== "copy-qiskit") return;
+    const snippet = target.dataset.qiskit ?? "";
+    const restore = (msg: string) => {
+      const prev = target.textContent;
+      target.textContent = msg;
+      window.setTimeout(() => { target.textContent = prev; }, 1500);
+    };
+    try {
+      await navigator.clipboard.writeText(snippet);
+      restore("Copied!");
+    } catch {
+      restore("Copy failed");
+    }
+  });
+</script>
