@@ -10,6 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "check:bundle": "node scripts/check-bundle-budget.mjs",
+    "pretest": "npm run build && npm run check:bundle",
     "test": "vitest run",
     "test:watch": "vitest"
   },

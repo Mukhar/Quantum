@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "comment": "Gzipped JS bytes shipped per route (every <script src='/_astro/*.js'> in dist/<route>/index.html). Ceiling = round_up(actual × 1.2, 1024). The gate intentionally measures only eagerly-loaded JS — chunks behind dynamic import() (canvas, tones, gallery-save) live below the fold and have their own implicit budget governed by IntersectionObserver gating. Update ceilings explicitly in the same commit as the regression, with a one-line rationale in the commit body.",
+  "routes": {
+    "404": 1024,
+    "cnot-bell": 1024,
+    "deutsch": 1024,
+    "entanglement": 1024,
+    "feedback": 2048,
+    "feedback/thanks": 1024,
+    "gallery": 3072,
+    "gates": 1024,
+    "index": 1024,
+    "measurement": 1024,
+    "qubit": 1024,
+    "sandbox": 3072,
+    "sandbox/challenges": 1024,
+    "sandbox/challenges/bell": 3072,
+    "sandbox/challenges/flip": 3072,
+    "sandbox/challenges/ghz": 3072,
+    "sandbox/challenges/plus": 3072,
+    "sandbox/challenges/rotate-pi-3": 3072,
+    "superposition": 1024
+  }
+}
