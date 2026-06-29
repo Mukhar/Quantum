@@ -55,3 +55,5 @@ export {
   teleportationSteps,
 } from "./teleportation";
 export type { ProtocolStep, TeleportationOpts } from "./teleportation";
+
+export { replayProtocol } from "./protocolStepper";

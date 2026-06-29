@@ -1,0 +1,177 @@
+---
+/**
+ * ProtocolStepper — Prev/Next walker through a labeled `ProtocolStep[]`.
+ *
+ * Server-rendered shell + inline `<script>` hydrator (no separate
+ * `.client.ts` — Phase 2 has one consumer; Phase 3's superdense will
+ * be the second and reuses this file as-is).
+ *
+ * Storage: steps are emitted into a `data-steps` attribute as JSON,
+ * deserialized on mount. Astro's attribute serializer handles the
+ * escaping; `el.dataset.steps` returns the unescaped string ready for
+ * `JSON.parse`.
+ *
+ * Replay semantics: every transition (Prev / Next / arrow keys) calls
+ * `replayProtocol(store, steps, current)` from
+ * `src/lib/quantum/protocolStepper.ts`. That helper resets the store
+ * and re-applies every step's ops from 0 to `current`. At 4 qubits
+ * this is sub-millisecond, and the simple model means jumping
+ * backward and forward never drifts.
+ */
+import type { ProtocolStep } from "../lib/quantum/teleportation";
+
+interface Props {
+  storeKey: string;
+  qubits: number;
+  steps: ProtocolStep[];
+  initialStep?: number;
+  caption?: string;
+}
+
+const {
+  storeKey,
+  qubits,
+  steps,
+  initialStep = 0,
+  caption,
+} = Astro.props as Props;
+
+const startIdx = Math.max(0, Math.min(initialStep, steps.length - 1));
+const current = steps[startIdx];
+const ariaLabel = caption ?? "Protocol stepper";
+const stepsJson = JSON.stringify(steps);
+---
+
+<figure
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5 space-y-3"
+  data-widget="protocol-stepper"
+  data-widget-id={`protocol-stepper:${storeKey}`}
+  data-store-key={storeKey}
+  data-qubits={qubits}
+  data-initial-step={startIdx}
+  data-steps={stepsJson}
+  tabindex="0"
+  aria-label={ariaLabel}
+>
+  {caption && (
+    <figcaption class="text-sm text-ink-subtle">{caption}</figcaption>
+  )}
+  <div class="flex items-center justify-between gap-3">
+    <button
+      type="button"
+      data-action="prev"
+      class="rounded-md border border-line-strong bg-surface-sunken/60 px-3 py-1.5 text-sm text-ink-muted hover:bg-line-strong disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent transition-colors"
+      aria-label="Previous step"
+      disabled={startIdx === 0}
+      aria-disabled={startIdx === 0}
+    >
+      ← Prev
+    </button>
+    <p
+      data-role="indicator"
+      aria-live="polite"
+      class="font-mono text-xs text-ink-subtle tabular-nums"
+    >
+      Step {startIdx + 1} / {steps.length}
+    </p>
+    <button
+      type="button"
+      data-action="next"
+      class="rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-sm font-mono text-accent-emphasis hover:bg-accent/20 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent transition-colors"
+      aria-label="Next step"
+      disabled={startIdx === steps.length - 1}
+      aria-disabled={startIdx === steps.length - 1}
+    >
+      Next →
+    </button>
+  </div>
+  <div data-role="step-body" class="text-sm space-y-1">
+    <strong data-role="label" class="block">{current.label}</strong>
+    <p data-role="description" class="text-ink-subtle">
+      {current.description ?? ""}
+    </p>
+  </div>
+</figure>
+
+<script>
+  import { ensureStore } from "../lib/quantum/store";
+  import { replayProtocol } from "../lib/quantum/protocolStepper";
+  import type { ProtocolStep } from "../lib/quantum/teleportation";
+
+  function mount(el: HTMLElement) {
+    const storeKey = el.dataset.storeKey!;
+    const qubits = Number(el.dataset.qubits ?? "1");
+    const store = ensureStore(storeKey, { qubits });
+
+    let steps: ProtocolStep[];
+    try {
+      steps = JSON.parse(el.dataset.steps ?? "[]") as ProtocolStep[];
+    } catch {
+      console.warn("ProtocolStepper: could not parse data-steps", el);
+      return;
+    }
+    if (steps.length === 0) return;
+
+    let current = Math.max(
+      0,
+      Math.min(Number(el.dataset.initialStep ?? "0"), steps.length - 1),
+    );
+
+    const prevBtn = el.querySelector<HTMLButtonElement>('button[data-action="prev"]')!;
+    const nextBtn = el.querySelector<HTMLButtonElement>('button[data-action="next"]')!;
+    const indicator = el.querySelector<HTMLElement>('[data-role="indicator"]')!;
+    const labelEl = el.querySelector<HTMLElement>('[data-role="label"]')!;
+    const descEl = el.querySelector<HTMLElement>('[data-role="description"]')!;
+
+    const refresh = () => {
+      replayProtocol(store, steps, current);
+      indicator.textContent = `Step ${current + 1} / ${steps.length}`;
+      labelEl.textContent = steps[current].label;
+      descEl.textContent = steps[current].description ?? "";
+      const atStart = current === 0;
+      const atEnd = current === steps.length - 1;
+      prevBtn.disabled = atStart;
+      nextBtn.disabled = atEnd;
+      prevBtn.setAttribute("aria-disabled", String(atStart));
+      nextBtn.setAttribute("aria-disabled", String(atEnd));
+    };
+
+    const goPrev = () => {
+      if (current > 0) {
+        current -= 1;
+        refresh();
+      }
+    };
+    const goNext = () => {
+      if (current < steps.length - 1) {
+        current += 1;
+        refresh();
+      }
+    };
+
+    el.addEventListener("click", (event) => {
+      const target = (event.target as HTMLElement).closest("button");
+      if (!target || !el.contains(target)) return;
+      if (target.dataset.action === "prev") goPrev();
+      else if (target.dataset.action === "next") goNext();
+    });
+
+    el.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        goPrev();
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        goNext();
+      }
+    });
+
+    // Initial replay so the store reflects the visible step even
+    // before the reader clicks anything.
+    refresh();
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="protocol-stepper"]')
+    .forEach(mount);
+</script>
