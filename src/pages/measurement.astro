@@ -91,31 +91,31 @@ const STARTER: Circuit = {
     isn't <em>doing anything</em> when one outcome has probability 1.
   </p>
 
-  <div class="my-6 rounded-lg border border-slate-800 bg-slate-900/40 p-5">
+  <div class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5">
     <div class="flex flex-wrap items-center gap-4">
       <button
         type="button"
         data-action="run-100"
-        class="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-mono text-emerald-200 hover:bg-emerald-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 transition-colors"
+        class="rounded-md border border-positive/40 bg-positive/10 px-4 py-2 text-sm font-mono text-positive hover:bg-positive/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-positive transition-colors"
       >
         Run 100×
       </button>
-      <p class="m-0 text-sm text-slate-400">
+      <p class="m-0 text-sm text-ink-subtle">
         Re-runs the circuit you've built (current gates, then a
         measurement) 100 times against fresh randomness.
       </p>
     </div>
-    <div class="mt-4 space-y-2 font-mono text-xs text-slate-300">
+    <div class="mt-4 space-y-2 font-mono text-xs text-ink-muted">
       <div class="flex items-center gap-3">
         <span class="w-10 text-right">|0⟩</span>
-        <div class="relative h-4 flex-1 rounded bg-slate-800/70">
-          <div data-run-bar="0" class="h-full rounded bg-indigo-500/70" style="width: 0%"></div>
+        <div class="relative h-4 flex-1 rounded bg-surface-sunken/70">
+          <div data-run-bar="0" class="h-full rounded bg-accent/70" style="width: 0%"></div>
         </div>
         <output data-run-count="0" class="w-10 text-right tabular-nums">0</output>
       </div>
       <div class="flex items-center gap-3">
         <span class="w-10 text-right">|1⟩</span>
-        <div class="relative h-4 flex-1 rounded bg-slate-800/70">
+        <div class="relative h-4 flex-1 rounded bg-surface-sunken/70">
           <div data-run-bar="1" class="h-full rounded bg-cyan-400/70" style="width: 0%"></div>
         </div>
         <output data-run-count="1" class="w-10 text-right tabular-nums">0</output>
@@ -201,7 +201,7 @@ const STARTER: Circuit = {
 
   <h2>Self-test</h2>
 
-  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-ink">
     <li>
       You apply <code>H</code>, measure, get the outcome <code>1</code>,
       and then immediately apply <code>H</code> and measure again.
@@ -281,8 +281,8 @@ const STARTER: Circuit = {
   </Fragment>
 
   <Fragment slot="footer-nav">
-    <a href="/superposition" class="hover:text-slate-200">← Superposition</a>
-    <a href="/gates" class="hover:text-slate-200">Next: Gates →</a>
+    <a href="/superposition" class="hover:text-ink">← Superposition</a>
+    <a href="/gates" class="hover:text-ink">Next: Gates →</a>
   </Fragment>
 </EssayLayout>
 

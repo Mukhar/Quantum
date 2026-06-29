@@ -146,7 +146,7 @@ const bellStarter: Circuit = {
     <button
       type="button"
       data-action="h"
-      class="rounded-md border border-indigo-500/40 bg-indigo-500/10 px-3 py-1.5 text-sm font-mono text-indigo-200 hover:bg-indigo-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 transition-colors"
+      class="rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-sm font-mono text-accent-emphasis hover:bg-accent/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent transition-colors"
     >Apply H to q₀</button>
     <button
       type="button"
@@ -156,7 +156,7 @@ const bellStarter: Circuit = {
     <button
       type="button"
       data-action="reset"
-      class="ml-2 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+      class="ml-2 rounded-md border border-line-strong bg-surface-sunken/60 px-3 py-1.5 text-sm text-ink-muted hover:bg-line-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-strong transition-colors"
     >Reset</button>
   </div>
 
@@ -227,7 +227,7 @@ const bellStarter: Circuit = {
 
   <h2>Self-test</h2>
 
-  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-ink">
     <li>
       After <code>H</code> on q<sub>0</sub> and <code>CNOT(0, 1)</code>,
       what does the Bloch arrow for q<sub>0</sub> look like, and what
@@ -292,8 +292,8 @@ const bellStarter: Circuit = {
   </MathNerds>
 
   <Fragment slot="footer-nav">
-    <a href="/gates" class="hover:text-slate-200">← Gates</a>
-    <a href="/cnot-bell" class="hover:text-slate-200">Next: CNOT + Bell →</a>
+    <a href="/gates" class="hover:text-ink">← Gates</a>
+    <a href="/cnot-bell" class="hover:text-ink">Next: CNOT + Bell →</a>
   </Fragment>
 </EssayLayout>
 

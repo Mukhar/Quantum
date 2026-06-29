@@ -35,17 +35,17 @@ const CLOSE_FIDELITY = 0.9;
  *  template's container is class-free and we don't fight over styles. */
 const STATUS_TIERS = {
   solved: {
-    bg: "bg-emerald-900/60 border-emerald-600 text-emerald-100",
+    bg: "bg-positive/20 border-positive text-positive",
     icon: "\u2713", // check mark
     label: "Solved!",
   },
   close: {
-    bg: "bg-amber-900/50 border-amber-600 text-amber-100",
+    bg: "bg-warning/20 border-warning text-warning",
     icon: "≈",
     label: "Close — keep tuning",
   },
   cold: {
-    bg: "bg-slate-800/70 border-slate-700 text-slate-300",
+    bg: "bg-surface-sunken/70 border-line-strong text-ink-muted",
     icon: "·",
     label: "Not there yet",
   },
@@ -145,7 +145,7 @@ function attachHints(btn: HTMLButtonElement, box: HTMLElement, puzzle: Puzzle) {
   btn.addEventListener("click", () => {
     if (shown >= total) return;
     const li = document.createElement("li");
-    li.className = "text-sm text-slate-300 leading-relaxed";
+    li.className = "text-sm text-ink-muted leading-relaxed";
     li.textContent = puzzle.hints[shown];
     box.appendChild(li);
     shown += 1;

@@ -22,6 +22,38 @@ import { stateToBloch } from "../../lib/quantum/bloch";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+/**
+ * Read a CSS custom property as an `rgb()` string. Falls back to a dark
+ * default if the var is missing or malformed. Theme.css defines values
+ * as RGB triplets (e.g. "165 180 252") so we wrap them in rgb(...).
+ */
+function readCssRgb(varName: string, fallback: string): string {
+  if (typeof document === "undefined") return fallback;
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue(varName)
+    .trim();
+  if (!raw) return fallback;
+  const parts = raw.split(/\s+/);
+  if (parts.length < 3) return fallback;
+  return `rgb(${parts[0]} ${parts[1]} ${parts[2]})`;
+}
+
+interface Polar2DPalette {
+  equator: string;
+  axis: string;
+  label: string;
+  arrow: string;
+}
+
+function readPolar2DPalette(): Polar2DPalette {
+  return {
+    equator: readCssRgb("--color-line-strong", "rgb(71 85 105)"),
+    axis: readCssRgb("--color-line", "rgb(51 65 85)"),
+    label: readCssRgb("--color-ink-subtle", "rgb(148 163 184)"),
+    arrow: readCssRgb("--color-bloch-arrow", "rgb(129 140 248)"),
+  };
+}
+
 export function mountPolar2D(mount: HTMLElement, store: Store): () => void {
   mount.innerHTML = "";
   const svg = document.createElementNS(SVG_NS, "svg");
@@ -35,6 +67,8 @@ export function mountPolar2D(mount: HTMLElement, store: Store): () => void {
   const cy = 100;
   const r = 80;
 
+  let palette = readPolar2DPalette();
+
   const make = (name: string, attrs: Record<string, string | number>) => {
     const el = document.createElementNS(SVG_NS, name);
     for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
@@ -43,21 +77,23 @@ export function mountPolar2D(mount: HTMLElement, store: Store): () => void {
   };
 
   // Equator + axes
-  make("circle", { cx, cy, r, fill: "none", stroke: "#475569", "stroke-opacity": 0.5 });
-  make("line", { x1: cx, y1: cy - r, x2: cx, y2: cy + r, stroke: "#334155" });
-  make("line", { x1: cx - r, y1: cy, x2: cx + r, y2: cy, stroke: "#334155" });
+  const equator = make("circle", { cx, cy, r, fill: "none", stroke: palette.equator, "stroke-opacity": 0.5 });
+  const vAxis = make("line", { x1: cx, y1: cy - r, x2: cx, y2: cy + r, stroke: palette.axis });
+  const hAxis = make("line", { x1: cx - r, y1: cy, x2: cx + r, y2: cy, stroke: palette.axis });
 
   // Pole + equator labels
+  const labelEls: SVGTextElement[] = [];
   const label = (x: number, y: number, text: string) => {
     const t = document.createElementNS(SVG_NS, "text");
     t.setAttribute("x", String(x));
     t.setAttribute("y", String(y));
-    t.setAttribute("fill", "#94a3b8");
+    t.setAttribute("fill", palette.label);
     t.setAttribute("font-size", "12");
     t.setAttribute("font-family", "ui-monospace, monospace");
     t.setAttribute("text-anchor", "middle");
     t.textContent = text;
     svg.appendChild(t);
+    labelEls.push(t);
   };
   label(cx, cy - r - 6, "|0⟩");
   label(cx, cy + r + 14, "|1⟩");
@@ -67,12 +103,23 @@ export function mountPolar2D(mount: HTMLElement, store: Store): () => void {
   // Arrow shaft + tip handle
   const shaft = make("line", {
     x1: cx, y1: cy, x2: cx, y2: cy - r,
-    stroke: "#818cf8", "stroke-width": 3, "stroke-linecap": "round",
+    stroke: palette.arrow, "stroke-width": 3, "stroke-linecap": "round",
   }) as SVGLineElement;
   const tip = make("circle", {
     cx, cy: cy - r, r: 10,
-    fill: "#818cf8", cursor: "grab",
+    fill: palette.arrow, cursor: "grab",
   }) as SVGCircleElement;
+
+  // Re-apply palette to existing nodes — no SVG rebuild required.
+  const applyPalette = () => {
+    palette = readPolar2DPalette();
+    equator.setAttribute("stroke", palette.equator);
+    vAxis.setAttribute("stroke", palette.axis);
+    hAxis.setAttribute("stroke", palette.axis);
+    for (const el of labelEls) el.setAttribute("fill", palette.label);
+    shaft.setAttribute("stroke", palette.arrow);
+    tip.setAttribute("fill", palette.arrow);
+  };
 
   // Convert (θ, φ_proj) to the tip's (x, y) on the SVG, where we project
   // onto the X-Z great circle. Practically: angle from +Z, signed by cos(φ).
@@ -146,8 +193,13 @@ export function mountPolar2D(mount: HTMLElement, store: Store): () => void {
     setTip(theta, phi);
   });
 
+  // Theme reactivity
+  const onThemeChange = () => applyPalette();
+  window.addEventListener("themechange", onThemeChange);
+
   return () => {
     unsubscribe();
+    window.removeEventListener("themechange", onThemeChange);
     tip.removeEventListener("pointerdown", onPointerDown);
     tip.removeEventListener("pointermove", onPointerMove);
     tip.removeEventListener("pointerup", onPointerUp);

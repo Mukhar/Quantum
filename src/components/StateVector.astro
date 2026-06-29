@@ -17,16 +17,16 @@ const { storeKey, qubits, caption } = Astro.props as Props;
 ---
 
 <figure
-  class="my-6 rounded-lg border border-slate-800 bg-slate-900/40 p-5"
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5"
   data-widget="state-vector"
   data-widget-id={`state-vector:${storeKey}`}
   data-annotatable
   data-store-key={storeKey}
   data-qubits={qubits}
 >
-  {caption && <figcaption class="mb-3 text-sm text-slate-400">{caption}</figcaption>}
+  {caption && <figcaption class="mb-3 text-sm text-ink-subtle">{caption}</figcaption>}
   <pre
-    class="overflow-x-auto rounded bg-slate-950/60 p-4 font-mono text-sm leading-relaxed text-indigo-200"
+    class="overflow-x-auto rounded bg-surface/60 p-4 font-mono text-sm leading-relaxed text-accent-emphasis"
     data-role="readout"
     aria-live="polite"
   >…</pre>

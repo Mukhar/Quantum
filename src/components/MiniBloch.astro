@@ -37,7 +37,7 @@ const { storeKey, qubit, qubits, caption } = Astro.props as Props;
 ---
 
 <figure
-  class="my-4 rounded-md border border-slate-800 bg-slate-950/60 p-3 space-y-2"
+  class="my-4 rounded-md border border-line bg-surface/60 p-3 space-y-2"
   data-widget="mini-bloch"
   data-store-key={storeKey}
   data-qubit={qubit}
@@ -45,12 +45,12 @@ const { storeKey, qubit, qubits, caption } = Astro.props as Props;
   aria-label={`Reduced-density Bloch projection for qubit ${qubit}`}
 >
   <div class="flex items-center justify-between">
-    <p class="font-mono text-xs uppercase tracking-wider text-slate-400">
-      q<span class="text-indigo-300">{qubit}</span>
+    <p class="font-mono text-xs uppercase tracking-wider text-ink-subtle">
+      q<span class="text-accent">{qubit}</span>
     </p>
     <span
       data-role="entangled-badge"
-      class="hidden rounded-full bg-amber-500/15 text-amber-300 text-[10px] uppercase tracking-wider px-2 py-0.5"
+      class="hidden rounded-full bg-warning/15 text-warning text-[10px] uppercase tracking-wider px-2 py-0.5"
       title="r < 0.98 — this qubit shares information with another. No single-qubit picture is exact."
     >Entangled</span>
   </div>
@@ -62,24 +62,26 @@ const { storeKey, qubit, qubits, caption } = Astro.props as Props;
       role="img"
       aria-label={`Bloch projection for qubit ${qubit}`}
     >
-      <circle cx="50" cy="50" r="40" fill="none" stroke="#334155" stroke-width="1" />
-      <line x1="50" y1="10" x2="50" y2="90" stroke="#1e293b" stroke-width="1" />
-      <line x1="10" y1="50" x2="90" y2="50" stroke="#1e293b" stroke-width="1" />
-      <text x="50" y="8" text-anchor="middle" font-size="6" fill="#64748b" font-family="ui-monospace, monospace">|0⟩</text>
-      <text x="50" y="97" text-anchor="middle" font-size="6" fill="#64748b" font-family="ui-monospace, monospace">|1⟩</text>
+      {/* All decorative strokes/fills use semantic CSS vars so the SVG
+          re-paints on theme toggle without any JS. */}
+      <circle cx="50" cy="50" r="40" fill="none" style="stroke: rgb(var(--color-line-strong))" stroke-width="1" />
+      <line x1="50" y1="10" x2="50" y2="90" style="stroke: rgb(var(--color-line))" stroke-width="1" />
+      <line x1="10" y1="50" x2="90" y2="50" style="stroke: rgb(var(--color-line))" stroke-width="1" />
+      <text x="50" y="8" text-anchor="middle" font-size="6" style="fill: rgb(var(--color-ink-subtle))" font-family="ui-monospace, monospace">|0⟩</text>
+      <text x="50" y="97" text-anchor="middle" font-size="6" style="fill: rgb(var(--color-ink-subtle))" font-family="ui-monospace, monospace">|1⟩</text>
       <line
         data-role="arrow"
         x1="50" y1="50" x2="50" y2="10"
-        stroke="#818cf8" stroke-width="2.5" stroke-linecap="round"
+        style="stroke: rgb(var(--color-bloch-arrow))" stroke-width="2.5" stroke-linecap="round"
       />
-      <circle data-role="tip" cx="50" cy="10" r="3" fill="#818cf8" />
+      <circle data-role="tip" cx="50" cy="10" r="3" style="fill: rgb(var(--color-bloch-arrow))" />
     </svg>
   </div>
 
-  {caption && <figcaption class="text-center text-xs text-slate-500">{caption}</figcaption>}
+  {caption && <figcaption class="text-center text-xs text-ink-subtle">{caption}</figcaption>}
 
-  <p class="text-center font-mono text-[10px] text-slate-500">
-    r = <span data-role="r-readout" class="tabular-nums text-slate-300">1.000</span>
+  <p class="text-center font-mono text-[10px] text-ink-subtle">
+    r = <span data-role="r-readout" class="tabular-nums text-ink-muted">1.000</span>
   </p>
 </figure>
 

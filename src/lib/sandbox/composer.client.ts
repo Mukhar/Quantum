@@ -68,11 +68,11 @@ const PALETTE_ITEMS: Array<{
 
 const FAMILY_ACCENT: Record<string, { bg: string; text: string; border: string }> = {
   pauli: { bg: "bg-rose-600 hover:bg-rose-500", text: "text-rose-300", border: "border-rose-600" },
-  hadamard: { bg: "bg-indigo-600 hover:bg-indigo-500", text: "text-indigo-300", border: "border-indigo-500" },
+  hadamard: { bg: "bg-accent hover:bg-accent", text: "text-accent", border: "border-accent" },
   phase: { bg: "bg-violet-600 hover:bg-violet-500", text: "text-violet-300", border: "border-violet-500" },
-  rot: { bg: "bg-emerald-700 hover:bg-emerald-600", text: "text-emerald-300", border: "border-emerald-600" },
-  cnot: { bg: "bg-amber-600 hover:bg-amber-500", text: "text-amber-300", border: "border-amber-500" },
-  measure: { bg: "bg-slate-600 hover:bg-slate-500", text: "text-slate-200", border: "border-slate-500" },
+  rot: { bg: "bg-positive hover:bg-positive", text: "text-positive", border: "border-positive" },
+  cnot: { bg: "bg-warning hover:bg-warning", text: "text-warning", border: "border-warning" },
+  measure: { bg: "bg-line-strong hover:bg-line-strong", text: "text-ink", border: "border-line-strong" },
 };
 
 const TOUCH_PICKUP_MS = 250;
@@ -150,7 +150,7 @@ function renderPalette(palette: HTMLDivElement) {
   const cancel = document.createElement("button");
   cancel.type = "button";
   cancel.dataset.paletteCancel = "true";
-  cancel.className = "col-span-full text-xs text-slate-400 hover:text-slate-200 underline-offset-4 hover:underline mt-1";
+  cancel.className = "col-span-full text-xs text-ink-subtle hover:text-ink underline-offset-4 hover:underline mt-1";
   cancel.textContent = "Cancel pickup (Esc)";
   palette.appendChild(cancel);
 }
@@ -237,14 +237,14 @@ function renderGrid(grid: HTMLDivElement) {
   grid.setAttribute("aria-label", "Circuit grid");
 
   // Header row
-  grid.appendChild(text("div", "qubit", "text-xs text-slate-500 uppercase tracking-widest"));
+  grid.appendChild(text("div", "qubit", "text-xs text-ink-subtle uppercase tracking-widest"));
   for (let t = 0; t < steps; t++) {
-    grid.appendChild(text("div", `t${t}`, "text-center text-xs text-slate-500 tabular-nums"));
+    grid.appendChild(text("div", `t${t}`, "text-center text-xs text-ink-subtle tabular-nums"));
   }
 
   // Body rows
   for (let q = 0; q < c.qubits; q++) {
-    grid.appendChild(text("div", `q${q}`, "flex items-center justify-end pr-2 text-sm font-mono text-slate-400"));
+    grid.appendChild(text("div", `q${q}`, "flex items-center justify-end pr-2 text-sm font-mono text-ink-subtle"));
     for (let t = 0; t < steps; t++) {
       grid.appendChild(renderCell(q, t, opAt(c, q, t), sel.qubit === q && sel.step === t));
     }
@@ -265,15 +265,15 @@ function renderCell(q: number, t: number, op: Op | null, selected: boolean): HTM
   );
 
   const accent = op ? cellFamily(op) : null;
-  const accentClass = accent ? FAMILY_ACCENT[accent].border : "border-dashed border-slate-700 hover:border-slate-500";
+  const accentClass = accent ? FAMILY_ACCENT[accent].border : "border-dashed border-line-strong hover:border-line-strong";
   const textClass = accent ? FAMILY_ACCENT[accent].text : "";
-  const fillClass = op ? "bg-slate-800" : "";
+  const fillClass = op ? "bg-surface-sunken" : "";
 
   const pending = pendingCnot && pendingCnot.step === t && pendingCnot.control === q;
 
   btn.className =
     `relative h-12 rounded-md border ${accentClass} ${fillClass} ${textClass} ` +
-    `${selected ? "outline outline-2 outline-indigo-400" : ""} ` +
+    `${selected ? "outline outline-2 outline-accent" : ""} ` +
     `${pending ? "ring-2 ring-amber-400" : ""} transition-colors font-mono text-sm`;
 
   btn.textContent = pending ? "•?" : op ? cellLabel(op, q) : "";

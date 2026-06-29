@@ -17,39 +17,39 @@ import QuantumTones from "../../components/sandbox/QuantumTones.astro";
     <section aria-label="Composer" class="space-y-4">
       <div
         data-sandbox-toolbar
-        class="flex flex-wrap items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2 text-sm"
+        class="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface-elevated/40 px-3 py-2 text-sm"
         role="toolbar"
         aria-label="Sandbox actions"
       >
         <button
           type="button"
           data-action="undo"
-          class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-slate-200"
+          class="rounded bg-surface-sunken hover:bg-line-strong disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-ink"
           title="Undo (⌘Z)"
         >Undo</button>
         <button
           type="button"
           data-action="redo"
-          class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-slate-200"
+          class="rounded bg-surface-sunken hover:bg-line-strong disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-ink"
           title="Redo (⌘⇧Z)"
         >Redo</button>
         <button
           type="button"
           data-action="share"
-          class="rounded bg-emerald-600 hover:bg-emerald-500 px-3 py-1 text-white"
+          class="rounded bg-positive hover:bg-positive px-3 py-1 text-white"
           title="Copy share URL"
         >Copy share URL</button>
         <button
           type="button"
           data-action="reset"
-          class="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1 text-slate-300"
+          class="rounded bg-surface-sunken hover:bg-line-strong px-3 py-1 text-ink-muted"
           title="Reset to empty circuit"
         >Reset</button>
-        <label class="ml-auto flex items-center gap-2 text-slate-400">
+        <label class="ml-auto flex items-center gap-2 text-ink-subtle">
           Qubits:
           <select
             data-action="qubits"
-            class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+            class="rounded bg-surface-sunken border border-line-strong px-2 py-1 text-ink"
             aria-label="Number of qubits"
           >
             <option value="1">1</option>
@@ -61,7 +61,7 @@ import QuantumTones from "../../components/sandbox/QuantumTones.astro";
       </div>
       <div
         data-sandbox-grid
-        class="relative overflow-x-auto rounded-lg border border-slate-800 bg-slate-900/40 p-3 grid gap-1.5 min-w-fit"
+        class="relative overflow-x-auto rounded-lg border border-line bg-surface-elevated/40 p-3 grid gap-1.5 min-w-fit"
       >
         <!-- composer.client.ts hydrates this -->
       </div>
@@ -73,12 +73,12 @@ import QuantumTones from "../../components/sandbox/QuantumTones.astro";
     <aside aria-label="Tools" class="space-y-4">
       <div
         data-sandbox-palette
-        class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-3 gap-2 p-3 rounded-lg border border-slate-800 bg-slate-900/60"
+        class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-3 gap-2 p-3 rounded-lg border border-line bg-surface-elevated/60"
       >
         <!-- composer.client.ts hydrates this -->
       </div>
-      <div class="rounded-lg border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400 space-y-2">
-        <p class="text-slate-200 font-medium">How to play</p>
+      <div class="rounded-lg border border-line bg-surface-elevated/40 p-3 text-xs text-ink-subtle space-y-2">
+        <p class="text-ink font-medium">How to play</p>
         <ul class="list-disc list-inside space-y-1">
           <li>Click a gate to arm it, then click a grid cell to drop. Or use shortcut keys (shown on each button) to insert at the selected cell.</li>
           <li>For CNOT: drop on the <em>control</em> qubit, then tap the target in the same column.</li>

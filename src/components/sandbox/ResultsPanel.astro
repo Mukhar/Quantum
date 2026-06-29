@@ -23,14 +23,14 @@
 
 <section
   data-results-panel
-  class="rounded-lg border border-slate-800 bg-slate-900/40 p-4 space-y-4"
+  class="rounded-lg border border-line bg-surface-elevated/40 p-4 space-y-4"
   aria-label="Live circuit results"
 >
   <header class="flex items-baseline justify-between">
-    <h2 class="text-slate-100 font-medium">Results</h2>
+    <h2 class="text-ink font-medium">Results</h2>
     <p
       data-role="status"
-      class="text-xs text-slate-500"
+      class="text-xs text-ink-subtle"
       aria-live="polite"
     >Idle</p>
   </header>
@@ -42,16 +42,16 @@
     {[0, 1, 2, 3].map((q) => (
       <article
         data-qubit-card={q}
-        class="rounded-md border border-slate-800 bg-slate-950/60 p-3 space-y-2 hidden"
+        class="rounded-md border border-line bg-surface/60 p-3 space-y-2 hidden"
         aria-label={`Qubit ${q} readout`}
       >
         <div class="flex items-center justify-between">
-          <p class="font-mono text-xs uppercase tracking-wider text-slate-400">
-            q<span class="text-indigo-300">{q}</span>
+          <p class="font-mono text-xs uppercase tracking-wider text-ink-subtle">
+            q<span class="text-accent">{q}</span>
           </p>
           <span
             data-role="entangled-badge"
-            class="hidden rounded-full bg-amber-500/15 text-amber-300 text-[10px] uppercase tracking-wider px-2 py-0.5"
+            class="hidden rounded-full bg-warning/15 text-warning text-[10px] uppercase tracking-wider px-2 py-0.5"
             title="This qubit shares information with another — no single-qubit picture is exact."
           >Entangled</span>
         </div>
@@ -64,37 +64,37 @@
             role="img"
             aria-label={`Bloch projection for qubit ${q}`}
           >
-            <!-- circle outline + axes -->
-            <circle cx="50" cy="50" r="40" fill="none" stroke="#334155" stroke-width="1" />
-            <line x1="50" y1="10" x2="50" y2="90" stroke="#1e293b" stroke-width="1" />
-            <line x1="10" y1="50" x2="90" y2="50" stroke="#1e293b" stroke-width="1" />
-            <text x="50" y="8" text-anchor="middle" font-size="6" fill="#64748b" font-family="ui-monospace, monospace">|0⟩</text>
-            <text x="50" y="97" text-anchor="middle" font-size="6" fill="#64748b" font-family="ui-monospace, monospace">|1⟩</text>
-            <!-- arrow, hydrated by the client -->
+            {/* circle outline + axes — semantic CSS vars repaint on theme toggle */}
+            <circle cx="50" cy="50" r="40" fill="none" style="stroke: rgb(var(--color-line-strong))" stroke-width="1" />
+            <line x1="50" y1="10" x2="50" y2="90" style="stroke: rgb(var(--color-line))" stroke-width="1" />
+            <line x1="10" y1="50" x2="90" y2="50" style="stroke: rgb(var(--color-line))" stroke-width="1" />
+            <text x="50" y="8" text-anchor="middle" font-size="6" style="fill: rgb(var(--color-ink-subtle))" font-family="ui-monospace, monospace">|0⟩</text>
+            <text x="50" y="97" text-anchor="middle" font-size="6" style="fill: rgb(var(--color-ink-subtle))" font-family="ui-monospace, monospace">|1⟩</text>
+            {/* arrow, hydrated by the client */}
             <line
               data-role="arrow"
               x1="50" y1="50" x2="50" y2="10"
-              stroke="#818cf8" stroke-width="2.5" stroke-linecap="round"
+              style="stroke: rgb(var(--color-bloch-arrow))" stroke-width="2.5" stroke-linecap="round"
             />
             <circle
               data-role="tip"
               cx="50" cy="10" r="3"
-              fill="#818cf8"
+              style="fill: rgb(var(--color-bloch-arrow))"
             />
           </svg>
         </div>
 
-        <div class="space-y-1 font-mono text-[11px] text-slate-400">
+        <div class="space-y-1 font-mono text-[11px] text-ink-subtle">
           <div class="flex items-center gap-2">
-            <span class="w-8 text-right text-slate-500">P|0⟩</span>
-            <div class="flex-1 h-2 rounded-sm bg-slate-800 overflow-hidden">
-              <div data-role="p0-bar" class="h-full bg-indigo-400" style="width: 100%"></div>
+            <span class="w-8 text-right text-ink-subtle">P|0⟩</span>
+            <div class="flex-1 h-2 rounded-sm bg-surface-sunken overflow-hidden">
+              <div data-role="p0-bar" class="h-full bg-accent" style="width: 100%"></div>
             </div>
             <span data-role="p0-text" class="w-12 text-right tabular-nums">1.000</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="w-8 text-right text-slate-500">P|1⟩</span>
-            <div class="flex-1 h-2 rounded-sm bg-slate-800 overflow-hidden">
+            <span class="w-8 text-right text-ink-subtle">P|1⟩</span>
+            <div class="flex-1 h-2 rounded-sm bg-surface-sunken overflow-hidden">
               <div data-role="p1-bar" class="h-full bg-rose-400" style="width: 0%"></div>
             </div>
             <span data-role="p1-text" class="w-12 text-right tabular-nums">0.000</span>
@@ -106,12 +106,12 @@
 
   <div
     data-role="state-vector"
-    class="rounded-md bg-slate-950/60 border border-slate-800 p-3 overflow-x-auto"
+    class="rounded-md bg-surface/60 border border-line p-3 overflow-x-auto"
   >
-    <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Global state |ψ⟩</p>
+    <p class="text-[10px] uppercase tracking-wider text-ink-subtle mb-1">Global state |ψ⟩</p>
     <pre
       data-role="state-readout"
-      class="font-mono text-xs text-indigo-200 whitespace-pre-wrap leading-relaxed m-0"
+      class="font-mono text-xs text-accent-emphasis whitespace-pre-wrap leading-relaxed m-0"
     >|0…0⟩</pre>
   </div>
 </section>

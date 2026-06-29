@@ -12,6 +12,12 @@
  *
  * When the store updates from outside (e.g. a gate button), we re-orient
  * the arrow with a short tween. `prefers-reduced-motion` skips the tween.
+ *
+ * Theme reactivity:
+ *  - Reads scene + arrow + axis colors from CSS custom properties on
+ *    mount (--color-canvas-bg, --color-bloch-arrow, --color-line, …).
+ *  - Listens for `themechange` on `window` and re-applies palette in
+ *    place (no scene rebuild) plus one render pass.
  */
 
 import {
@@ -44,6 +50,41 @@ const reduceMotion =
   window.matchMedia &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/**
+ * Read a CSS custom property as a Three.js Color. Values in theme.css
+ * are RGB triplets (e.g. "165 180 252"); convert to a hex int.
+ * Falls back to a sensible dark-palette default if the var is missing.
+ */
+function readCssColor(varName: string, fallback: number): Color {
+  if (typeof document === "undefined") return new Color(fallback);
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue(varName)
+    .trim();
+  if (!raw) return new Color(fallback);
+  const parts = raw.split(/\s+/).map((n) => parseInt(n, 10));
+  if (parts.length < 3 || parts.some(Number.isNaN)) return new Color(fallback);
+  const [r, g, b] = parts;
+  return new Color(r / 255, g / 255, b / 255);
+}
+
+interface BlochPalette {
+  wire: Color;        // --color-line — wireframe sphere
+  ghost: Color;       // --color-surface-elevated — back-face fill
+  axis: Color;        // --color-ink-subtle — axis lines
+  arrow: Color;       // --color-bloch-arrow — shaft + head
+  arrowTip: Color;    // --color-accent-emphasis — tip handle (brighter)
+}
+
+function readBlochPalette(): BlochPalette {
+  return {
+    wire: readCssColor("--color-line", 0x334155),
+    ghost: readCssColor("--color-surface-elevated", 0x0f172a),
+    axis: readCssColor("--color-ink-subtle", 0x64748b),
+    arrow: readCssColor("--color-bloch-arrow", 0x818cf8),
+    arrowTip: readCssColor("--color-accent-emphasis", 0xa5b4fc),
+  };
+}
+
 export function mountSphere3D(mount: HTMLElement, store: Store): () => void {
   mount.innerHTML = "";
   const rect = mount.getBoundingClientRect();
@@ -72,22 +113,30 @@ export function mountSphere3D(mount: HTMLElement, store: Store): () => void {
   dir.position.set(3, 4, 5);
   scene.add(dir);
 
+  // Initial palette read.
+  let palette = readBlochPalette();
+
   // Wire sphere
-  const sphere = new Mesh(
-    new SphereGeometry(1, 32, 32),
-    new MeshBasicMaterial({ color: 0x334155, wireframe: true, transparent: true, opacity: 0.35 }),
-  );
+  const wireMaterial = new MeshBasicMaterial({
+    color: palette.wire,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.35,
+  });
+  const sphere = new Mesh(new SphereGeometry(1, 32, 32), wireMaterial);
   scene.add(sphere);
 
   // Solid back-face sphere so the arrow doesn't poke through visibly.
-  const ghost = new Mesh(
-    new SphereGeometry(0.99, 24, 24),
-    new MeshBasicMaterial({ color: 0x0f172a, transparent: true, opacity: 0.6 }),
-  );
+  const ghostMaterial = new MeshBasicMaterial({
+    color: palette.ghost,
+    transparent: true,
+    opacity: 0.6,
+  });
+  const ghost = new Mesh(new SphereGeometry(0.99, 24, 24), ghostMaterial);
   scene.add(ghost);
 
   // Axes lines
-  const axisMaterial = new LineBasicMaterial({ color: 0x64748b });
+  const axisMaterial = new LineBasicMaterial({ color: palette.axis });
   const axisLine = (a: Vector3, b: Vector3) => {
     const g = new BufferGeometry().setFromPoints([a, b]);
     return new Line(g, axisMaterial);
@@ -98,23 +147,19 @@ export function mountSphere3D(mount: HTMLElement, store: Store): () => void {
 
   // Arrow group: shaft (cylinder) + head (cone) + tip handle (sphere)
   const arrow = new Group();
-  const arrowColor = new Color(0x818cf8);
+  const shaftMaterial = new MeshBasicMaterial({ color: palette.arrow });
   const shaft = new Mesh(
     new CylinderGeometry(0.02, 0.02, 0.88, 12),
-    new MeshBasicMaterial({ color: arrowColor }),
+    shaftMaterial,
   );
   shaft.position.set(0, 0.44, 0);
   arrow.add(shaft);
-  const head = new Mesh(
-    new ConeGeometry(0.06, 0.18, 16),
-    new MeshBasicMaterial({ color: arrowColor }),
-  );
+  const headMaterial = new MeshBasicMaterial({ color: palette.arrow });
+  const head = new Mesh(new ConeGeometry(0.06, 0.18, 16), headMaterial);
   head.position.set(0, 0.94, 0);
   arrow.add(head);
-  const tip = new Mesh(
-    new SphereGeometry(0.09, 16, 16),
-    new MeshBasicMaterial({ color: 0xa5b4fc }),
-  );
+  const tipMaterial = new MeshBasicMaterial({ color: palette.arrowTip });
+  const tip = new Mesh(new SphereGeometry(0.09, 16, 16), tipMaterial);
   tip.position.set(0, 1, 0);
   arrow.add(tip);
   // The whole arrow points along +Y in its local frame. We orient it
@@ -256,12 +301,26 @@ export function mountSphere3D(mount: HTMLElement, store: Store): () => void {
   };
   document.addEventListener("visibilitychange", onVisibility);
 
+  // Theme reactivity — re-read CSS vars and apply to existing materials.
+  const onThemeChange = () => {
+    palette = readBlochPalette();
+    wireMaterial.color.copy(palette.wire);
+    ghostMaterial.color.copy(palette.ghost);
+    axisMaterial.color.copy(palette.axis);
+    shaftMaterial.color.copy(palette.arrow);
+    headMaterial.color.copy(palette.arrow);
+    tipMaterial.color.copy(palette.arrowTip);
+    requestRender();
+  };
+  window.addEventListener("themechange", onThemeChange);
+
   // First paint
   requestRender();
 
   return () => {
     unsubscribe();
     window.removeEventListener("resize", onResize);
+    window.removeEventListener("themechange", onThemeChange);
     document.removeEventListener("visibilitychange", onVisibility);
     renderer.domElement.removeEventListener("pointerdown", onPointerDown);
     renderer.domElement.removeEventListener("pointermove", onPointerMove);

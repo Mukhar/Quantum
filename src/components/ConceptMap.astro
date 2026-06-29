@@ -70,20 +70,22 @@ const edges: Array<{ from: number; to: number; dim?: boolean }> = [
 ];
 
 function nodeFill(tier: Node["tier"]): string {
-  if (tier === "primary") return "rgb(30 41 59)";    // slate-800
-  if (tier === "utility") return "rgb(6 78 59)";     // emerald-900
-  return "rgb(15 23 42)";                            // slate-950 (dim)
+  // Semantic CSS vars so map repaints on theme toggle. Each tier picks
+  // the appropriate surface level — primary = elevated, utility = positive
+  // tinted, dim = sunken so it visibly recedes.
+  if (tier === "primary") return "rgb(var(--color-surface-elevated))";
+  if (tier === "utility") return "rgb(var(--color-positive) / 0.15)";
+  return "rgb(var(--color-surface-sunken))";
 }
 function nodeStroke(tier: Node["tier"]): string {
-  if (tier === "primary") return "rgb(129 140 248)"; // indigo-400
-  if (tier === "utility") return "rgb(52 211 153)";  // emerald-400
-  return "rgb(51 65 85)";                            // slate-700 (dim)
+  if (tier === "primary") return "rgb(var(--color-accent))";
+  if (tier === "utility") return "rgb(var(--color-positive))";
+  return "rgb(var(--color-line-strong))";
 }
 function nodeText(tier: Node["tier"]): string {
-  // All three pass AA against their respective fills.
-  if (tier === "primary") return "rgb(226 232 240)"; // slate-200
-  if (tier === "utility") return "rgb(167 243 208)"; // emerald-200
-  return "rgb(100 116 139)";                         // slate-500
+  if (tier === "primary") return "rgb(var(--color-ink))";
+  if (tier === "utility") return "rgb(var(--color-positive))";
+  return "rgb(var(--color-ink-subtle))";
 }
 
 /** Build a smooth cubic Bezier between two nodes, edge-to-edge. */
@@ -115,7 +117,7 @@ function edgePath(a: Node, b: Node): string {
         markerHeight="6"
         orient="auto-start-reverse"
       >
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(100 116 139)" />
+        <path d="M 0 0 L 10 5 L 0 10 z" style="fill: rgb(var(--color-ink-subtle))" />
       </marker>
       <marker
         id="concept-arrow-dim"
@@ -126,7 +128,7 @@ function edgePath(a: Node, b: Node): string {
         markerHeight="6"
         orient="auto-start-reverse"
       >
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(51 65 85)" />
+        <path d="M 0 0 L 10 5 L 0 10 z" style="fill: rgb(var(--color-line-strong))" />
       </marker>
     </defs>
 
@@ -134,7 +136,7 @@ function edgePath(a: Node, b: Node): string {
       <path
         d={edgePath(nodes[e.from], nodes[e.to])}
         fill="none"
-        stroke={e.dim ? "rgb(51 65 85)" : "rgb(100 116 139)"}
+        style={`stroke: ${e.dim ? "rgb(var(--color-line-strong))" : "rgb(var(--color-ink-subtle))"}`}
         stroke-width="1.5"
         stroke-dasharray={e.dim ? "4 4" : "0"}
         marker-end={e.dim ? "url(#concept-arrow-dim)" : "url(#concept-arrow)"}
@@ -152,8 +154,7 @@ function edgePath(a: Node, b: Node): string {
             width={NODE_W}
             height={NODE_H}
             rx={NODE_R}
-            fill={nodeFill(n.tier)}
-            stroke={nodeStroke(n.tier)}
+            style={`fill: ${nodeFill(n.tier)}; stroke: ${nodeStroke(n.tier)};`}
             stroke-width="1.5"
           />
           <text
@@ -163,7 +164,7 @@ function edgePath(a: Node, b: Node): string {
             font-family="ui-sans-serif, system-ui, sans-serif"
             font-size="16"
             font-weight="500"
-            fill={nodeText(n.tier)}
+            style={`fill: ${nodeText(n.tier)};`}
           >{n.label}{n.tier === "v2" ? " · v2" : ""}</text>
         </g>
       );
@@ -172,7 +173,7 @@ function edgePath(a: Node, b: Node): string {
         return (
           <a
             href={n.href}
-            class="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+            class="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             aria-label={`Read: ${n.label}`}
           >{common}</a>
         );
@@ -191,10 +192,10 @@ function edgePath(a: Node, b: Node): string {
       <li>
         <a
           href={n.href!}
-          class="flex items-baseline gap-3 rounded-md border border-slate-800 bg-slate-900/60 px-4 py-3 hover:border-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+          class="flex items-baseline gap-3 rounded-md border border-line bg-surface-elevated/60 px-4 py-3 hover:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
-          <span class="text-xs uppercase tracking-widest text-indigo-400 tabular-nums">{String(i + 1).padStart(2, "0")}</span>
-          <span class="text-slate-100 font-medium">{n.label}</span>
+          <span class="text-xs uppercase tracking-widest text-accent tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+          <span class="text-ink font-medium">{n.label}</span>
         </a>
       </li>
     ))}
@@ -202,20 +203,20 @@ function edgePath(a: Node, b: Node): string {
       <li>
         <a
           href={n.href!}
-          class="flex items-baseline gap-3 rounded-md border border-emerald-700/40 bg-emerald-950/30 px-4 py-3 hover:border-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+          class="flex items-baseline gap-3 rounded-md border border-positive/40 bg-positive/10/30 px-4 py-3 hover:border-positive focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-positive"
         >
-          <span class="text-xs uppercase tracking-widest text-emerald-300">play</span>
-          <span class="text-emerald-100 font-medium">{n.label}</span>
+          <span class="text-xs uppercase tracking-widest text-positive">play</span>
+          <span class="text-positive font-medium">{n.label}</span>
         </a>
       </li>
     ))}
     {nodes.filter((n) => n.tier === "v2").map((n) => (
       <li
         aria-disabled="true"
-        class="flex items-baseline gap-3 rounded-md border border-slate-800 bg-slate-950/60 px-4 py-3"
+        class="flex items-baseline gap-3 rounded-md border border-line bg-surface/60 px-4 py-3"
       >
-        <span class="text-xs uppercase tracking-widest text-slate-600">v2</span>
-        <span class="text-slate-500">{n.label}</span>
+        <span class="text-xs uppercase tracking-widest text-ink-subtle">v2</span>
+        <span class="text-ink-subtle">{n.label}</span>
       </li>
     ))}
   </ol>

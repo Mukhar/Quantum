@@ -1,7 +1,7 @@
 # State
 
-*Last updated: 2026-06-28 — v2.0 milestone started. Phase 1 (theme
-system) is next.*
+*Last updated: 2026-06-28 — Phase 1 (theme system) complete.
+Entering Phase 2 (feedback form).*
 
 ## Project Reference
 
@@ -21,18 +21,18 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 
 | | |
 |---|---|
-| Phase | Not started (entering Phase 1 — Theme system) |
+| Phase | Phase 2 — Feedback form (next to plan) |
 | Plan | — |
-| Status | Defining phase context |
-| Last activity | 2026-06-28 — Milestone v2.0 started |
+| Status | Phase 1 committed; entering Phase 2 |
+| Last activity | 2026-06-28 — Phase 1 theme system complete (+21 tests) |
 
 ## Where we are
 
 ### v2.0 — current
 
-- [ ] **Phase 1** — Theme system (Tailwind class-based dark mode +
-  FOUC-killer + widget audit + Playwright visual regression).
-  Requirements: THEME-01..05.
+- [x] **Phase 1** — Theme system (Tailwind class-based dark mode +
+  FOUC-killer + widget audit). Requirements: THEME-01..04.
+  THEME-05 (Playwright visual regression) deferred to Phase 4.
 - [ ] **Phase 2** — Feedback form (`/feedback` + Apps Script + Sheet).
   Requirements: FB-01..05.
 - [ ] **Phase 3** — Circuit gallery (IndexedDB, `/gallery`, sandbox

@@ -147,22 +147,22 @@ function buildPin(
   const dot = document.createElement("button");
   dot.type = "button";
   dot.className =
-    "h-4 w-4 rounded-full bg-amber-400 ring-2 ring-amber-200/40 hover:scale-110 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200";
+    "h-4 w-4 rounded-full bg-warning ring-2 ring-amber-200/40 hover:scale-110 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warning";
   dot.setAttribute("aria-label", "Annotation pin (click to toggle note)");
 
   const note_el = document.createElement("div");
   note_el.className =
-    "hidden flex-col gap-1 rounded-md border border-amber-300/40 bg-amber-50 text-amber-900 p-2 text-xs shadow-lg w-48";
+    "hidden flex-col gap-1 rounded-md border border-warning/40 bg-warning/10 text-warning p-2 text-xs shadow-lg w-48";
 
   const ta = document.createElement("textarea");
-  ta.className = "w-full h-16 resize-none bg-transparent text-amber-900 focus:outline-none";
+  ta.className = "w-full h-16 resize-none bg-transparent text-warning focus:outline-none";
   ta.placeholder = "Your note…";
   ta.value = note.text;
   ta.addEventListener("input", () => onChange(note.id, ta.value));
 
   const del = document.createElement("button");
   del.type = "button";
-  del.className = "self-end text-[10px] uppercase tracking-widest text-amber-700 hover:text-amber-900";
+  del.className = "self-end text-[10px] uppercase tracking-widest text-warning hover:text-warning";
   del.textContent = "Delete";
   del.addEventListener("click", () => onDelete(note.id));
 

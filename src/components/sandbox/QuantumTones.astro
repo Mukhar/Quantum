@@ -16,27 +16,27 @@
 <section
   data-quantum-tones-root
   aria-labelledby="quantum-tones-title"
-  class="rounded-lg border border-slate-800 bg-slate-900/40 p-4"
+  class="rounded-lg border border-line bg-surface-elevated/40 p-4"
 >
   <header class="mb-3 flex items-baseline justify-between gap-3 flex-wrap">
     <h2
       id="quantum-tones-title"
-      class="text-base font-semibold text-slate-100"
+      class="text-base font-semibold text-ink"
     >
       Quantum Tones
     </h2>
-    <p class="text-xs text-slate-400">
+    <p class="text-xs text-ink-subtle">
       Measure the circuit a few times, map outcomes to pitches, play the result.
     </p>
   </header>
 
   <div class="grid gap-3 text-sm">
     <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
-      <label class="flex flex-col gap-1 text-slate-400">
+      <label class="flex flex-col gap-1 text-ink-subtle">
         <span>Scale</span>
         <select
           data-tones-mapping
-          class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+          class="rounded bg-surface-sunken border border-line-strong px-2 py-1 text-ink"
           aria-label="Pitch mapping scale"
         >
           <option value="chromatic">chromatic</option>
@@ -45,11 +45,11 @@
         </select>
       </label>
 
-      <label class="flex flex-col gap-1 text-slate-400">
+      <label class="flex flex-col gap-1 text-ink-subtle">
         <span>Base note</span>
         <select
           data-tones-base
-          class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+          class="rounded bg-surface-sunken border border-line-strong px-2 py-1 text-ink"
           aria-label="Base note for the scale"
         >
           <option value="C3">C3</option>
@@ -58,7 +58,7 @@
         </select>
       </label>
 
-      <label class="flex flex-col gap-1 text-slate-400">
+      <label class="flex flex-col gap-1 text-ink-subtle">
         <span>Steps</span>
         <input
           type="number"
@@ -66,13 +66,13 @@
           min="4"
           max="32"
           value="16"
-          class="rounded bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200 tabular-nums"
+          class="rounded bg-surface-sunken border border-line-strong px-2 py-1 text-ink tabular-nums"
           aria-label="Number of measurement steps in the sequence"
         />
       </label>
 
-      <label class="flex flex-col gap-1 text-slate-400">
-        <span>Tempo · <span data-tones-tempo-label class="tabular-nums text-slate-300">120</span> bpm</span>
+      <label class="flex flex-col gap-1 text-ink-subtle">
+        <span>Tempo · <span data-tones-tempo-label class="tabular-nums text-ink-muted">120</span> bpm</span>
         <input
           type="range"
           data-tones-tempo
@@ -89,31 +89,31 @@
       <button
         type="button"
         data-action="play"
-        class="rounded bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed px-3 py-1 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+        class="rounded bg-positive hover:bg-positive disabled:bg-line-strong disabled:text-ink-subtle disabled:cursor-not-allowed px-3 py-1 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >Play</button>
       <button
         type="button"
         data-action="stop"
-        class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+        class="rounded bg-surface-sunken hover:bg-line-strong disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         disabled
       >Stop</button>
       <button
         type="button"
         data-action="download"
-        class="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1 text-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+        class="rounded bg-surface-sunken hover:bg-line-strong px-3 py-1 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         title="Render the same sequence offline and download as a 16-bit PCM WAV"
       >Download WAV</button>
 
       <span
         data-tones-step
-        class="ml-auto inline-flex min-w-[3.5rem] justify-center self-center rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-300 tabular-nums"
+        class="ml-auto inline-flex min-w-[3.5rem] justify-center self-center rounded bg-surface-sunken px-2 py-0.5 text-xs text-ink-muted tabular-nums"
         aria-hidden="true"
       >—</span>
     </div>
 
     <p
       data-tones-status
-      class="text-xs text-slate-500"
+      class="text-xs text-ink-subtle"
       role="status"
       aria-live="polite"
     >Idle</p>

@@ -260,7 +260,20 @@ function paintRow(refs: CanvasRefs, row: number, data: Float32Array): void {
 }
 
 function paintBackground(refs: CanvasRefs): void {
-  refs.ctx.fillStyle = "#0f172a"; // slate-900, matches the page chrome
+  // Read --color-surface-elevated so the canvas blends with the
+  // surrounding page chrome on both light and dark themes. Falls back
+  // to slate-900 if document is unavailable (SSR / tests).
+  let fill = "#0f172a";
+  if (typeof document !== "undefined") {
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-surface-elevated")
+      .trim();
+    if (raw) {
+      const parts = raw.split(/\s+/);
+      if (parts.length >= 3) fill = `rgb(${parts[0]}, ${parts[1]}, ${parts[2]})`;
+    }
+  }
+  refs.ctx.fillStyle = fill;
   refs.ctx.fillRect(0, 0, refs.canvas.width, refs.canvas.height);
 }
 

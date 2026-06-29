@@ -117,21 +117,21 @@ const DEUTSCH_F2_CIRCUIT: Circuit = {
   <div class="not-prose my-6 overflow-x-auto">
     <table class="w-full border-collapse text-sm">
       <thead>
-        <tr class="border-b border-slate-700 text-left text-slate-400">
+        <tr class="border-b border-line-strong text-left text-ink-subtle">
           <th class="px-3 py-2 font-medium">Oracle</th>
           <th class="px-3 py-2 font-medium">f(0)</th>
           <th class="px-3 py-2 font-medium">f(1)</th>
           <th class="px-3 py-2 font-medium">Class</th>
         </tr>
       </thead>
-      <tbody class="font-mono text-slate-200">
-        <tr class="border-b border-slate-800">
-          <td class="px-3 py-2">f₀ (zero)</td><td class="px-3 py-2">0</td><td class="px-3 py-2">0</td><td class="px-3 py-2 text-emerald-300">constant</td>
+      <tbody class="font-mono text-ink">
+        <tr class="border-b border-line">
+          <td class="px-3 py-2">f₀ (zero)</td><td class="px-3 py-2">0</td><td class="px-3 py-2">0</td><td class="px-3 py-2 text-positive">constant</td>
         </tr>
-        <tr class="border-b border-slate-800">
-          <td class="px-3 py-2">f₁ (one)</td><td class="px-3 py-2">1</td><td class="px-3 py-2">1</td><td class="px-3 py-2 text-emerald-300">constant</td>
+        <tr class="border-b border-line">
+          <td class="px-3 py-2">f₁ (one)</td><td class="px-3 py-2">1</td><td class="px-3 py-2">1</td><td class="px-3 py-2 text-positive">constant</td>
         </tr>
-        <tr class="border-b border-slate-800">
+        <tr class="border-b border-line">
           <td class="px-3 py-2">f₂ (identity)</td><td class="px-3 py-2">0</td><td class="px-3 py-2">1</td><td class="px-3 py-2 text-fuchsia-300">balanced</td>
         </tr>
         <tr>
@@ -187,7 +187,7 @@ const DEUTSCH_F2_CIRCUIT: Circuit = {
     Five steps. Two qubits. One oracle query.
   </p>
 
-  <ol class="my-5 list-decimal space-y-2 pl-6 text-slate-200">
+  <ol class="my-5 list-decimal space-y-2 pl-6 text-ink">
     <li>Start in <code>|0⟩|0⟩</code>.</li>
     <li>Apply <code>X</code> to q₁ — the register is now <code>|0⟩|1⟩</code> (ancilla in <code>|1⟩</code>).</li>
     <li>Apply <code>H</code> to both qubits — the register is now <code>|+⟩|−⟩</code>.</li>
@@ -227,12 +227,12 @@ const DEUTSCH_F2_CIRCUIT: Circuit = {
     <button
       type="button"
       data-oracle="f0"
-      class="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-mono text-emerald-200 hover:bg-emerald-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 transition-colors"
+      class="rounded-md border border-positive/40 bg-positive/10 px-3 py-1.5 text-sm font-mono text-positive hover:bg-positive/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-positive transition-colors"
     >Run f₀ (constant 0)</button>
     <button
       type="button"
       data-oracle="f1"
-      class="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-mono text-emerald-200 hover:bg-emerald-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 transition-colors"
+      class="rounded-md border border-positive/40 bg-positive/10 px-3 py-1.5 text-sm font-mono text-positive hover:bg-positive/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-positive transition-colors"
     >Run f₁ (constant 1)</button>
     <button
       type="button"
@@ -247,11 +247,11 @@ const DEUTSCH_F2_CIRCUIT: Circuit = {
     <button
       type="button"
       data-oracle="reset"
-      class="ml-2 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+      class="ml-2 rounded-md border border-line-strong bg-surface-sunken/60 px-3 py-1.5 text-sm text-ink-muted hover:bg-line-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-strong transition-colors"
     >Reset</button>
     <p
       data-deutsch-verdict
-      class="ml-auto text-sm font-mono text-slate-400"
+      class="ml-auto text-sm font-mono text-ink-subtle"
       aria-live="polite"
     >Verdict: press a button.</p>
   </div>
@@ -311,7 +311,7 @@ const DEUTSCH_F2_CIRCUIT: Circuit = {
 
   <h2>Self-test</h2>
 
-  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-ink">
     <li>
       Without running the simulator: if <code>U<sub>f</sub></code> is
       literally the identity (no oracle gates at all), what state
@@ -385,8 +385,8 @@ const DEUTSCH_F2_CIRCUIT: Circuit = {
   </MathNerds>
 
   <Fragment slot="footer-nav">
-    <a href="/cnot-bell" class="hover:text-slate-200">← CNOT + Bell</a>
-    <a href="/sandbox" class="hover:text-slate-200">Next: open the Sandbox →</a>
+    <a href="/cnot-bell" class="hover:text-ink">← CNOT + Bell</a>
+    <a href="/sandbox" class="hover:text-ink">Next: open the Sandbox →</a>
   </Fragment>
 </EssayLayout>
 
@@ -464,18 +464,18 @@ const DEUTSCH_F2_CIRCUIT: Circuit = {
       f0: "f₀", f1: "f₁", f2: "f₂", f3: "f₃",
     };
     el.textContent = `Verdict for ${labels[name] ?? name}: ${verdict}`;
-    el.classList.remove("text-slate-400", "text-emerald-300", "text-fuchsia-300");
-    if (verdict.startsWith("constant")) el.classList.add("text-emerald-300");
+    el.classList.remove("text-ink-subtle", "text-positive", "text-fuchsia-300");
+    if (verdict.startsWith("constant")) el.classList.add("text-positive");
     else if (verdict.startsWith("balanced")) el.classList.add("text-fuchsia-300");
-    else el.classList.add("text-slate-400");
+    else el.classList.add("text-ink-subtle");
   }
 
   function clearVerdict() {
     const el = document.querySelector<HTMLElement>("[data-deutsch-verdict]");
     if (!el) return;
     el.textContent = "Verdict: press a button.";
-    el.classList.remove("text-emerald-300", "text-fuchsia-300");
-    el.classList.add("text-slate-400");
+    el.classList.remove("text-positive", "text-fuchsia-300");
+    el.classList.add("text-ink-subtle");
   }
 
   const controls = document.querySelector<HTMLElement>("[data-deutsch-controls]");

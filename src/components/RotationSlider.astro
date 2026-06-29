@@ -32,7 +32,7 @@ const displayLabel = label ?? `${axis}(θ) — qubit ${qubit}`;
 ---
 
 <div
-  class="my-4 rounded-lg border border-slate-800 bg-slate-900/40 p-4"
+  class="my-4 rounded-lg border border-line bg-surface-elevated/40 p-4"
   data-widget="rotation-slider"
   data-store-key={storeKey}
   data-qubits={qubits}
@@ -41,8 +41,8 @@ const displayLabel = label ?? `${axis}(θ) — qubit ${qubit}`;
 >
   <label class="flex flex-col gap-2">
     <span class="flex items-baseline justify-between gap-3 text-sm">
-      <span class="font-mono text-indigo-200">{displayLabel}</span>
-      <span class="text-xs text-slate-400" data-role="theta-readout">θ = 0.000 rad</span>
+      <span class="font-mono text-accent-emphasis">{displayLabel}</span>
+      <span class="text-xs text-ink-subtle" data-role="theta-readout">θ = 0.000 rad</span>
     </span>
     <input
       type="range"
@@ -51,7 +51,7 @@ const displayLabel = label ?? `${axis}(θ) — qubit ${qubit}`;
       step="0.04908738521234052"
       value="0"
       data-role="slider"
-      class="w-full accent-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+      class="w-full accent-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       aria-label={`${axis} rotation angle on qubit ${qubit}`}
     />
   </label>

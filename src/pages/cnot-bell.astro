@@ -94,11 +94,11 @@ const bellStarter: Circuit = {
     expect:
   </p>
 
-  <ul class="my-4 font-mono text-sm text-slate-300">
-    <li>|00⟩ → |00⟩ &nbsp; <span class="text-slate-500">(control = 0, target unchanged)</span></li>
-    <li>|01⟩ → |11⟩ &nbsp; <span class="text-slate-500">(control = 1, target flipped from 0 to 1)</span></li>
-    <li>|10⟩ → |10⟩ &nbsp; <span class="text-slate-500">(control = 0, target unchanged)</span></li>
-    <li>|11⟩ → |01⟩ &nbsp; <span class="text-slate-500">(control = 1, target flipped from 1 to 0)</span></li>
+  <ul class="my-4 font-mono text-sm text-ink-muted">
+    <li>|00⟩ → |00⟩ &nbsp; <span class="text-ink-subtle">(control = 0, target unchanged)</span></li>
+    <li>|01⟩ → |11⟩ &nbsp; <span class="text-ink-subtle">(control = 1, target flipped from 0 to 1)</span></li>
+    <li>|10⟩ → |10⟩ &nbsp; <span class="text-ink-subtle">(control = 0, target unchanged)</span></li>
+    <li>|11⟩ → |01⟩ &nbsp; <span class="text-ink-subtle">(control = 1, target flipped from 1 to 0)</span></li>
   </ul>
 
   <p>
@@ -167,17 +167,17 @@ const bellStarter: Circuit = {
     <button
       type="button"
       data-action="x0"
-      class="rounded-md border border-slate-600 bg-slate-700/30 px-3 py-1.5 text-sm font-mono text-slate-200 hover:bg-slate-700/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+      class="rounded-md border border-line-strong bg-line-strong/30 px-3 py-1.5 text-sm font-mono text-ink hover:bg-line-strong/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-strong transition-colors"
     >X on q₀</button>
     <button
       type="button"
       data-action="x1"
-      class="rounded-md border border-slate-600 bg-slate-700/30 px-3 py-1.5 text-sm font-mono text-slate-200 hover:bg-slate-700/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+      class="rounded-md border border-line-strong bg-line-strong/30 px-3 py-1.5 text-sm font-mono text-ink hover:bg-line-strong/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-strong transition-colors"
     >X on q₁</button>
     <button
       type="button"
       data-action="h"
-      class="rounded-md border border-indigo-500/40 bg-indigo-500/10 px-3 py-1.5 text-sm font-mono text-indigo-200 hover:bg-indigo-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 transition-colors"
+      class="rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-sm font-mono text-accent-emphasis hover:bg-accent/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent transition-colors"
     >H on q₀</button>
     <button
       type="button"
@@ -187,7 +187,7 @@ const bellStarter: Circuit = {
     <button
       type="button"
       data-action="reset"
-      class="ml-2 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 transition-colors"
+      class="ml-2 rounded-md border border-line-strong bg-surface-sunken/60 px-3 py-1.5 text-sm text-ink-muted hover:bg-line-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-strong transition-colors"
     >Reset</button>
   </div>
 
@@ -204,7 +204,7 @@ const bellStarter: Circuit = {
     convention, is:
   </p>
 
-  <ul class="my-4 font-mono text-sm text-slate-300 space-y-1">
+  <ul class="my-4 font-mono text-sm text-ink-muted space-y-1">
     <li>|00⟩ &nbsp;→ H, CNOT →&nbsp; |Φ⁺⟩ = (|00⟩ + |11⟩) / √2</li>
     <li>|01⟩ &nbsp;→ H, CNOT →&nbsp; |Φ⁻⟩ = (|00⟩ − |11⟩) / √2</li>
     <li>|10⟩ &nbsp;→ H, CNOT →&nbsp; |Ψ⁺⟩ = (|01⟩ + |10⟩) / √2</li>
@@ -285,7 +285,7 @@ const bellStarter: Circuit = {
 
   <h2>Self-test</h2>
 
-  <ol class="my-6 list-decimal space-y-3 pl-6 text-slate-200">
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-ink">
     <li>
       Build <code>|Ψ⁻⟩ = (|01⟩ − |10⟩) / √2</code> from
       <code>|00⟩</code> using only the four operation buttons above.
@@ -343,8 +343,8 @@ const bellStarter: Circuit = {
   </MathNerds>
 
   <Fragment slot="footer-nav">
-    <a href="/entanglement" class="hover:text-slate-200">← Entanglement</a>
-    <a href="/deutsch" class="hover:text-slate-200">Next: Deutsch →</a>
+    <a href="/entanglement" class="hover:text-ink">← Entanglement</a>
+    <a href="/deutsch" class="hover:text-ink">Next: Deutsch →</a>
   </Fragment>
 </EssayLayout>
 

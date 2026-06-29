@@ -20,14 +20,14 @@ const { storeKey, qubits, caption, showAxis = true } = Astro.props as Props;
 ---
 
 <figure
-  class="my-6 rounded-lg border border-slate-800 bg-slate-900/40 p-5"
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5"
   data-widget="probability-bars"
   data-widget-id={`probability-bars:${storeKey}`}
   data-annotatable
   data-store-key={storeKey}
   data-qubits={qubits}
 >
-  {caption && <figcaption class="mb-3 text-sm text-slate-400">{caption}</figcaption>}
+  {caption && <figcaption class="mb-3 text-sm text-ink-subtle">{caption}</figcaption>}
   <div class="relative">
     <svg
       class="w-full h-40"
@@ -37,7 +37,7 @@ const { storeKey, qubits, caption, showAxis = true } = Astro.props as Props;
       data-role="chart"
     ></svg>
     {showAxis && (
-      <p class="mt-2 text-right text-xs text-slate-500" data-role="readout" aria-live="polite">
+      <p class="mt-2 text-right text-xs text-ink-subtle" data-role="readout" aria-live="polite">
         P(|0⟩) = …, P(|1⟩) = …
       </p>
     )}

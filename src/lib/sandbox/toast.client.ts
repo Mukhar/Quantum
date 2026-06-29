@@ -27,7 +27,7 @@ function show(message: string, kind: "info" | "error") {
     `fixed bottom-6 left-1/2 -translate-x-1/2 z-40 rounded-md px-4 py-2 text-sm shadow-lg border ` +
     (kind === "error"
       ? "bg-rose-900/90 border-rose-700 text-rose-100"
-      : "bg-slate-800/95 border-slate-700 text-slate-100");
+      : "bg-surface-sunken/95 border-line-strong text-ink");
   host.textContent = message;
   document.body.appendChild(host);
   dismissTimer = window.setTimeout(() => {

@@ -46,7 +46,7 @@ function open(grid: HTMLElement) {
   if (!host) {
     host = document.createElement("div");
     host.dataset.paramSlider = "true";
-    host.className = "fixed z-30 w-64 rounded-md border border-slate-700 bg-slate-900 shadow-xl p-3";
+    host.className = "fixed z-30 w-64 rounded-md border border-line-strong bg-surface-elevated shadow-xl p-3";
     host.setAttribute("role", "dialog");
     document.body.appendChild(host);
   }
@@ -91,8 +91,8 @@ function repositionAndRender(grid: HTMLElement, sel: SelectedCell) {
 
   host.innerHTML = `
     <div class="flex items-baseline justify-between mb-2">
-      <span class="font-mono text-sm text-emerald-300">R${op.axis.toLowerCase()}(θ) · q${op.qubit}</span>
-      <span class="text-xs text-slate-400 tabular-nums" data-theta-label>${formatTheta(op.theta)}</span>
+      <span class="font-mono text-sm text-positive">R${op.axis.toLowerCase()}(θ) · q${op.qubit}</span>
+      <span class="text-xs text-ink-subtle tabular-nums" data-theta-label>${formatTheta(op.theta)}</span>
     </div>
     <input
       type="range"
@@ -105,11 +105,11 @@ function repositionAndRender(grid: HTMLElement, sel: SelectedCell) {
       aria-label="Rotation angle in radians"
       aria-valuetext="${formatTheta(op.theta)}"
     />
-    <div class="mt-2 flex justify-between text-xs text-slate-400">
-      <button type="button" data-theta-preset="0" class="hover:text-slate-200">0</button>
-      <button type="button" data-theta-preset="${Math.PI / 2}" class="hover:text-slate-200">π/2</button>
-      <button type="button" data-theta-preset="${Math.PI}" class="hover:text-slate-200">π</button>
-      <button type="button" data-theta-preset="${(3 * Math.PI) / 2}" class="hover:text-slate-200">3π/2</button>
+    <div class="mt-2 flex justify-between text-xs text-ink-subtle">
+      <button type="button" data-theta-preset="0" class="hover:text-ink">0</button>
+      <button type="button" data-theta-preset="${Math.PI / 2}" class="hover:text-ink">π/2</button>
+      <button type="button" data-theta-preset="${Math.PI}" class="hover:text-ink">π</button>
+      <button type="button" data-theta-preset="${(3 * Math.PI) / 2}" class="hover:text-ink">3π/2</button>
     </div>
   `;
 

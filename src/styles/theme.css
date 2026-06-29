@@ -1,0 +1,93 @@
+/*
+ * Quantum — global theme tokens.
+ *
+ * Light defaults under :root; dark overrides under .dark. Tailwind
+ * resolves semantic utilities (bg-surface, text-ink, etc.) against
+ * these custom properties — see tailwind.config.mjs.
+ *
+ * Values are RGB triplets (no rgb() wrapper) so Tailwind can apply
+ * arbitrary alpha via the `/ <alpha-value>` token.
+ *
+ * Contrast target: WCAG AA (4.5:1 text, 3:1 large/iconography) on
+ * both themes. Validated in tests/visual/themes.spec.ts.
+ *
+ * NOTE: This file does NOT contain @tailwind directives because
+ * @astrojs/tailwind injects them automatically. Importing this file
+ * from a layout simply layers our tokens on top.
+ */
+
+:root {
+  /* ── Surfaces ─────────────────────────────────────────────────────── */
+  --color-surface: 248 250 252;            /* slate-50 — page bg */
+  --color-surface-elevated: 255 255 255;   /* white — cards / popovers */
+  --color-surface-sunken: 241 245 249;     /* slate-100 — code, math */
+
+  /* ── Ink ─────────────────────────────────────────────────────────── */
+  --color-ink: 15 23 42;                   /* slate-900 — body copy */
+  --color-ink-muted: 71 85 105;            /* slate-600 — secondary */
+  --color-ink-subtle: 100 116 139;         /* slate-500 — tertiary */
+
+  /* ── Lines & borders ─────────────────────────────────────────────── */
+  --color-line: 226 232 240;               /* slate-200 */
+  --color-line-strong: 203 213 225;        /* slate-300 */
+
+  /* ── Accent (indigo) ─────────────────────────────────────────────── */
+  --color-accent: 79 70 229;               /* indigo-600 */
+  --color-accent-emphasis: 67 56 202;      /* indigo-700 — hover */
+  --color-accent-muted: 224 231 255;       /* indigo-100 — subtle bg */
+
+  /* ── 3D canvas ───────────────────────────────────────────────────── */
+  --color-canvas-bg: 248 250 252;          /* matches surface */
+  --color-axis-x: 220 38 38;               /* red-600 */
+  --color-axis-y: 22 163 74;               /* green-600 */
+  --color-axis-z: 37 99 235;               /* blue-600 */
+  --color-bloch-arrow: 79 70 229;          /* indigo-600 */
+
+  /* ── Status ──────────────────────────────────────────────────────── */
+  --color-positive: 22 163 74;             /* green-600 */
+  --color-warning: 217 119 6;              /* amber-600 */
+}
+
+.dark {
+  /* ── Surfaces ─────────────────────────────────────────────────────── */
+  --color-surface: 2 6 23;                 /* slate-950 — matches v1 */
+  --color-surface-elevated: 15 23 42;      /* slate-900 */
+  --color-surface-sunken: 30 41 59;        /* slate-800 */
+
+  /* ── Ink ─────────────────────────────────────────────────────────── */
+  --color-ink: 241 245 249;                /* slate-100 — matches v1 */
+  --color-ink-muted: 203 213 225;          /* slate-300 */
+  --color-ink-subtle: 148 163 184;         /* slate-400 */
+
+  /* ── Lines & borders ─────────────────────────────────────────────── */
+  --color-line: 30 41 59;                  /* slate-800 */
+  --color-line-strong: 51 65 85;           /* slate-700 */
+
+  /* ── Accent (indigo, brighter for AA on dark) ────────────────────── */
+  --color-accent: 165 180 252;             /* indigo-300 — matches v1 */
+  --color-accent-emphasis: 199 210 254;    /* indigo-200 — hover */
+  --color-accent-muted: 49 46 129;         /* indigo-900 — subtle bg */
+
+  /* ── 3D canvas ───────────────────────────────────────────────────── */
+  --color-canvas-bg: 2 6 23;               /* matches surface */
+  --color-axis-x: 248 113 113;             /* red-400 */
+  --color-axis-y: 74 222 128;              /* green-400 */
+  --color-axis-z: 96 165 250;              /* blue-400 */
+  --color-bloch-arrow: 165 180 252;        /* indigo-300 */
+
+  /* ── Status ──────────────────────────────────────────────────────── */
+  --color-positive: 74 222 128;            /* green-400 */
+  --color-warning: 251 191 36;             /* amber-400 */
+}
+
+/* Body uses raw vars so it paints correctly before any class-based
+   utilities resolve. Components can override with bg-surface / text-ink. */
+body {
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-ink));
+}
+
+/* KaTeX inherits color from parent so dark-mode math stays legible. */
+.katex {
+  color: inherit;
+}

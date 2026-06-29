@@ -1,8 +1,9 @@
 ---
+import "../styles/theme.css";
+import ThemeToggle from "../components/ThemeToggle.astro";
+import { BOOTSTRAP_SCRIPT } from "../lib/themeBootstrap";
 /**
- * Friendly 404 page. Dark slate palette to match the rest of the site,
- * with a link back to the concept map (the real homepage UX) plus
- * direct quick-links to the obvious destinations.
+ * Friendly 404 page. Theme-aware via shared semantic tokens.
  */
 const title = "404 — page not found · Quantum";
 ---
@@ -10,18 +11,22 @@ const title = "404 — page not found · Quantum";
 <!doctype html>
 <html lang="en">
   <head>
+    <script is:inline set:html={BOOTSTRAP_SCRIPT} />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="robots" content="noindex" />
   </head>
-  <body class="bg-slate-950 text-slate-100 antialiased">
+  <body class="bg-surface text-ink antialiased">
+    <div class="fixed top-4 right-4 z-50">
+      <ThemeToggle />
+    </div>
     <main class="mx-auto max-w-2xl px-6 py-24 text-center">
-      <p class="mb-4 text-sm uppercase tracking-widest text-indigo-400">404</p>
+      <p class="mb-4 text-sm uppercase tracking-widest text-accent">404</p>
       <h1 class="mb-5 text-4xl sm:text-5xl font-semibold leading-tight">
         That page collapsed into the void.
       </h1>
-      <p class="mb-10 text-lg text-slate-300">
+      <p class="mb-10 text-lg text-ink-muted">
         Quantum mechanics says the page might exist somewhere in the
         multiverse. Classical web hosting says: nope, not here.
       </p>
@@ -29,19 +34,19 @@ const title = "404 — page not found · Quantum";
       <div class="flex flex-wrap justify-center gap-3 mb-10">
         <a
           href="/"
-          class="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+          class="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-emphasis focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >← Back to the map</a>
         <a
           href="/qubit"
-          class="rounded-md border border-indigo-700/40 bg-indigo-950/30 px-4 py-2 text-sm font-medium text-indigo-200 hover:border-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+          class="rounded-md border border-accent/40 bg-accent-muted/30 px-4 py-2 text-sm font-medium text-accent hover:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >Start with the qubit essay</a>
         <a
           href="/sandbox"
-          class="rounded-md border border-emerald-700/40 bg-emerald-950/30 px-4 py-2 text-sm font-medium text-emerald-200 hover:border-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+          class="rounded-md border border-positive/40 bg-positive/10 px-4 py-2 text-sm font-medium text-positive hover:border-positive focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-positive"
         >Jump into the sandbox</a>
       </div>
 
-      <p class="text-sm text-slate-500">
+      <p class="text-sm text-ink-subtle">
         If you got here from a link on this site, that's a bug — please
         let us know on GitHub.
       </p>

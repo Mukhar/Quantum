@@ -119,7 +119,7 @@ const remixHref = showRemixLink ? `/sandbox#${encodeCircuit(circuit)}` : null;
 ---
 
 <figure class:list={["not-prose my-6", extraClass]}>
-  <div class="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+  <div class="rounded-lg border border-line bg-surface-elevated/40 p-4">
     <svg
       role="img"
       aria-label={a11yLabel}
@@ -240,13 +240,13 @@ const remixHref = showRemixLink ? `/sandbox#${encodeCircuit(circuit)}` : null;
       <div class="mt-2 text-right">
         <a
           href={remixHref}
-          class="text-xs text-emerald-300 hover:text-emerald-200 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+          class="text-xs text-positive hover:text-positive underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-positive"
           data-circuit-view-remix
         >Remix in sandbox →</a>
       </div>
     )}
   </div>
   {caption && (
-    <figcaption class="mt-2 text-sm text-slate-400">{caption}</figcaption>
+    <figcaption class="mt-2 text-sm text-ink-subtle">{caption}</figcaption>
   )}
 </figure>
