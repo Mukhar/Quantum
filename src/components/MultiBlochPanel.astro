@@ -1,0 +1,66 @@
+---
+/**
+ * MultiBlochPanel — a responsive row of N `MiniBloch` cards bound to a
+ * shared store.
+ *
+ * Implements ALG-02 (the algorithm half's visualization requirement):
+ * stepping through a protocol, the reader sees every qubit's reduced
+ * Bloch state update in lockstep. The mid-teleportation moment where
+ * q1 and q2's arrows shrink to the centre and the "Entangled" badge
+ * appears — and then q2's arrow returns to full length, matching the
+ * input on q0 — is the visual payoff this panel exists to deliver.
+ *
+ * Implementation note: no client JS in this file. Every `MiniBloch`
+ * already subscribes to the shared store via its own
+ * `data-store-key` + `data-qubit` contract and recomputes the
+ * reduced-density Bloch vector per snapshot. This component is
+ * deliberately a thin composition shell — the arrow-length math,
+ * the entangled badge threshold (r < 0.98), and the theme reactivity
+ * all live in `MiniBloch.astro`. Shrinks the diff and keeps a single
+ * source of truth for the Bloch projection.
+ *
+ * Generic from day 1: Phase 3's superdense essay will instantiate it
+ * with 2 qubits for free.
+ */
+import MiniBloch from "./MiniBloch.astro";
+
+interface Props {
+  /** Store key shared with sibling widgets on the same essay. */
+  storeKey: string;
+  /** Total qubits in the register — must match the store. */
+  qubits: number;
+  /**
+   * Per-qubit captions. Defaults to "q0", "q1", "q2", … if absent.
+   * Pass an array shorter than `qubits` and trailing qubits fall back
+   * to the default.
+   */
+  captions?: string[];
+  /** Optional figure-level caption shown above the row. */
+  caption?: string;
+}
+
+const { storeKey, qubits, captions, caption } = Astro.props as Props;
+const indices = Array.from({ length: qubits }, (_, i) => i);
+---
+
+<figure
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-4 space-y-3"
+  data-widget="multi-bloch-panel"
+  data-store-key={storeKey}
+  data-qubits={qubits}
+  aria-label={caption ?? `Reduced Bloch projection for ${qubits} qubits`}
+>
+  {caption && (
+    <figcaption class="text-sm text-ink-subtle">{caption}</figcaption>
+  )}
+  <div class={`grid grid-cols-1 ${qubits === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"} gap-4`}>
+    {indices.map((i) => (
+      <MiniBloch
+        storeKey={storeKey}
+        qubits={qubits}
+        qubit={i}
+        caption={captions?.[i] ?? `q${i}`}
+      />
+    ))}
+  </div>
+</figure>
