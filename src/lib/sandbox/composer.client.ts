@@ -35,7 +35,7 @@ import {
 } from "../quantum/circuit";
 import { mountParamSlider } from "./paramSlider.client";
 import { initHistory, undo, redo, canUndo, canRedo } from "./history";
-import { hydrateFromUrlOrStorage, startAutoPersist, copyShareUrl } from "./persistence";
+import { hydrateFromUrlOrStorage, startAutoPersist, copyShareUrl, copyQiskitSnippet } from "./persistence";
 import { emptyCircuit } from "../quantum/circuit";
 import { padToVisibleSteps, DEFAULT_QUBITS, DEFAULT_STEPS } from "./store";
 
@@ -389,12 +389,14 @@ function attachToolbar(toolbar: HTMLElement) {
   const undoBtn = toolbar.querySelector<HTMLButtonElement>("[data-action='undo']");
   const redoBtn = toolbar.querySelector<HTMLButtonElement>("[data-action='redo']");
   const shareBtn = toolbar.querySelector<HTMLButtonElement>("[data-action='share']");
+  const qiskitBtn = toolbar.querySelector<HTMLButtonElement>("[data-action='qiskit']");
   const resetBtn = toolbar.querySelector<HTMLButtonElement>("[data-action='reset']");
   const qubitsSel = toolbar.querySelector<HTMLSelectElement>("[data-action='qubits']");
 
   undoBtn?.addEventListener("click", () => undo());
   redoBtn?.addEventListener("click", () => redo());
   shareBtn?.addEventListener("click", () => { void copyShareUrl(); });
+  qiskitBtn?.addEventListener("click", () => { void copyQiskitSnippet(); });
   resetBtn?.addEventListener("click", () => {
     commit(() => padToVisibleSteps(emptyCircuit(circuit.value.qubits), DEFAULT_STEPS));
   });

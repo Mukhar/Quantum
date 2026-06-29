@@ -16,6 +16,7 @@
  */
 import { circuit, onCommit, showToast, padToVisibleSteps, DEFAULT_STEPS } from "./store";
 import { encodeCircuit, decodeCircuit, CodecError } from "../quantum/codec";
+import { toQiskit } from "../quantum/qiskit";
 import type { Circuit } from "../quantum/circuit";
 
 const LS_KEY = "sandbox.lastCircuit";
@@ -100,6 +101,30 @@ export async function copyShareUrl(): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(url);
     showToast("Share link copied to clipboard");
+    return true;
+  } catch (_err) {
+    showToast("Couldn't copy — your browser blocked clipboard access", "error");
+    return false;
+  }
+}
+
+/**
+ * Copy a runnable Qiskit Python snippet of the current sandbox
+ * circuit to clipboard (QSK-01). Mirrors `copyShareUrl` step for
+ * step — same toast / error discipline so the two toolbar buttons
+ * behave identically.
+ */
+export async function copyQiskitSnippet(): Promise<boolean> {
+  let snippet: string;
+  try {
+    snippet = toQiskit(circuit.value);
+  } catch (err) {
+    showToast(`Can't export: ${(err as Error).message}`, "error");
+    return false;
+  }
+  try {
+    await navigator.clipboard.writeText(snippet);
+    showToast("Qiskit snippet copied to clipboard");
     return true;
   } catch (_err) {
     showToast("Couldn't copy — your browser blocked clipboard access", "error");
