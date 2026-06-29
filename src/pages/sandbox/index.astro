@@ -41,6 +41,17 @@ import QuantumTones from "../../components/sandbox/QuantumTones.astro";
         >Copy share URL</button>
         <button
           type="button"
+          data-action="save-gallery"
+          class="rounded bg-accent hover:bg-accent-emphasis px-3 py-1 text-white"
+          title="Save to local gallery"
+        >Save</button>
+        <a
+          href="/gallery"
+          class="rounded bg-surface-sunken hover:bg-line-strong px-3 py-1 text-ink-muted hover:text-ink"
+          title="Open the gallery"
+        >Gallery →</a>
+        <button
+          type="button"
           data-action="reset"
           class="rounded bg-surface-sunken hover:bg-line-strong px-3 py-1 text-ink-muted"
           title="Reset to empty circuit"
@@ -89,6 +100,41 @@ import QuantumTones from "../../components/sandbox/QuantumTones.astro";
       </div>
     </aside>
   </div>
+
+  {/* Save-to-gallery dialog — native <dialog> for free modal a11y. */}
+  <dialog
+    data-role="save-dialog"
+    class="rounded-lg border border-line-strong bg-surface-elevated p-6 text-ink backdrop:bg-surface/80 backdrop:backdrop-blur-sm w-[min(90vw,28rem)]"
+  >
+    <form data-role="save-form" method="dialog" class="space-y-4">
+      <h2 class="text-lg font-semibold text-ink">Save circuit to gallery</h2>
+      <p class="text-sm text-ink-muted">
+        Stored locally in this browser. Browse, rename, or export at any time from the
+        <a href="/gallery" class="text-accent hover:text-accent-emphasis underline">gallery</a>.
+      </p>
+      <label class="block">
+        <span class="block text-sm font-medium text-ink mb-1">Name</span>
+        <input
+          data-role="save-name"
+          type="text"
+          required
+          maxlength="80"
+          class="w-full rounded-md border border-line bg-surface px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+        />
+      </label>
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          data-role="save-cancel"
+          class="text-sm text-ink-subtle hover:text-ink px-3 py-2"
+        >Cancel</button>
+        <button
+          type="submit"
+          class="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-emphasis focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface-elevated"
+        >Save</button>
+      </div>
+    </form>
+  </dialog>
 </SandboxLayout>
 
 <script>
@@ -102,6 +148,26 @@ import QuantumTones from "../../components/sandbox/QuantumTones.astro";
     mountComposer(root as HTMLElement);
     mountToast();
     mountResults(root as HTMLElement);
+
+    // Save-to-gallery is lazy — only pulled in when the user hovers
+    // or focuses the Save button. Keeps idb-keyval out of the
+    // critical sandbox bundle until needed.
+    const saveBtn = document.querySelector<HTMLButtonElement>('[data-action="save-gallery"]');
+    if (saveBtn) {
+      let loaded = false;
+      const load = () => {
+        if (loaded) return;
+        loaded = true;
+        import("../../lib/sandbox/gallery-save.client").then(({ mountSaveToGallery }) => {
+          mountSaveToGallery(document.body);
+          // Click the button again to actually open the dialog if the
+          // user pressed Save (rather than just hovered).
+        }).catch((err) => console.warn("[gallery-save] load failed", err));
+      };
+      saveBtn.addEventListener("pointerenter", load, { once: true });
+      saveBtn.addEventListener("focus", load, { once: true });
+      saveBtn.addEventListener("click", load, { once: true });
+    }
 
     // Both creative widgets are lazy-mounted via IntersectionObserver
     // so the composer up top stays the fast critical path. Each pays

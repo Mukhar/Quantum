@@ -1,7 +1,7 @@
 # State
 
-*Last updated: 2026-06-28 — Phase 2 (feedback form) complete.
-Entering Phase 3 (circuit gallery).*
+*Last updated: 2026-06-28 — Phase 3 (circuit gallery) complete.
+Entering Phase 4 (launch polish).*
 
 ## Project Reference
 
@@ -21,20 +21,19 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 
 | | |
 |---|---|
-| Phase | Phase 3 — Circuit gallery (next to plan) |
+| Phase | Phase 4 — Launch polish (next to plan) |
 | Plan | — |
-| Status | Phase 2 committed; entering Phase 3 |
-| Last activity | 2026-06-28 — Phase 2 feedback form complete (+30 tests) |
+| Status | Phase 3 committed; entering Phase 4 |
+| Last activity | 2026-06-28 — Phase 3 circuit gallery complete (+50 tests) |
 
 ## Where we are
 
 ### v2.0 — current
 
 - [x] **Phase 1** — Theme system (THEME-01..04). THEME-05 deferred to Phase 4.
-- [x] **Phase 2** — Feedback form (FB-01..05). 197/197 tests.
-- [ ] **Phase 3** — Circuit gallery (IndexedDB, `/gallery`, sandbox
-  drawer, export/import). Requirements: GAL-01..09.
-- [ ] **Phase 4** — v2 launch polish. Requirements: OPS-01..03.
+- [x] **Phase 2** — Feedback form (FB-01..05). 197 tests.
+- [x] **Phase 3** — Circuit gallery (GAL-01..09). 247 tests, 19 pages.
+- [ ] **Phase 4** — v2 launch polish. Requirements: OPS-01..03 + Plan 01-05 carryover.
 
 ### v1.0 — archived
 
