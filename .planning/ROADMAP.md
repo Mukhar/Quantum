@@ -1,135 +1,216 @@
-# Roadmap: Quantum v2.0 — Return, Comfort, Voice
+# Roadmap: Quantum v3.0 — Algorithms × Use Cases
 
 ## Overview
 
-v2.0 closes the three obvious gaps that will be visible the moment v1
-hits readers — no way to save circuits, no theme choice, no in-site
-feedback channel — without breaking the static-site, no-backend posture
-that defines the project.
+v3.0 pairs the canonical quantum algorithm canon with the practical
+use case each algorithm unlocks. Every v3 essay teaches the algorithm
+AND the use case in the same scroll, with widgets driving both halves.
 
-Phase order is deliberate, smallest-blast-radius first → biggest:
+Phase order is deliberate, foundation-first then ascending difficulty:
 
-1. **Theme system first.** Touches every page, so subsequent phases
-   are theme-aware from birth and we avoid auditing widgets twice.
-2. **Feedback form second.** Tiny and self-contained, plus it gives
-   us a feedback channel *during* the rest of v2 dev.
-3. **Circuit gallery third.** The meatiest feature; depends on the
-   existing sandbox circuit codec from v1 Phase 3.
-4. **Launch polish fourth.** Closing-the-loop: a11y/Lighthouse audit,
-   dark-mode visual QA pass, v2 announcement.
+1. **Foundation infra first.** Qiskit text export + bundle-size CI
+   gate. Every subsequent phase reuses both, so it has to land first.
+2. **Teleportation second (FLAGSHIP).** Extends v1's entanglement
+   story most directly → lowest pedagogical risk for proving the
+   "algorithm + use case in one scroll" format end-to-end.
+3. **Superdense third.** Same protocol shape as Teleportation;
+   completes the communication arc.
+4. **Grover fourth.** Self-contained; first essay where the use case
+   is "honest disappointment" (no, it doesn't break RSA).
+5. **Shor + QFT fifth.** Densest essay in v3; QFT taught inline as
+   Shor's engine; Qiskit export bridges to real hardware for N=15.
+6. **VQE + launch sixth.** Variational/hybrid — the near-term
+   industrial story — plus concept-map progress indicator and v3
+   launch artifacts.
 
-Phase numbering is **reset** for v2 — v1's phases 1–5 are archived
-under `.planning/phases/_archive-v1/`. v1 historical context lives in
-`.planning/MILESTONES.md`.
+Phase numbering is **reset** for v3 — v1's phases 1–5 are archived
+under `.planning/phases/_archive-v1/`, v2's 1–4 under `_archive-v2/`.
+v1+v2 historical context lives in `.planning/MILESTONES.md`.
 
 ## Phases
 
-- [ ] **Phase 1: Theme system** — Tailwind class-based dark mode, persisted user override, FOUC-killer, full widget audit, Playwright visual regression
-- [ ] **Phase 2: Feedback form** — `/feedback` page + Apps Script + private Google Sheet + honeypot + mailto fallback
-- [ ] **Phase 3: Circuit gallery** — IndexedDB-backed save/load shelf, `/gallery` page, sandbox save drawer, export/import, schema migrations
-- [ ] **Phase 4: v2 launch polish** — Lighthouse + a11y audit, dark-mode visual QA, v2 announcement draft
+- [ ] **Phase 1: Foundation — Qiskit export + bundle CI** — Sandbox toolbar export, per-essay `CircuitView` export, gate-coverage golden tests, per-route bundle-size CI gate
+- [ ] **Phase 2: Teleportation + Quantum networks (FLAGSHIP)** — `/teleportation` essay with `ProtocolStepper`, mixed-state `MultiBlochPanel`, and `QuantumNetwork` interactive
+- [ ] **Phase 3: Superdense + Holevo bound** — `/superdense-coding` essay with `EncodingTable` and `HolevoBound` widgets
+- [ ] **Phase 4: Grover + Search reality** — `/grover` essay with oracle/diffusion, `AmplitudeBars` iterator, and `SearchComparison` widget
+- [ ] **Phase 5: Shor + QFT + PQC threat** — `/shor` essay with `QFT` visualizer, `PeriodFinding` demo, static full-N=15 `CircuitView`, and `RSACountdown` widget
+- [ ] **Phase 6: VQE + Chemistry + v3 launch** — `/vqe` essay with vanilla-TS optimizer + `EnergyLandscape` + `MoleculeGallery`, concept-map progress indicator, OPS audit, v3 announcement
 
 ## Phase Details
 
-### Phase 1: Theme system
+### Phase 1: Foundation — Qiskit export + bundle CI
 
-**Goal:** Class-based dark mode with `localStorage`-persisted user
-override, FOUC-free first paint, and AA contrast across every existing
-widget on both themes.
-**Depends on:** v1.0 (every existing page).
-**Requirements:** THEME-01, THEME-02, THEME-03, THEME-04, THEME-05
+**Goal:** Land the two cross-cutting infrastructure pieces every later
+phase depends on: a Qiskit-text export usable from both the sandbox
+toolbar and every essay's `CircuitView`, and a per-route bundle-size
+CI gate that prevents v3 essays from bloating the site.
+**Depends on:** v1.0 codec (`src/lib/quantum/codec.ts`), v1.0
+`CircuitView` component, v2.0 sandbox toolbar.
+**Requirements:** QSK-01, QSK-02, QSK-03, OPS-04
 **Success Criteria:**
-  1. Header has a 3-state toggle (Light / Dark / System); choice
-     persists across reloads in `localStorage["quantum/theme"]`
-  2. First paint is FOUC-free in both themes (inline `<head>` script
-     runs before CSS applies)
-  3. KaTeX, Three.js Bloch, ProbabilityBars, StateVector, sandbox
-     grid + palette, Quantum Canvas, Quantum Tones, annotations,
-     ConceptMap, and Shiki code blocks all hit WCAG 2.2 AA contrast
-     in both themes
-  4. Three.js Bloch scene re-reads background/axis colors from CSS
-     vars on toggle — no reload required
-  5. Playwright snapshots every route in both themes and fails CI on
-     contrast/layout regression
+  1. "Copy as Qiskit" button on sandbox toolbar copies a runnable
+     Qiskit snippet (`QuantumCircuit(n,n)` + gates in `Step` order +
+     measurement) to the clipboard
+  2. Every existing essay `CircuitView` exposes the same affordance
+     for its statically-encoded circuit
+  3. Golden test asserts each simulator-supported gate (`H`, `X`, `Y`,
+     `Z`, `S`, `T`, `Rx`, `Ry`, `Rz`, `CNOT`, controlled rotations,
+     `SWAP`, `M`) maps to syntactically-correct Qiskit; test fails on
+     any new simulator gate without a Qiskit mapping
+  4. CI runs `astro build` and asserts each tracked route's JS bundle
+     stays under its declared ceiling; build fails on overrun
+  5. Existing tests (v1 + v2) all still pass; no Lighthouse regressions
 
 **Plans:** TBD (created by `/gsd-plan-phase 1`)
 
-### Phase 2: Feedback form
+### Phase 2: Teleportation + Quantum networks (FLAGSHIP)
 
-**Goal:** A single `/feedback` page POSTs to a Google Apps Script Web
-App that appends rows to a private Google Sheet you own. Mailto
-fallback on failure; honeypot for spam.
-**Depends on:** Phase 1 (theme system) — form should ship theme-aware.
-**Requirements:** FB-01, FB-02, FB-03, FB-04, FB-05
+**Goal:** Ship `/teleportation`, the flagship v3 essay, proving the
+"algorithm half + use-case half, both widget-driven" format
+end-to-end. Algorithm half walks the reader through the 3-qubit
+teleportation circuit; use-case half lets them swap entanglement
+across a 3-node network.
+**Depends on:** Phase 1 (Qiskit export is on this essay's
+`CircuitView` from day 1), v1 `MiniBloch` pattern,
+`src/lib/quantum/reducedDensity.ts`.
+**Requirements:** ALG-01, ALG-02, USE-01
 **Success Criteria:**
-  1. `/feedback` renders the form with Type / Subject / Message /
-     optional Email fields and submits to the Apps Script URL
-  2. Submission appends a row with `(timestamp, type, subject, message,
-     email, page_referrer)` to the configured Sheet
-  3. `/feedback/thanks` confirms success; a "send another" link returns
-     to the form
-  4. Honeypot drops bot submissions silently
-  5. Apps Script failure or network error surfaces a `mailto:` fallback
-     link with prefilled subject/body
-  6. `docs/apps-script.md` documents the one-time Apps Script setup
+  1. `/teleportation` essay renders end-to-end with an embedded
+     `ProtocolStepper` that advances through entangle-pair → Bell
+     measure → classical bits → conditional X/Z → state arrives
+  2. `MultiBlochPanel` honestly renders mixed states: Bloch arrow
+     length = `|r|` (vector norm of reduced density); for canonical
+     mixed states (`I/2`, `(I + 0.5·Z)/2`) the arrow lives **inside**
+     the sphere with the right magnitude
+  3. `QuantumNetwork` 3-node widget (Alice / Repeater / Bob): clicking
+     each link swaps entanglement along it; live "shared Bell pair
+     Alice ↔ Bob" indicator flips when end-to-end entanglement exists
+  4. Essay frontmatter wires into `tests/essays/nav-graph.test.ts`
+     mirror; concept-map node added with same-commit mirror update
+  5. Lighthouse mobile a11y ≥ 95 in both themes
 
 **Plans:** TBD (created by `/gsd-plan-phase 2`)
 
-### Phase 3: Circuit gallery
+### Phase 3: Superdense + Holevo bound
 
-**Goal:** Local "my saved circuits" shelf at `/gallery` plus a save
-drawer in `/sandbox`. IndexedDB-backed, schema-versioned, exportable.
-Loading a gallery entry reuses the existing URL-fragment codec — no
-new hydration path.
-**Depends on:** Phase 1 (theme), Phase 2 (feedback channel handy for
-beta-testers reporting gallery issues), plus the v1 URL-fragment codec.
-**Requirements:** GAL-01, GAL-02, GAL-03, GAL-04, GAL-05, GAL-06,
-  GAL-07, GAL-08, GAL-09
+**Goal:** Ship `/superdense-coding`. Algorithm half shows
+encoding/decoding; use-case half visualizes the Holevo bound so the
+reader understands superdense ≠ free bandwidth.
+**Depends on:** Phase 2 (pattern reuse: `ProtocolStepper`,
+`MultiBlochPanel`), Phase 1 (Qiskit export).
+**Requirements:** ALG-03, USE-02
 **Success Criteria:**
-  1. User can save the current sandbox circuit with a name + optional
-     tags; save renders an ≤ 8 KB PNG thumbnail
-  2. `/gallery` grid shows all saved circuits (thumbnail, name,
-     `qubits·steps`, relative updated-at) with a clear empty state
-  3. Clicking a gallery card opens it in `/sandbox` via the existing
-     URL-fragment codec (no separate "load circuit" code path)
-  4. Rename / duplicate / delete actions work and persist to IndexedDB
-  5. Export entire gallery (or a single entry) to JSON; re-import
-     validates schema and never overwrites existing entries
-  6. Schema is versioned with migration tests (fake-indexeddb)
-  7. Private-browsing fallback: banner + in-memory list for the session
-  8. Gallery bundle lazy-loaded; essay bundles unchanged
-  9. Soft warning at 100 entries; storage-quota error surfaces a toast
+  1. `/superdense-coding` essay renders with `EncodingTable` widget:
+     clicking a 2-bit input animates the corresponding `I/X/Z/XZ`
+     gate on Alice's qubit and shows the Bell-basis measurement on
+     Bob's
+  2. `HolevoBound` widget maps `n` qubits ↔ classical bits, surfacing
+     the 2× ceiling so the reader sees why superdense doesn't scale
+     to "10× bandwidth via 10 qubits"
+  3. Concept-map + nav-graph + sandbox-links mirrors updated in the
+     same commit as essay frontmatter changes
+  4. Lighthouse mobile a11y ≥ 95 in both themes
 
 **Plans:** TBD (created by `/gsd-plan-phase 3`)
 
-### Phase 4: v2 launch polish
+### Phase 4: Grover + Search reality
 
-**Goal:** Final audit + announcement.
-**Depends on:** Phase 3
-**Requirements:** OPS-01, OPS-02, OPS-03
+**Goal:** Ship `/grover`. Algorithm half implements oracle + diffusion
+in the simulator and lets the reader step through iterations; use-case
+half is the "honest disappointment" — quantum search is `√N`, not
+magic.
+**Depends on:** Phase 1 (Qiskit export); independent of Phases 2-3.
+**Requirements:** ALG-04, USE-03
 **Success Criteria:**
-  1. Lighthouse mobile a11y ≥ 95 on `/gallery` and `/feedback` in both
-     themes
-  2. Dark-mode visual QA walkthrough recorded against the §3.2 widget
-     checklist in `docs/plans/2026-06-26-v2-design.md`
-  3. v2 announcement draft committed (mirrors v1's `LAUNCH-ANNOUNCEMENT.md`
-     structure)
-  4. Bundle size delta vs v1 captured; no essay bundle regresses
+  1. Oracle + diffusion operators implemented against the existing
+     simulator; unit tests assert amplitude concentration on the
+     marked state after the optimal `⌊(π/4)·√N⌋` iterations
+  2. `AmplitudeBars` widget shows per-basis-state amplitudes after
+     each iteration; reader steps through; bars animate
+  3. `SearchComparison` widget side-by-side animates classical linear
+     scan vs. Grover's `√N` as `N` slides from 16 → 1024
+  4. Body text explicitly closes the "does this break RSA?" loop with
+     a clean "no — that's Shor, see next essay" handoff
+  5. Concept-map + nav-graph + sandbox-links mirrors updated; Lighthouse
+     mobile a11y ≥ 95 in both themes
 
 **Plans:** TBD (created by `/gsd-plan-phase 4`)
 
+### Phase 5: Shor + QFT + PQC threat
+
+**Goal:** Ship `/shor` — the densest v3 essay. QFT taught inline as
+Shor's engine (interactive at 4 qubits); period-finding demoed live
+on small `N`; full N=15 Shor rendered statically with the Qiskit-
+export button being the bridge to actually running it. Use-case half
+is the PQC threat: RSACountdown + NIST PQC links.
+**Depends on:** Phase 1 (Qiskit export is the **point** of this
+essay's last section), Phase 4 (Grover handoff).
+**Requirements:** ALG-05, ALG-06, ALG-07, USE-04
+**Success Criteria:**
+  1. `QFT` visualizer renders 4-qubit QFT input vs. output as
+     probability bars; reader can adjust input state
+  2. `PeriodFinding` widget runs in-browser for `a^x mod N` with
+     `N ≤ 15`; QFT peak pins the period; tests cover canonical periods
+  3. Full N=15 Shor circuit rendered statically via `CircuitView`
+     (not executed in-browser) with the "Copy as Qiskit" button
+     prominent and body text framing it as "now go run this for real"
+  4. `RSACountdown` widget takes RSA key size (2048 / 3072 / 4096) and
+     a logical-qubit slider; projects qubits-to-break + links the 4
+     NIST PQC primitives (Kyber, Dilithium, Falcon, SPHINCS+)
+  5. Concept-map + nav-graph + sandbox-links mirrors updated; bundle
+     stays under per-route ceiling (OPS-04); Lighthouse mobile a11y
+     ≥ 95 in both themes
+
+**Plans:** TBD (created by `/gsd-plan-phase 5`)
+
+### Phase 6: VQE + Chemistry + v3 launch
+
+**Goal:** Ship `/vqe` (the near-term industrial story — variational
+hybrid algorithms) plus the concept-map progress indicator and all
+v3-launch operational items.
+**Depends on:** Phase 5; touches concept-map (PROG-01) which depends
+on all 5 essays existing.
+**Requirements:** ALG-08, ALG-09, USE-05, PROG-01, OPS-01, OPS-02,
+  OPS-03
+**Success Criteria:**
+  1. Vanilla-TypeScript classical optimizer (~50-100 LOC) lives in
+     `src/lib/quantum/`; unit tests assert convergence on a 1D
+     parabola and on the 2-parameter H2 energy surface to within
+     1e-3 of the true minimum
+  2. `EnergyLandscape` widget renders the 2-parameter variational
+     surface; reader can drag a marker or click "auto-descend" to
+     watch the optimizer converge
+  3. `MoleculeGallery` ships 2-3 pre-baked molecules (`H2`, `LiH`,
+     `HeH+`); each shows saved ansatz parameters, converged energy,
+     and the Qiskit-export button
+  4. Concept-map shows a "visited" flag per essay (10 essays total
+     after v3); state stored under `localStorage["quantum/visited"]`;
+     flag flips on essay-page scroll past 50%; **no analytics**
+  5. Lighthouse mobile a11y ≥ 95 across all 5 new routes in both
+     themes; concept-map layout audit recorded (track-grouped if
+     needed); v3 announcement draft committed
+  6. Final bundle delta vs. v2 captured; no essay route exceeds its
+     per-route ceiling (OPS-04 stays green)
+
+**Plans:** TBD (created by `/gsd-plan-phase 6`)
+
 ## Progress
 
-**Execution Order:** Phases run in numeric order: 1 → 2 → 3 → 4.
+**Execution Order:** Phases run in numeric order: 1 → 2 → 3 → 4 → 5 → 6.
 
 | Phase | Plans Complete | Status      | Completed  |
 |-------|----------------|-------------|------------|
-| 1. Theme system        | 0/TBD | Not started | — |
-| 2. Feedback form       | 0/TBD | Not started | — |
-| 3. Circuit gallery     | 0/TBD | Not started | — |
-| 4. v2 launch polish    | 0/TBD | Not started | — |
+| 1. Foundation — Qiskit export + bundle CI     | 0/TBD | Not started | — |
+| 2. Teleportation + Quantum networks (FLAGSHIP)| 0/TBD | Not started | — |
+| 3. Superdense + Holevo bound                  | 0/TBD | Not started | — |
+| 4. Grover + Search reality                    | 0/TBD | Not started | — |
+| 5. Shor + QFT + PQC threat                    | 0/TBD | Not started | — |
+| 6. VQE + Chemistry + v3 launch                | 0/TBD | Not started | — |
 
-**Parallel ops task (not a phase):** v1 deploy + post-launch feedback
-round. Tracked in
-`.planning/phases/_archive-v1/05-algorithms/LAUNCH-ANNOUNCEMENT.md`.
-Runs whenever ready; does not block v2 phase work.
+**Parallel ops tasks (not phase work):**
+- v1 deploy + post-launch feedback round (tracked under
+  `.planning/phases/_archive-v1/05-algorithms/LAUNCH-ANNOUNCEMENT.md`).
+- v2 deploy: Apps Script provisioning, Lighthouse audit, launch smoke
+  test (tracked under `.planning/phases/_archive-v2/04-launch-polish/`).
+
+Both ops tracks run whenever ready; neither blocks v3 phase work.

@@ -1,6 +1,6 @@
 # Project: Quantum
 
-*Last updated: 2026-06-28 — v1.0 shipped (code-complete; deploy is a parallel ops task). v2.0 milestone started.*
+*Last updated: 2026-06-29 — v2.0 code-complete (deploy + Apps Script provisioning pending). v3.0 milestone started.*
 
 ## What This Is
 
@@ -29,31 +29,36 @@ We insist on both.
 
 ---
 
-## Current Milestone: v2.0 — Return, Comfort, Voice
+## Current Milestone: v3.0 — Algorithms × Use Cases
 
-**Goal:** Close the three obvious gaps that will be visible the moment
-v1 hits readers — no way to save circuits, no theme choice, no in-site
-feedback channel — without breaking the static-site, no-backend posture
-that defines the project.
+**Goal:** Pair the canonical quantum algorithm canon with the
+practical use case each algorithm unlocks. Every v3 essay teaches
+the algorithm AND the use case in the same scroll, with widgets
+driving both halves. Closes the v1+v2 reader's last open question:
+*"Where does this actually bite reality?"*
 
 **Target features:**
 
-1. **Circuit Gallery** — local "my saved circuits" shelf backed by
-   IndexedDB. Save / name / load / delete / duplicate / export / import.
-   Schema designed to sync to a remote API later with zero migration.
-2. **Dark + Light Mode** — Tailwind `darkMode: 'class'`, `localStorage`-
-   backed user override, FOUC-killer inline `<head>` script, full
-   widget audit across KaTeX / Three.js / Canvas / Tones / annotations.
-3. **Unified Feedback Form** — single `/feedback` page POSTing to a
-   Google Apps Script Web App that appends rows to a private Google
-   Sheet you own. Honeypot for spam; mailto fallback on failure.
+1. **Foundation infra** — Qiskit text export from the sandbox
+   toolbar AND every essay's `CircuitView`; bundle-size CI gate.
+2. **Teleportation + Quantum Networks** (flagship essay; validates
+   the algorithm-plus-use-case format end-to-end).
+3. **Superdense + Bandwidth/Holevo** (completes the communication arc).
+4. **Grover + Search Reality Check** (amplitude amplification + the
+   honest √N reality of what Grover does and doesn't break).
+5. **Shor + QFT + Post-Quantum Crypto Threat** (densest essay; QFT
+   taught inline as Shor's engine; Qiskit export bridges to real
+   hardware for the full N=15 factoring).
+6. **VQE + Quantum Chemistry** (variational/hybrid — the near-term
+   industrial story) + concept-map progress indicator + v3 launch.
 
-**Source of truth for design:** `docs/plans/2026-06-26-v2-design.md`
-(brainstormed 2026-06-26, ratified 2026-06-28).
+**Source of truth for design:** `docs/plans/2026-06-29-v3-design.md`
+(brainstormed and ratified 2026-06-29).
 
-**Phases:** see `.planning/ROADMAP.md`. v1 history lives in
-`.planning/MILESTONES.md`; archived v1 phase artifacts under
-`.planning/phases/_archive-v1/`.
+**Phases:** see `.planning/ROADMAP.md`. Phase numbering reset to 1
+for v3 (matching v2's pattern). v1 + v2 history live in
+`.planning/MILESTONES.md`; archived phase artifacts under
+`.planning/phases/_archive-v1/` and `_archive-v2/`.
 
 ---
 
@@ -94,37 +99,50 @@ that defines the project.
 - [done] REQ-22 — Annotations / pins persisted in `localStorage` — Phase 2
 - [done] REQ-23 — Undo/redo + keyboard shortcuts in sandbox — Phase 3
 
-### Active (v2.0 scope)
+### Validated (shipped & proven in v2.0)
 
-See `.planning/REQUIREMENTS.md` for the full v2 requirement list with
-REQ-IDs `GAL-*`, `THEME-*`, `FB-*`, `OPS-*`. Summary by category:
+- [done] THEME-01..04 — Class-based dark mode, FOUC-free, user override, AA contrast in both themes — v2 Phase 1
+- [done] FB-01..05 — `/feedback` + Apps Script + honeypot + mailto fallback + setup doc — v2 Phase 2
+- [done] GAL-01..09 — IndexedDB-backed circuit gallery, schema v1, export/import, in-memory fallback — v2 Phase 3
+- [done] OPS-01..03 — v2 Lighthouse audit plan, dark-mode visual QA, v2 announcement draft — v2 Phase 4
+- [deferred] THEME-05 — Playwright visual regression deferred to v2.1 (see `_archive-v2/04-launch-polish/VISUAL-REGRESSION-DEFERRED.md`)
 
-- **Theme system** (`THEME-01..05`) — class-based dark mode, persisted
-  user override, FOUC-killer script, full widget audit (KaTeX, Three.js,
-  Canvas, Tones, annotations, ConceptMap, Shiki), Playwright visual
-  regression.
-- **Feedback form** (`FB-01..05`) — `/feedback` page, Apps Script +
-  Google Sheet transport, honeypot, optional email, mailto fallback.
-- **Circuit Gallery** (`GAL-01..09`) — IndexedDB store via `idb-keyval`,
-  schema v1 with migrations, thumbnail generator, `/gallery` page,
-  sandbox save drawer, export / import / duplicate / rename / delete,
-  hydrates via the existing URL-fragment codec.
-- **Launch ops** (`OPS-01..03`) — v2 a11y + Lighthouse audit, dark-mode
-  visual QA pass, v2 announcement draft.
+### Active (v3.0 scope)
 
-### Out of Scope (v2 — still v3+ territory)
+See `.planning/REQUIREMENTS.md` for the full v3 requirement list with
+REQ-IDs `ALG-*`, `USE-*`, `QSK-*`, `PROG-*`, `OPS-*`. Summary by category:
+
+- **Algorithms** (`ALG-01..09`) — Teleportation, Superdense, Grover,
+  QFT, period-finding, Shor (static walkthrough), VQE (with classical
+  optimizer), EnergyLandscape; plus the rule that `MultiBlochPanel`
+  honestly renders mixed states via existing `reducedDensity.ts`.
+- **Use cases** (`USE-01..05`) — Quantum networks (Teleportation),
+  Holevo bandwidth bound (Superdense), classical-vs-quantum search
+  comparison (Grover), RSACountdown + NIST PQC (Shor), Molecule
+  gallery (VQE).
+- **Qiskit export** (`QSK-01..03`) — Sandbox toolbar button +
+  per-essay `CircuitView` button + drift-proof gate coverage.
+- **Progress** (`PROG-01`) — Concept-map per-essay visited flag,
+  `localStorage`-only, no analytics.
+- **Launch ops** (`OPS-01..04`) — v3 Lighthouse audit, v3 announcement,
+  concept-map layout audit, per-route bundle-size CI gate.
+
+### Out of Scope (v3 — still v4+ territory)
 
 - [no] User accounts / login — sync stays client-only
 - [no] Public / community gallery feed — moderation cost
 - [no] Comment threads — replaced by the feedback form
 - [no] Upvoting / Canny-style public roadmap
-- [no] Cross-device gallery sync — schema is sync-ready; the sync layer
-  itself is v3
+- [no] Cross-device gallery sync — schema is sync-ready; sync layer = v4
 - [no] Real quantum hardware integration (IBM Q) — adds auth + cost + flakiness
-- [no] Embedded Qiskit/Cirq editor — IDE territory; sandbox "export to
-  Qiskit text" remains a v3 stretch
-- [no] Algorithms beyond Deutsch (Grover, Shor, QFT, VQE) — v3 algorithm
-  track 2/3 (teleportation, superdense coding, Grover, QFT, Shor)
+- [no] Embedded Qiskit/Cirq editor — IDE territory; v3 export is one-way only
+- [no] Sandbox import of Qiskit text (reverse direction) — v4 stretch at earliest
+- [no] 8-qubit simulator extension — Qiskit export handles Shor's overflow
+- [no] Full Shor-on-N=15 in-browser — same; Qiskit bridge owns it
+- [no] Playwright E2E sandbox-flow harness — deferred again from v2; not blocking v3
+- [no] Pedagogy experiments (pick-a-path routing) — deferred from v2
+- [no] HHL / QPCA / quantum ML / QAOA / error-correction essays — v4 candidates
+- [no] Quantum sensing / metrology essays — not algorithm-class; v4 standalone if ever
 - [no] i18n — single-language
 
 ## Context
@@ -181,13 +199,22 @@ REQ-IDs `GAL-*`, `THEME-*`, `FB-*`, `OPS-*`. Summary by category:
 | Test mirrors of source canonical lists (concept-map nodes, nav chain, sandbox-link starters) | Whenever v2 touches any of these, touch the mirror in the same commit | [good] working norm |
 | Algorithm essays use the "why should I care" opener | Carries into v3 algorithm track | [good] used in `/cnot-bell`, `/deutsch` |
 | **No analytics. Ever.** | Privacy promise; core launch announcement line | [locked] re-ratified at v2 entry |
-| **v2: IndexedDB via `idb-keyval` over localStorage** | 5MB cap too tight; async; future-friendly to sync layer | [pending] proven in v2 Phase 3 |
-| **v2: Tailwind `darkMode: 'class'` over `'media'`** | Allows user override of OS preference; 3-state toggle | [pending] proven in v2 Phase 1 |
-| **v2: Google Apps Script + Sheet over Formspree** | Free forever, no submission cap, data ownership | [pending] proven in v2 Phase 2 |
-| **v2: Gallery reuses URL-fragment codec for hydration** | DRY — one circuit-loading code path | [pending] proven in v2 Phase 3 |
-| **v2: Theme stored in `localStorage` (not cookie)** | Static site, no server reads it; survives offline | [pending] proven in v2 Phase 1 |
-| **v2: Honeypot for spam (not reCAPTCHA)** | Zero JS deps, accessible, sufficient for low-volume site | [pending] proven in v2 Phase 2 |
-| **v2: Defer cloud sync to v3** | Honors no-backend v2 constraint; schema is sync-ready when we want it | [pending] revisit at v2 retro |
+| **v2: IndexedDB via `idb-keyval` over localStorage** | 5MB cap too tight; async; future-friendly to sync layer | [good] shipped v2 Phase 3 |
+| **v2: Tailwind `darkMode: 'class'` over `'media'`** | Allows user override of OS preference; 3-state toggle | [good] shipped v2 Phase 1 |
+| **v2: Google Apps Script + Sheet over Formspree** | Free forever, no submission cap, data ownership | [good] shipped v2 Phase 2 |
+| **v2: Gallery reuses URL-fragment codec for hydration** | DRY — one circuit-loading code path | [good] shipped v2 Phase 3 |
+| **v2: Theme stored in `localStorage` (not cookie)** | Static site, no server reads it; survives offline | [good] shipped v2 Phase 1 |
+| **v2: Honeypot for spam (not reCAPTCHA)** | Zero JS deps, accessible, sufficient for low-volume site | [good] shipped v2 Phase 2 |
+| **v2: Defer cloud sync to v3** | Honors no-backend v2 constraint; schema is sync-ready when we want it | [done] re-deferred to v4 at v3 entry |
+| **v3: Interleaved essays (algorithm + use case)** | Deepens v1's "why should I care" opener into real content; one essay = one complete payoff | [pending] proven across v3 phases 2-6 |
+| **v3: Keep simulator at 4 qubits** | Qiskit export handles the only algorithm that exceeds it (Shor); every other v3 essay fits | [pending] proven in v3 Phase 5 |
+| **v3: Qiskit export as Shor's pedagogical bridge** | Stronger framing than watered-down in-browser Shor: "you've learned the parts; now run the real thing" | [pending] proven in v3 Phase 5 |
+| **v3: One essay per phase, foundation-first** | v1 lesson: ship one essay end-to-end first. v3 essays are denser than v1's, so one-per-phase rhythm fits | [pending] proven across v3 |
+| **v3: Flagship = Teleportation (Phase 2)** | Extends v1's entanglement story most directly → lowest pedagogical risk for format validation | [pending] proven in v3 Phase 2 |
+| **v3: `MultiBlochPanel` renders mixed states inside the sphere** | Truthful visualization; sphere only honestly shows pure single-qubit states | [pending] proven in v3 Phase 2 |
+| **v3: VQE classical optimizer in vanilla TS** | Same inspectability bar as the simulator; ~50-100 LOC | [pending] proven in v3 Phase 6 |
+| **v3: Qiskit export ships everywhere, not just on Shor** | Strengthens "now go do this for real" theme across all essays; sibling to v1's "remix in sandbox" CTA | [pending] proven in v3 Phase 1 |
+| **v3: Progress indicator is localStorage-only (not tracking)** | Honors "no analytics. ever." with a one-line PROJECT clarification | [pending] proven in v3 Phase 6 |
 
 ---
 
