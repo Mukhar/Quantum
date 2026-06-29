@@ -21,6 +21,6 @@
     "sandbox/challenges/plus": 3072,
     "sandbox/challenges/rotate-pi-3": 3072,
     "superposition": 1024,
-    "teleportation": 12288
+    "teleportation": 2048
   }
 }
