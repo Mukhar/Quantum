@@ -41,11 +41,11 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 ### Open carryover (operational, not phase work)
 
 1. Provision Apps Script web app + set `PUBLIC_FEEDBACK_URL` env.
-2. Run manual Lighthouse audit per `04-launch-polish/LIGHTHOUSE-PLAN.md`.
-3. Run launch-day smoke test per `04-launch-polish/LAUNCH-ANNOUNCEMENT.md` steps 1-11.
+2. Run manual Lighthouse audit per `_archive-v2/04-launch-polish/LIGHTHOUSE-PLAN.md`.
+3. Run launch-day smoke test per `_archive-v2/04-launch-polish/LAUNCH-ANNOUNCEMENT.md` steps 1-11.
 4. Push, deploy, announce.
 5. v1 deploy carryover (if not yet shipped).
-6. After post-launch stable: `/gsd-complete-milestone v2.0` to archive `_archive-v2/` and bump to v3.0 scoping.
+6. After post-launch stable: scope v3.0 (algorithm essays — Teleportation, Superdense, Grover, QFT, Shor — per PROJECT.md "Future Requirements").
 
 ### v1.0 — archived
 

@@ -92,6 +92,5 @@ Essay routes unchanged at 4 KB initial JS. See
 - Launch-day smoke test per `04-launch-polish/LAUNCH-ANNOUNCEMENT.md`
 - v1 deploy carryover (still open from v1.0 if not yet shipped)
 
-**Archived under:** `.planning/phases/_archive-v2/` (to be moved
-post-launch via `/gsd-complete-milestone v2.0`).
+**Archived under:** `.planning/phases/_archive-v2/` (moved post code-complete).
 
