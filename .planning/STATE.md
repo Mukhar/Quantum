@@ -1,7 +1,7 @@
 # State
 
-*Last updated: 2026-06-28 — Phase 1 (theme system) complete.
-Entering Phase 2 (feedback form).*
+*Last updated: 2026-06-28 — Phase 2 (feedback form) complete.
+Entering Phase 3 (circuit gallery).*
 
 ## Project Reference
 
@@ -21,20 +21,17 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 
 | | |
 |---|---|
-| Phase | Phase 2 — Feedback form (next to plan) |
+| Phase | Phase 3 — Circuit gallery (next to plan) |
 | Plan | — |
-| Status | Phase 1 committed; entering Phase 2 |
-| Last activity | 2026-06-28 — Phase 1 theme system complete (+21 tests) |
+| Status | Phase 2 committed; entering Phase 3 |
+| Last activity | 2026-06-28 — Phase 2 feedback form complete (+30 tests) |
 
 ## Where we are
 
 ### v2.0 — current
 
-- [x] **Phase 1** — Theme system (Tailwind class-based dark mode +
-  FOUC-killer + widget audit). Requirements: THEME-01..04.
-  THEME-05 (Playwright visual regression) deferred to Phase 4.
-- [ ] **Phase 2** — Feedback form (`/feedback` + Apps Script + Sheet).
-  Requirements: FB-01..05.
+- [x] **Phase 1** — Theme system (THEME-01..04). THEME-05 deferred to Phase 4.
+- [x] **Phase 2** — Feedback form (FB-01..05). 197/197 tests.
 - [ ] **Phase 3** — Circuit gallery (IndexedDB, `/gallery`, sandbox
   drawer, export/import). Requirements: GAL-01..09.
 - [ ] **Phase 4** — v2 launch polish. Requirements: OPS-01..03.

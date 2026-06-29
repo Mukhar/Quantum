@@ -1,0 +1,41 @@
+---
+/**
+ * /feedback/thanks — post-submit confirmation.
+ *
+ * Reached via JS redirect from /feedback on submit success (real or
+ * silent-drop spam). Static, no JS, no form data echoed (XSS-safe).
+ */
+import EssayLayout from "../../layouts/EssayLayout.astro";
+---
+
+<EssayLayout
+  title="Thanks"
+  subtitle="Your feedback is in the queue."
+  pageTitle="Thanks — Quantum"
+  description="Feedback received."
+  ogType="website"
+>
+  <p class="text-ink">
+    Got it. I read every message myself, usually within a day or two.
+  </p>
+
+  <p class="text-ink-muted">
+    If you left an email and asked for a reply, you'll hear back. If
+    not, your note is still shaping what gets built next.
+  </p>
+
+  <div class="not-prose mt-10 flex flex-wrap gap-3">
+    <a
+      href="/"
+      class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-surface hover:bg-accent-emphasis focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface"
+    >
+      ← Back home
+    </a>
+    <a
+      href="/feedback"
+      class="inline-flex items-center gap-2 rounded-md border border-line-strong bg-surface-elevated px-5 py-2.5 text-sm font-medium text-ink hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent"
+    >
+      Send another
+    </a>
+  </div>
+</EssayLayout>

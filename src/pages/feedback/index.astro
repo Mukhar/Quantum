@@ -1,0 +1,250 @@
+---
+/**
+ * /feedback — the in-site feedback form.
+ *
+ * Vanilla HTML form, native validation. POST handler is wired by
+ * FeedbackForm.client.ts. Honeypot field is hidden via .sr-only-hp.
+ *
+ * On submit success → redirects to /feedback/thanks.
+ * On failure       → shows inline error + "Send via email instead" button.
+ *
+ * Theme inherited from EssayLayout (Phase 1).
+ */
+import EssayLayout from "../../layouts/EssayLayout.astro";
+
+const FEEDBACK_URL = import.meta.env.PUBLIC_FEEDBACK_URL ?? "";
+const FEEDBACK_EMAIL = import.meta.env.PUBLIC_FEEDBACK_EMAIL ?? "feedback@example.com";
+const deliveryConfigured = Boolean(FEEDBACK_URL);
+---
+
+<EssayLayout
+  title="Feedback"
+  subtitle="What worked, what broke, what's next."
+  pageTitle="Feedback — Quantum"
+  description="Send a quick note, bug report, or topic suggestion."
+  ogType="website"
+>
+  <p class="text-ink-muted">
+    No account, no tracking. Honeypot-protected. Your message lands
+    in a private sheet I read myself. If the network blinks, you'll
+    get a one-click "send via email instead" fallback so your words
+    never get lost.
+  </p>
+
+  {!deliveryConfigured && (
+    <div
+      role="status"
+      class="my-6 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning"
+    >
+      <strong>Preview build:</strong> feedback delivery is not configured
+      here. The form will fall through to <code class="font-mono">mailto:</code>.
+    </div>
+  )}
+
+  <form
+    id="feedback-form"
+    class="not-prose mt-8 space-y-5"
+    data-endpoint={FEEDBACK_URL}
+    data-mailto={FEEDBACK_EMAIL}
+    novalidate
+  >
+    {/* Honeypot — hidden from sighted users and AT, visible to dumb bots */}
+    <div class="sr-only-hp" aria-hidden="true">
+      <label>
+        Don't fill this out
+        <input
+          type="text"
+          name="_hp"
+          tabindex="-1"
+          autocomplete="off"
+        />
+      </label>
+    </div>
+
+    <div>
+      <label for="feedback-type" class="block text-sm font-medium text-ink mb-1">
+        Type
+      </label>
+      <select
+        id="feedback-type"
+        name="type"
+        required
+        class="w-full rounded-md border border-line bg-surface-elevated px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+      >
+        <option value="general">General comment</option>
+        <option value="topic">Topic suggestion</option>
+        <option value="feature">Feature request</option>
+        <option value="bug">Bug report</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="feedback-subject" class="block text-sm font-medium text-ink mb-1">
+        Subject
+      </label>
+      <input
+        id="feedback-subject"
+        name="subject"
+        type="text"
+        required
+        maxlength="100"
+        class="w-full rounded-md border border-line bg-surface-elevated px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+        placeholder="A short title"
+      />
+    </div>
+
+    <div>
+      <label for="feedback-message" class="block text-sm font-medium text-ink mb-1">
+        Message
+      </label>
+      <textarea
+        id="feedback-message"
+        name="message"
+        required
+        rows="6"
+        maxlength="2000"
+        class="w-full rounded-md border border-line bg-surface-elevated px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+        placeholder="What's on your mind?"
+      ></textarea>
+      <p class="mt-1 text-xs text-ink-subtle">
+        <span data-role="char-count" class="tabular-nums">0</span> / 2000
+      </p>
+    </div>
+
+    <div>
+      <label for="feedback-email" class="block text-sm font-medium text-ink mb-1">
+        Email <span class="text-ink-subtle">(optional — only if you want a reply)</span>
+      </label>
+      <input
+        id="feedback-email"
+        name="email"
+        type="email"
+        maxlength="200"
+        class="w-full rounded-md border border-line bg-surface-elevated px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+        placeholder="you@example.com"
+      />
+    </div>
+
+    <input type="hidden" name="page" value="" />
+    <input type="hidden" name="sid" value="" />
+
+    <div
+      data-role="error-banner"
+      role="alert"
+      class="hidden rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning"
+    >
+      <p data-role="error-message">Submission failed.</p>
+      <a
+        data-role="mailto-link"
+        href="#"
+        class="mt-2 inline-flex items-center gap-1 font-medium text-accent hover:text-accent-emphasis"
+      >
+        Send via email instead →
+      </a>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <button
+        type="submit"
+        data-role="submit-btn"
+        class="rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-surface hover:bg-accent-emphasis focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span data-role="btn-label">Send feedback</span>
+        <span data-role="btn-spinner" class="hidden">Sending…</span>
+      </button>
+      <a
+        href="/"
+        class="text-sm text-ink-subtle hover:text-ink"
+      >
+        Cancel
+      </a>
+    </div>
+  </form>
+
+  <style>
+    /* sr-only honeypot — invisible to humans + screen readers, but
+       a naive bot crawling the DOM and filling every input will hit it. */
+    .sr-only-hp {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+
+  <script>
+    import { submitFeedback, buildMailto, getOrCreateSid, clampPayload, type FeedbackPayload } from "../../lib/feedback";
+
+    const form = document.getElementById("feedback-form") as HTMLFormElement | null;
+    if (form) {
+      const endpoint = form.dataset.endpoint ?? "";
+      const mailto = form.dataset.mailto ?? "feedback@example.com";
+
+      const pageInput = form.querySelector<HTMLInputElement>('input[name="page"]');
+      const sidInput = form.querySelector<HTMLInputElement>('input[name="sid"]');
+      const errorBanner = form.querySelector<HTMLElement>('[data-role="error-banner"]');
+      const errorMsg = form.querySelector<HTMLElement>('[data-role="error-message"]');
+      const mailtoLink = form.querySelector<HTMLAnchorElement>('[data-role="mailto-link"]');
+      const submitBtn = form.querySelector<HTMLButtonElement>('[data-role="submit-btn"]');
+      const btnLabel = form.querySelector<HTMLElement>('[data-role="btn-label"]');
+      const btnSpinner = form.querySelector<HTMLElement>('[data-role="btn-spinner"]');
+      const messageTextarea = form.querySelector<HTMLTextAreaElement>('textarea[name="message"]');
+      const charCount = form.querySelector<HTMLElement>('[data-role="char-count"]');
+
+      // Auto-fill hidden fields on mount
+      if (pageInput) pageInput.value = document.referrer || "";
+      if (sidInput) sidInput.value = getOrCreateSid();
+
+      // Live char count for message
+      if (messageTextarea && charCount) {
+        const update = () => { charCount.textContent = String(messageTextarea.value.length); };
+        messageTextarea.addEventListener("input", update);
+        update();
+      }
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (errorBanner) errorBanner.classList.add("hidden");
+        if (submitBtn) submitBtn.disabled = true;
+        if (btnLabel) btnLabel.classList.add("hidden");
+        if (btnSpinner) btnSpinner.classList.remove("hidden");
+
+        const fd = new FormData(form);
+        const payload = clampPayload({
+          type: String(fd.get("type") ?? ""),
+          subject: String(fd.get("subject") ?? ""),
+          message: String(fd.get("message") ?? ""),
+          email: String(fd.get("email") ?? ""),
+          page: String(fd.get("page") ?? ""),
+          sid: String(fd.get("sid") ?? ""),
+          _hp: String(fd.get("_hp") ?? ""),
+        } as FeedbackPayload);
+
+        const result = await submitFeedback(payload, endpoint);
+
+        if (result === "ok" || result === "spam") {
+          // Silent success path for both real submissions and bots
+          window.location.href = "/feedback/thanks";
+          return;
+        }
+
+        // Failure path — surface mailto fallback
+        if (errorBanner) errorBanner.classList.remove("hidden");
+        if (errorMsg) {
+          errorMsg.textContent = result === "noop"
+            ? "Feedback delivery isn't configured for this preview build."
+            : "We couldn't reach the feedback server. Your message is safe — click below to send via email instead.";
+        }
+        if (mailtoLink) mailtoLink.href = buildMailto(payload, mailto);
+        if (submitBtn) submitBtn.disabled = false;
+        if (btnLabel) btnLabel.classList.remove("hidden");
+        if (btnSpinner) btnSpinner.classList.add("hidden");
+      });
+    }
+  </script>
+</EssayLayout>
