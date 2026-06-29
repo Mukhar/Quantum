@@ -5,6 +5,11 @@
  * Falls back gracefully if KaTeX throws: the raw TeX is shown inside a
  * `<code class="math-fallback">` block so the reader still gets the
  * source rather than a broken render.
+ *
+ * Display-mode equations are wrapped in a horizontally-scrollable
+ * container so wide expressions scroll *inside* the container on narrow
+ * viewports rather than forcing the whole page to scroll sideways.
+ * Inline math is rendered bare to keep it flowing inside `<p>` text.
  */
 import katex from "katex";
 
@@ -31,7 +36,17 @@ try {
 ---
 
 {
-  failed ? (
+  display ? (
+    failed ? (
+      <div class="math-block-scroll overflow-x-auto max-w-full">
+        <code class="math-fallback">{tex}</code>
+      </div>
+    ) : (
+      <div class="math-block-scroll overflow-x-auto max-w-full">
+        <Fragment set:html={rendered} />
+      </div>
+    )
+  ) : failed ? (
     <code class="math-fallback">{tex}</code>
   ) : (
     <Fragment set:html={rendered} />

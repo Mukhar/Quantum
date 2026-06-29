@@ -187,29 +187,33 @@ expected: |
   MultiBlochPanel stacks vertically, ProtocolStepper Prev/Next
   full-width, QuantumNetwork SVG scales, body text doesn't
   overflow horizontally.
-result: issue
-reported: |
-  At narrow viewports the main page layout IS responsive:
-    - MultiBlochPanel: 3 widgets stack vertically ✓
-    - ProtocolStepper: Prev (~55 px) / Next (~60 px) buttons at
-      ~54 px tall (above 44 px iOS HIG tap-target minimum) ✓
-    - QuantumNetwork SVG: 160 px wide, fits viewport ✓
-  HOWEVER, two KaTeX MathBlock equations in the appendix have NO
-  horizontal-overflow container and extend ~580 px wide regardless
-  of viewport width:
-    - "measure(q0,q1) → Xb Za on q2 ≡ CNOT(q1→q2); CZ(q0→q2)"
-    - "measure(q1) → Xb on q2 ≡ CNOT(q1→q2); measure(q1)"
-  Result: at 250 px viewport, 343 px horizontal overflow on the
-  whole page; at iPhone 375 px viewport, ~206 px overflow
-  estimated. The fix is local: wrap KaTeX block equations in an
-  `<div class="overflow-x-auto">` so wide equations scroll
-  *inside* their container rather than scrolling the whole page.
-severity: cosmetic
-artifacts:
-  - src/components/MathBlock.astro
-  - src/pages/teleportation.astro (two MathBlock display={true} usages
-    in the "Math nerds" appendix and the "Deferred-measurement trick"
-    section)
+result: pass
+notes: |
+  Main page layout responsive: MultiBlochPanel stacks vertically,
+  ProtocolStepper Prev/Next ≥ 44 px tap targets, QuantumNetwork
+  SVG fits viewport.
+
+  Initial verification (commit 3fbd3d1) flagged wide KaTeX block
+  equations forcing 343 px page overflow at 250 px viewport. Fixed
+  in src/components/MathBlock.astro: display-mode equations now
+  render inside a `<div class="math-block-scroll overflow-x-auto
+  max-w-full">` so wide equations scroll *inside* their container
+  rather than the whole page. Inline math (display={false}) is
+  rendered bare to keep flow inside `<p>` text.
+
+  Post-fix re-verification:
+    - /teleportation intrinsic minimum width: 274 px (was ~580 px).
+      Zero overflow on any real device (iPhone SE 320 px and up).
+    - 3 .math-block-scroll wrappers on /teleportation, all render
+      KaTeX (.katex-display present), all horizontally scrollable
+      (overflow-x: auto, max-width: 100%).
+    - Site-wide propagation verified: /qubit (5 wrappers), 
+      /superposition (2 wrappers) all render correctly.
+    - 0 console errors after fix.
+    - 324/324 tests still green; bundle gate green.
+  Remaining residual 274 px floor is the global header chrome
+  (Quantum + Home + Feedback + ThemeToggle), only manifests below
+  ~280 px viewport — well outside any real device range.
 
 ### 14. No console errors during full walkthrough
 expected: |
@@ -228,34 +232,21 @@ notes: |
 ## Summary
 
 total: 14
-passed: 13
-issues: 1
+passed: 14
+issues: 0
 pending: 0
 skipped: 0
 
 automated_verifier_notes: |
   All 14 tests validated by the agent via Playwright-MCP against
-  the live preview at http://localhost:4321. The single issue is
-  cosmetic and confined to wide KaTeX block equations overflowing
-  on narrow viewports — does not block Phase 2 closure.
+  the live preview. Initial walkthrough (commit 3fbd3d1) found 1
+  cosmetic issue on Test 13 (wide KaTeX equations overflowing on
+  narrow viewports); resolved in a follow-up commit by wrapping
+  display-mode KaTeX output in an `overflow-x-auto` container in
+  src/components/MathBlock.astro. Re-verification confirms the fix
+  works on /teleportation and propagates cleanly to /qubit and
+  /superposition with no regressions.
 
 ## Gaps
 
-- truth: "On narrow mobile viewports (≤ ~600 px), wide KaTeX
-    block equations in /teleportation overflow the viewport
-    horizontally, causing the whole page to scroll sideways."
-  status: failed
-  reason: |
-    Two MathBlock equations in the deferred-measurement section
-    and the Math-nerds appendix render at ~580 px intrinsic width
-    with no horizontal-overflow container, forcing horizontal
-    scroll on the whole page.
-  severity: cosmetic
-  test: 13
-  artifacts:
-    - src/components/MathBlock.astro
-    - src/pages/teleportation.astro
-  missing:
-    - Horizontal-overflow container around block-level KaTeX
-      output (e.g. wrap rendered MathBlock display equations in
-      a `div.overflow-x-auto.max-w-full`).
+_(none — all 14 tests pass after the MathBlock overflow fix)_
