@@ -57,3 +57,6 @@ export {
 export type { ProtocolStep, TeleportationOpts } from "./teleportation";
 
 export { replayProtocol } from "./protocolStepper";
+
+export { endpointsEntangled } from "./network";
+export type { NetworkEdgeState } from "./network";

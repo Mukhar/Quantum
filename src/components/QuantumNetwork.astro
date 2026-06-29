@@ -1,0 +1,221 @@
+---
+/**
+ * QuantumNetwork — interactive multi-node entanglement diagram (USE-01).
+ *
+ * Generic from day 1: caller supplies `nodes` (with hand-placed `cx/cy`)
+ * and `edges`, plus an `endpoints` pair to expose as the "shared Bell
+ * pair" indicator. Phase 2's teleportation essay instantiates the
+ * 3-node Alice ↔ Repeater ↔ Bob layout; a v4 multi-hop essay can reuse
+ * this file with no changes.
+ *
+ * Server-rendered SVG + inline `<script>` hydrator (no `.client.ts`,
+ * single-essay use, < 1 KB JS budget). The pure reachability primitive
+ * (`endpointsEntangled`) lives in `src/lib/quantum/network.ts` so it's
+ * unit-tested independently of the DOM.
+ *
+ * Visual contract mirrors `ConceptMap.astro`: rounded rect + text label
+ * per node, semantic CSS vars for theme reactivity. Entangled edges
+ * paint with `--color-positive`; idle edges with `--color-line-strong`.
+ * No state outside the DOM — entangled status lives entirely on
+ * `data-entangled` attributes, so the figure is fully reconstructable
+ * from its own markup.
+ */
+
+export interface NetworkNode {
+  id: string;
+  label: string;
+  cx: number;
+  cy: number;
+}
+export interface NetworkEdge {
+  from: string;
+  to: string;
+}
+
+interface Props {
+  nodes: NetworkNode[];
+  edges: NetworkEdge[];
+  /** Pair of node IDs exposed as the "shared Bell pair" indicator. */
+  endpoints: [string, string];
+  /** Optional caption above the diagram. */
+  caption?: string;
+}
+
+const { nodes, edges, endpoints, caption } = Astro.props as Props;
+
+// Look up node positions / labels for SVG rendering and indicator text.
+const nodeMap = new Map(nodes.map((n) => [n.id, n] as const));
+const endpoint0 = nodeMap.get(endpoints[0]);
+const endpoint1 = nodeMap.get(endpoints[1]);
+if (!endpoint0 || !endpoint1) {
+  throw new Error(
+    `QuantumNetwork: endpoint id not found in nodes (got [${endpoints.join(", ")}])`,
+  );
+}
+
+// viewBox: tight bounding box around the node centers, with padding for
+// the node rects and labels. Falls back to 400×200 for the canonical
+// 3-node teleportation layout.
+const NODE_W = 100;
+const NODE_H = 44;
+const NODE_R = 10;
+const PAD = 16;
+const maxX = Math.max(...nodes.map((n) => n.cx)) + NODE_W / 2 + PAD;
+const maxY = Math.max(...nodes.map((n) => n.cy)) + NODE_H / 2 + PAD;
+
+const IDLE_STROKE = "rgb(var(--color-line-strong))";
+const ENTANGLED_STROKE = "rgb(var(--color-positive))";
+
+const labelFor = (id: string) => nodeMap.get(id)?.label ?? id;
+const idleIndicator = `${labelFor(endpoints[0])} ↔ ${labelFor(endpoints[1])}: not yet entangled`;
+---
+
+<figure
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5 space-y-3"
+  data-widget="quantum-network"
+  data-endpoints={JSON.stringify(endpoints)}
+  data-endpoint-labels={JSON.stringify([labelFor(endpoints[0]), labelFor(endpoints[1])])}
+  aria-label={caption ?? "Quantum network entanglement diagram"}
+>
+  {caption && <figcaption class="text-sm text-ink-subtle">{caption}</figcaption>}
+  <svg
+    viewBox={`0 0 ${maxX} ${maxY}`}
+    class="w-full h-auto"
+    role="img"
+    aria-label="Network of nodes connected by entanglement links. Click a link to toggle its entangled state."
+  >
+    {edges.map((e) => {
+      const a = nodeMap.get(e.from);
+      const b = nodeMap.get(e.to);
+      if (!a || !b) {
+        throw new Error(`QuantumNetwork: edge references unknown node (${e.from} → ${e.to})`);
+      }
+      const ariaLabel = `Entanglement link from ${a.label} to ${b.label} (idle)`;
+      return (
+        <line
+          data-role="edge"
+          data-from={e.from}
+          data-to={e.to}
+          data-entangled="false"
+          x1={a.cx}
+          y1={a.cy}
+          x2={b.cx}
+          y2={b.cy}
+          style={`stroke: ${IDLE_STROKE}; cursor: pointer; pointer-events: stroke;`}
+          stroke-width="4"
+          stroke-linecap="round"
+          role="button"
+          tabindex="0"
+          aria-label={ariaLabel}
+          aria-pressed="false"
+        />
+      );
+    })}
+
+    {nodes.map((n) => (
+      <g aria-hidden="true">
+        <rect
+          x={n.cx - NODE_W / 2}
+          y={n.cy - NODE_H / 2}
+          width={NODE_W}
+          height={NODE_H}
+          rx={NODE_R}
+          style="fill: rgb(var(--color-surface-elevated)); stroke: rgb(var(--color-accent));"
+          stroke-width="1.5"
+        />
+        <text
+          x={n.cx}
+          y={n.cy + 5}
+          text-anchor="middle"
+          font-family="ui-sans-serif, system-ui, sans-serif"
+          font-size="14"
+          font-weight="500"
+          style="fill: rgb(var(--color-ink));"
+        >{n.label}</text>
+      </g>
+    ))}
+  </svg>
+
+  <p
+    data-role="indicator"
+    aria-live="polite"
+    class="text-center text-sm font-mono text-ink-subtle"
+  >{idleIndicator}</p>
+</figure>
+
+<script>
+  import { endpointsEntangled, type NetworkEdgeState } from "../lib/quantum/network";
+
+  const IDLE_STROKE = "rgb(var(--color-line-strong))";
+  const ENTANGLED_STROKE = "rgb(var(--color-positive))";
+
+  function mount(el: HTMLElement) {
+    let endpoints: [string, string];
+    let labels: [string, string];
+    try {
+      endpoints = JSON.parse(el.dataset.endpoints ?? "[]") as [string, string];
+      labels = JSON.parse(el.dataset.endpointLabels ?? "[]") as [string, string];
+    } catch {
+      console.warn("QuantumNetwork: malformed endpoints/labels JSON", el);
+      return;
+    }
+    if (!Array.isArray(endpoints) || endpoints.length !== 2) return;
+
+    const edges = Array.from(
+      el.querySelectorAll<SVGLineElement>('line[data-role="edge"]'),
+    );
+    const indicator = el.querySelector<HTMLElement>('[data-role="indicator"]')!;
+
+    const refresh = () => {
+      const state: NetworkEdgeState[] = edges.map((line) => ({
+        from: line.dataset.from!,
+        to: line.dataset.to!,
+        entangled: line.dataset.entangled === "true",
+      }));
+      const connected = endpointsEntangled(state, endpoints[0], endpoints[1]);
+      indicator.textContent = connected
+        ? `${labels[0]} ↔ ${labels[1]}: shared Bell pair`
+        : `${labels[0]} ↔ ${labels[1]}: not yet entangled`;
+      el.setAttribute("data-endpoints-connected", String(connected));
+    };
+
+    const toggle = (line: SVGLineElement) => {
+      const now = line.dataset.entangled === "true";
+      const next = !now;
+      line.dataset.entangled = String(next);
+      line.style.stroke = next ? ENTANGLED_STROKE : IDLE_STROKE;
+      // Keep aria-label + aria-pressed in sync for screen readers.
+      const fromId = line.dataset.from!;
+      const toId = line.dataset.to!;
+      const fromLabel =
+        edges.find((l) => l.dataset.from === fromId)?.dataset.fromLabel ??
+        fromId;
+      // Pull labels off the original aria-label (prefix); only the
+      // trailing "(idle|entangled)" suffix changes.
+      const base = (line.getAttribute("aria-label") ?? "").replace(
+        /\((idle|entangled)\)$/,
+        "",
+      ).trim();
+      line.setAttribute("aria-label", `${base} (${next ? "entangled" : "idle"})`);
+      line.setAttribute("aria-pressed", String(next));
+      refresh();
+    };
+
+    for (const line of edges) {
+      line.addEventListener("click", () => toggle(line));
+      line.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          toggle(line);
+        }
+      });
+    }
+
+    // Initial paint reflects the (entirely-idle) starting state.
+    refresh();
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="quantum-network"]')
+    .forEach(mount);
+</script>
