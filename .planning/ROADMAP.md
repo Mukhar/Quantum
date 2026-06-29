@@ -29,8 +29,8 @@ v1+v2 historical context lives in `.planning/MILESTONES.md`.
 
 ## Phases
 
-- [ ] **Phase 1: Foundation — Qiskit export + bundle CI** — Sandbox toolbar export, per-essay `CircuitView` export, gate-coverage golden tests, per-route bundle-size CI gate
-- [ ] **Phase 2: Teleportation + Quantum networks (FLAGSHIP)** — `/teleportation` essay with `ProtocolStepper`, mixed-state `MultiBlochPanel`, and `QuantumNetwork` interactive
+- [x] **Phase 1: Foundation — Qiskit export + bundle CI** — Sandbox toolbar export, per-essay `CircuitView` export, gate-coverage golden tests, per-route bundle-size CI gate ✅
+- [x] **Phase 2: Teleportation + Quantum networks (FLAGSHIP)** — `/teleportation` essay with `ProtocolStepper`, mixed-state `MultiBlochPanel`, and `QuantumNetwork` interactive ✅
 - [ ] **Phase 3: Superdense + Holevo bound** — `/superdense-coding` essay with `EncodingTable` and `HolevoBound` widgets
 - [ ] **Phase 4: Grover + Search reality** — `/grover` essay with oracle/diffusion, `AmplitudeBars` iterator, and `SearchComparison` widget
 - [ ] **Phase 5: Shor + QFT + PQC threat** — `/shor` essay with `QFT` visualizer, `PeriodFinding` demo, static full-N=15 `CircuitView`, and `RSACountdown` widget
@@ -210,11 +210,11 @@ on all 5 essays existing.
 
 | Phase | Plans Complete | Status      | Completed  |
 |-------|----------------|-------------|------------|
-| 1. Foundation — Qiskit export + bundle CI     | 0/4   | Planned     | — |
-| 2. Teleportation + Quantum networks (FLAGSHIP)| 0/6   | Planned     | — |
-| 3. Superdense + Holevo bound                  | 0/TBD | Not started | — |
-| 4. Grover + Search reality                    | 0/TBD | Not started | — |
-| 5. Shor + QFT + PQC threat                    | 0/TBD | Not started | — |
+| 1. Foundation — Qiskit export + bundle CI     | 4/4   | ✅ Complete | 2026-06-29 |
+| 2. Teleportation + Quantum networks (FLAGSHIP)| 6/6   | ✅ Complete | 2026-06-29 |
+| 3. Superdense + Holevo bound                  | 0/TBD | Discuss     | — |
+| 4. Grover + Search reality                    | 0/TBD | Discuss     | — |
+| 5. Shor + QFT + PQC threat                    | 0/TBD | Discuss     | — |
 | 6. VQE + Chemistry + v3 launch                | 0/TBD | Not started | — |
 
 **Parallel ops tasks (not phase work):**

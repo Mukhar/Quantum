@@ -1,8 +1,7 @@
 # State
 
-*Last updated: 2026-06-29 — v3.0 milestone started. v2.0 code-complete
-with operational launch tasks carrying over. v3 design ratified;
-roadmap & requirements being defined.*
+*Last updated: 2026-06-30 — v3.0 Phase 1 + Phase 2 verified complete
+(retroactive bookkeeping during autonomous run). Phases 3–6 next.*
 
 ## Project Reference
 
@@ -20,18 +19,18 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 - **v2.0 status:** **Code-complete, deploy pending.** All 4 v2 phases
   shipped (247 tests, 19 pages, +44 KB site bundle). Pending: Apps
   Script provisioning, Lighthouse run, launch smoke test, ship.
-- **v3.0 status:** **Design ratified.** Source of truth:
-  `docs/plans/2026-06-29-v3-design.md`. Requirements & roadmap in
-  progress (`/gsd-new-milestone v3.0` in flight).
+- **v3.0 status:** **Phase 1 + Phase 2 complete.** Foundation infra +
+  Teleportation flagship shipped. 324 tests, 20 pages, all routes
+  within bundle ceilings. Autonomous run in progress through Phase 6.
 
 ## Current Position
 
 | | |
 |---|---|
-| Phase | — (v3.0 milestone setup in progress) |
+| Phase | 3 (Superdense + Holevo bound) — discuss in progress |
 | Plan | — |
-| Status | Milestone scoping — REQUIREMENTS.md + ROADMAP.md being written |
-| Last activity | 2026-06-29 — v3 design committed (`docs/plans/2026-06-29-v3-design.md`) |
+| Status | Autonomous run — parallel discuss agents spawned for P3/P4/P5 |
+| Last activity | 2026-06-30 — Phase 1 + Phase 2 VERIFICATION + SUMMARY backfilled |
 
 ## Where we are
 
@@ -39,12 +38,14 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 
 Phase numbering reset to 1 for v3 (matching v2's pattern).
 
-- [ ] **Phase 1** — Foundation: Qiskit text export (sandbox + every
-  essay `CircuitView`) + bundle-size CI gate.
-- [ ] **Phase 2** — Teleportation + Quantum Networks (FLAGSHIP).
+- [x] **Phase 1** — Foundation: Qiskit text export (sandbox + every
+  essay `CircuitView`) + bundle-size CI gate. *Done 2026-06-29.*
+- [x] **Phase 2** — Teleportation + Quantum Networks (FLAGSHIP).
+  *Done 2026-06-29 (UAT 13/14 pass + cosmetic fix landed).*
 - [ ] **Phase 3** — Superdense coding + Bandwidth / Holevo bound.
 - [ ] **Phase 4** — Grover + Search reality check.
-- [ ] **Phase 5** — Shor + QFT + Post-quantum crypto threat.
+- [ ] **Phase 5** — Shor + QFT + Post-quantum crypto threat
+  (auto-split to 5a/5b if PLAN.md exceeds 6 plans).
 - [ ] **Phase 6** — VQE + Quantum chemistry + progress indicator + v3 launch.
 
 ### v2.0 — code-complete (operational launch tasks carrying over)
