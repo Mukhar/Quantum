@@ -39,6 +39,10 @@ import {
   Raycaster,
   Vector2,
   Color,
+  Sprite,
+  SpriteMaterial,
+  CanvasTexture,
+  LinearFilter,
 } from "three";
 import type { Store } from "../../lib/quantum/store";
 import { stateToBloch, blochToCartesian, cartesianToBloch } from "../../lib/quantum/bloch";
@@ -82,6 +86,70 @@ function readBlochPalette(): BlochPalette {
     axis: readCssColor("--color-ink-subtle", 0x64748b),
     arrow: readCssColor("--color-bloch-arrow", 0x818cf8),
     arrowTip: readCssColor("--color-accent-emphasis", 0xa5b4fc),
+  };
+}
+
+/**
+ * Build a billboard label sprite from a canvas-rendered string. Returns
+ * the sprite plus a `refresh(color)` callback that re-paints the texture
+ * (used on theme change) and a `dispose()` for teardown.
+ *
+ * Why sprites: Three.js has no first-class text. Sprites with a
+ * CanvasTexture are the cheapest way to get crisp, always-camera-facing
+ * labels; depthTest is disabled so labels stay legible when the camera
+ * orbits past their world position.
+ */
+function makeLabelSprite(text: string, color: Color) {
+  const FONT_PX = 96;
+  const PAD_X = 18;
+  const PAD_Y = 10;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d")!;
+  const font = `600 ${FONT_PX}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+  ctx.font = font;
+  const metrics = ctx.measureText(text);
+  const w = Math.max(1, Math.ceil(metrics.width) + PAD_X * 2);
+  const h = FONT_PX + PAD_Y * 2;
+  canvas.width = w;
+  canvas.height = h;
+
+  const paint = (c: Color) => {
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = font;
+    ctx.fillStyle = `#${c.getHexString()}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, w / 2, h / 2);
+  };
+  paint(color);
+
+  const texture = new CanvasTexture(canvas);
+  texture.minFilter = LinearFilter;
+  texture.magFilter = LinearFilter;
+  texture.needsUpdate = true;
+
+  const material = new SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const sprite = new Sprite(material);
+  // World-units scale. Make the label ~0.22 world-units tall.
+  const worldH = 0.22;
+  sprite.scale.set((w / h) * worldH, worldH, 1);
+  sprite.renderOrder = 1000;
+
+  return {
+    sprite,
+    refresh: (c: Color) => {
+      paint(c);
+      texture.needsUpdate = true;
+    },
+    dispose: () => {
+      texture.dispose();
+      material.dispose();
+    },
   };
 }
 
@@ -145,6 +213,54 @@ export function mountSphere3D(mount: HTMLElement, store: Store): () => void {
   scene.add(axisLine(new Vector3(0, -1.2, 0), new Vector3(0, 1.2, 0)));
   scene.add(axisLine(new Vector3(0, 0, -1.2), new Vector3(0, 0, 1.2)));
 
+  // Great-circle guides — equator + two meridians give the sphere
+  // legible depth cues that the uniform wireframe alone doesn't. All
+  // three are unit-radius circles on principal planes.
+  const ringMaterial = new LineBasicMaterial({
+    color: palette.wire,
+    transparent: true,
+    opacity: 0.7,
+  });
+  const ringGeometries: BufferGeometry[] = [];
+  const makeRing = (plane: "xy" | "xz" | "yz") => {
+    const segments = 96;
+    const pts: Vector3[] = [];
+    for (let i = 0; i <= segments; i++) {
+      const t = (i / segments) * Math.PI * 2;
+      const c = Math.cos(t);
+      const s = Math.sin(t);
+      if (plane === "xy") pts.push(new Vector3(c, s, 0));
+      else if (plane === "xz") pts.push(new Vector3(c, 0, s));
+      else pts.push(new Vector3(0, c, s));
+    }
+    const geom = new BufferGeometry().setFromPoints(pts);
+    ringGeometries.push(geom);
+    return new Line(geom, ringMaterial);
+  };
+  scene.add(makeRing("xz")); // equator — through |+⟩, |+i⟩, |−⟩, |−i⟩
+  scene.add(makeRing("xy")); // front meridian — through |0⟩, |+⟩, |1⟩, |−⟩
+  scene.add(makeRing("yz")); // side meridian — through |0⟩, |+i⟩, |1⟩, |−i⟩
+
+  // Axis labels — one sprite per pole. Positions are in Three's frame
+  // (Y up). Mapping back to physics: three.y = |0⟩/|1⟩ axis, three.x =
+  // |+⟩/|−⟩ axis, three.z = |+i⟩/|−i⟩ axis (see physicsToWorld below).
+  const LABEL_R = 1.36;
+  type Label = ReturnType<typeof makeLabelSprite>;
+  const labels: Label[] = [
+    // text, position
+    [`|0⟩`,  new Vector3(0,  LABEL_R, 0)],
+    [`|1⟩`,  new Vector3(0, -LABEL_R, 0)],
+    [`|+⟩`,  new Vector3( LABEL_R, 0, 0)],
+    [`|−⟩`,  new Vector3(-LABEL_R, 0, 0)],
+    [`|+i⟩`, new Vector3(0, 0,  LABEL_R)],
+    [`|−i⟩`, new Vector3(0, 0, -LABEL_R)],
+  ].map(([text, pos]) => {
+    const label = makeLabelSprite(text as string, palette.axis);
+    label.sprite.position.copy(pos as Vector3);
+    scene.add(label.sprite);
+    return label;
+  });
+
   // Arrow group: shaft (cylinder) + head (cone) + tip handle (sphere)
   const arrow = new Group();
   const shaftMaterial = new MeshBasicMaterial({ color: palette.arrow });
@@ -162,6 +278,55 @@ export function mountSphere3D(mount: HTMLElement, store: Store): () => void {
   const tip = new Mesh(new SphereGeometry(0.09, 16, 16), tipMaterial);
   tip.position.set(0, 1, 0);
   arrow.add(tip);
+
+  // Ghost overlay arrow: same geometry, drawn ON TOP of everything else
+  // (depthTest off, high renderOrder) so the arrow remains visible when
+  // it swings into the back hemisphere — otherwise the front-facing
+  // ghost sphere would occlude it. Only made visible when the arrow
+  // actually points away from the camera (toggled per render below).
+  const GHOST_OPACITY = 0.32;
+  const ghostShaftMaterial = new MeshBasicMaterial({
+    color: palette.arrow,
+    transparent: true,
+    opacity: GHOST_OPACITY,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const ghostShaftGeom = new CylinderGeometry(0.02, 0.02, 0.88, 12);
+  const ghostShaft = new Mesh(ghostShaftGeom, ghostShaftMaterial);
+  ghostShaft.position.set(0, 0.44, 0);
+  ghostShaft.renderOrder = 998;
+  ghostShaft.visible = false;
+  arrow.add(ghostShaft);
+
+  const ghostHeadMaterial = new MeshBasicMaterial({
+    color: palette.arrow,
+    transparent: true,
+    opacity: GHOST_OPACITY,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const ghostHeadGeom = new ConeGeometry(0.06, 0.18, 16);
+  const ghostHead = new Mesh(ghostHeadGeom, ghostHeadMaterial);
+  ghostHead.position.set(0, 0.94, 0);
+  ghostHead.renderOrder = 998;
+  ghostHead.visible = false;
+  arrow.add(ghostHead);
+
+  const ghostTipMaterial = new MeshBasicMaterial({
+    color: palette.arrowTip,
+    transparent: true,
+    opacity: GHOST_OPACITY + 0.12,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const ghostTipGeom = new SphereGeometry(0.09, 16, 16);
+  const ghostTip = new Mesh(ghostTipGeom, ghostTipMaterial);
+  ghostTip.position.set(0, 1, 0);
+  ghostTip.renderOrder = 999;
+  ghostTip.visible = false;
+  arrow.add(ghostTip);
+
   // The whole arrow points along +Y in its local frame. We orient it
   // by setting arrow.quaternion to align +Y with the target Bloch vector.
   scene.add(arrow);
@@ -207,10 +372,25 @@ export function mountSphere3D(mount: HTMLElement, store: Store): () => void {
 
   // Render loop — render on demand, not every frame.
   let renderRaf: number | null = null;
+  const ARROW_LOCAL_UP = new Vector3(0, 1, 0);
+  const tmpArrowDir = new Vector3();
+  const tmpCamDir = new Vector3();
+  const updateGhostVisibility = () => {
+    // Arrow's tip direction in world space.
+    tmpArrowDir.copy(ARROW_LOCAL_UP).applyQuaternion(arrow.quaternion);
+    // Direction from origin to camera. If the arrow tip points the
+    // opposite way (dot < 0), it's on the far hemisphere — show ghost.
+    tmpCamDir.copy(camera.position).normalize();
+    const facingAway = tmpArrowDir.dot(tmpCamDir) < 0;
+    ghostShaft.visible = facingAway;
+    ghostHead.visible = facingAway;
+    ghostTip.visible = facingAway;
+  };
   const requestRender = () => {
     if (renderRaf !== null) return;
     renderRaf = requestAnimationFrame(() => {
       renderRaf = null;
+      updateGhostVisibility();
       renderer.render(scene, camera);
     });
   };
@@ -307,9 +487,14 @@ export function mountSphere3D(mount: HTMLElement, store: Store): () => void {
     wireMaterial.color.copy(palette.wire);
     ghostMaterial.color.copy(palette.ghost);
     axisMaterial.color.copy(palette.axis);
+    ringMaterial.color.copy(palette.wire);
     shaftMaterial.color.copy(palette.arrow);
     headMaterial.color.copy(palette.arrow);
     tipMaterial.color.copy(palette.arrowTip);
+    ghostShaftMaterial.color.copy(palette.arrow);
+    ghostHeadMaterial.color.copy(palette.arrow);
+    ghostTipMaterial.color.copy(palette.arrowTip);
+    for (const l of labels) l.refresh(palette.axis);
     requestRender();
   };
   window.addEventListener("themechange", onThemeChange);
@@ -328,6 +513,15 @@ export function mountSphere3D(mount: HTMLElement, store: Store): () => void {
     renderer.domElement.removeEventListener("pointercancel", onPointerUp);
     if (tweenRaf !== null) cancelAnimationFrame(tweenRaf);
     if (renderRaf !== null) cancelAnimationFrame(renderRaf);
+    for (const l of labels) l.dispose();
+    ghostShaftMaterial.dispose();
+    ghostHeadMaterial.dispose();
+    ghostTipMaterial.dispose();
+    ghostShaftGeom.dispose();
+    ghostHeadGeom.dispose();
+    ghostTipGeom.dispose();
+    ringMaterial.dispose();
+    for (const g of ringGeometries) g.dispose();
     renderer.dispose();
     mount.innerHTML = "";
   };
