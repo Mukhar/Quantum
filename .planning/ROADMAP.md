@@ -61,7 +61,11 @@ CI gate that prevents v3 essays from bloating the site.
      stays under its declared ceiling; build fails on overrun
   5. Existing tests (v1 + v2) all still pass; no Lighthouse regressions
 
-**Plans:** TBD (created by `/gsd-plan-phase 1`)
+**Plans:**
+  - `01-01` — Qiskit exporter module + drift-proof tests (`src/lib/quantum/qiskit.ts`)
+  - `01-02` — Sandbox toolbar "Copy as Qiskit" button
+  - `01-03` — `CircuitView` "Copy as Qiskit" button
+  - `01-04` — Per-route bundle-size CI gate (`scripts/check-bundle-budget.mjs`)
 
 ### Phase 2: Teleportation + Quantum networks (FLAGSHIP)
 
@@ -200,7 +204,7 @@ on all 5 essays existing.
 
 | Phase | Plans Complete | Status      | Completed  |
 |-------|----------------|-------------|------------|
-| 1. Foundation — Qiskit export + bundle CI     | 0/TBD | Not started | — |
+| 1. Foundation — Qiskit export + bundle CI     | 0/4   | Planned     | — |
 | 2. Teleportation + Quantum networks (FLAGSHIP)| 0/TBD | Not started | — |
 | 3. Superdense + Holevo bound                  | 0/TBD | Not started | — |
 | 4. Grover + Search reality                    | 0/TBD | Not started | — |
