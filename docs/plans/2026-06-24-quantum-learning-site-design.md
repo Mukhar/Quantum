@@ -117,7 +117,7 @@ quantum-site/
 | 3D widgets | **Three.js** | Standard for browser 3D; great for Bloch sphere. |
 | Quantum sim | **Custom vanilla TS** | ~200 LOC. Auditable, testable, zero deps, real math. |
 | Tests | **Vitest** | First-class Astro/Vite integration. |
-| Hosting | **GitHub Pages / Netlify / Vercel** | All free, all support static. |
+| Hosting | **Cloudflare Pages** | Free tier, global CDN edge network, zero-config Astro support, automatic HTTPS. |
 
 ### 3.3 The quantum simulator (the heart of the site)
 
@@ -237,7 +237,7 @@ test("Deutsch's algorithm identifies balanced oracle", () => {
 });
 ```
 
-Run on every commit via GitHub Actions.
+Run on every commit via Cloudflare Pages CI (builds triggered on push to the connected GitHub repo).
 
 ### 7.2 Widget integration
 
@@ -268,7 +268,7 @@ The risk-killer here is shipping ONE essay end-to-end before scaling out.
 - Probability bars widget
 - State vector readout widget
 - Mobile fallbacks
-- Ship to a static host, share with 3-5 dev friends, iterate on feedback
+- Ship to Cloudflare Pages, share with 3-5 dev friends, iterate on feedback
 
 ### Milestone 2 — Foundations track (1-2 weeks)
 - Superposition, Measurement, Gates, Entanglement essays
