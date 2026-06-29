@@ -19,8 +19,22 @@
 import { Simulator } from "./simulator";
 import type { GateName, RotationAxis } from "./gates";
 
-export type DiscreteGate = "X" | "Y" | "Z" | "H" | "S" | "T" | "I";
-export type RotAxis = "X" | "Y" | "Z";
+/**
+ * Canonical runtime enumerations. Types below are *derived* from these
+ * arrays so adding a new discrete gate, rotation axis, or op kind in
+ * one place propagates through every TypeScript narrow + the Qiskit
+ * exporter's drift-coverage test (QSK-03).
+ *
+ * Order matters: the URL codec uses `DISCRETE_GATES.indexOf(...)` and
+ * `ROT_AXES.indexOf(...)` as wire-format sub-codes. Reordering these
+ * arrays breaks every shared sandbox URL ever minted. Append-only.
+ */
+export const DISCRETE_GATES = ["X", "Y", "Z", "H", "S", "T", "I"] as const;
+export const ROT_AXES = ["X", "Y", "Z"] as const;
+export const OP_KINDS = ["gate", "cnot", "rot", "measure"] as const;
+
+export type DiscreteGate = (typeof DISCRETE_GATES)[number];
+export type RotAxis = (typeof ROT_AXES)[number];
 
 export type Op =
   | { kind: "gate"; gate: DiscreteGate; qubit: number }

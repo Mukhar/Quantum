@@ -36,12 +36,18 @@
  * caller can show a friendly toast instead of crashing the page.
  */
 
-import type { Circuit, DiscreteGate, Op, RotAxis } from "./circuit";
-import { MAX_QUBITS, MAX_STEPS, validateCircuit } from "./circuit";
+import type { Circuit, Op } from "./circuit";
+import {
+  DISCRETE_GATES,
+  MAX_QUBITS,
+  MAX_STEPS,
+  ROT_AXES,
+  validateCircuit,
+} from "./circuit";
 
 export const CODEC_VERSION = 0x01 as const;
-const GATE_NAMES: readonly DiscreteGate[] = ["X", "Y", "Z", "H", "S", "T", "I"];
-const AXIS_NAMES: readonly RotAxis[] = ["X", "Y", "Z"];
+const GATE_NAMES = DISCRETE_GATES;
+const AXIS_NAMES = ROT_AXES;
 const TWO_PI = Math.PI * 2;
 const THETA_STEPS = 1024;
 

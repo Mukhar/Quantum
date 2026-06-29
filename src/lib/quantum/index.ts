@@ -17,6 +17,9 @@ export type { SimulatorOptions } from "./simulator";
 
 export type { Circuit, Op, DiscreteGate, RotAxis, RunResult } from "./circuit";
 export {
+  DISCRETE_GATES,
+  ROT_AXES,
+  OP_KINDS,
   MAX_QUBITS,
   MAX_STEPS,
   emptyCircuit,
@@ -37,3 +40,11 @@ export {
   UnsupportedVersionError,
   CODEC_VERSION,
 } from "./codec";
+
+export {
+  toQiskit,
+  QiskitExportError,
+  QISKIT_GATE_MAP,
+  QISKIT_ROT_MAP,
+} from "./qiskit";
+export type { ToQiskitOptions } from "./qiskit";
