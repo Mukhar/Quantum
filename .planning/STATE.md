@@ -1,7 +1,8 @@
 # State
 
-*Last updated: 2026-06-28 — Phase 3 (circuit gallery) complete.
-Entering Phase 4 (launch polish).*
+*Last updated: 2026-06-28 — v2.0 milestone code-complete.
+All 4 v2 phases shipped. Pending: Apps Script provisioning, manual
+Lighthouse run, launch-day smoke test, ship.*
 
 ## Project Reference
 
@@ -16,15 +17,17 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 - **v1.0 status:** **Code-complete, deploy pending.** All 5 v1
   phases shipped (146 tests, 16 pages). Deploy is a parallel ops
   task — runs whenever ready, does NOT block v2 phase work.
+- **v2.0 status:** **Code-complete. Ready for launch.** All 4 v2
+  phases shipped (247 tests, 19 pages, +44 KB site bundle).
 
 ## Current Position
 
 | | |
 |---|---|
-| Phase | Phase 4 — Launch polish (next to plan) |
+| Phase | v2.0 milestone code-complete |
 | Plan | — |
-| Status | Phase 3 committed; entering Phase 4 |
-| Last activity | 2026-06-28 — Phase 3 circuit gallery complete (+50 tests) |
+| Status | All phase work done; carryover = operational launch tasks |
+| Last activity | 2026-06-28 — Phase 4 launch polish complete |
 
 ## Where we are
 
@@ -33,7 +36,16 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 - [x] **Phase 1** — Theme system (THEME-01..04). THEME-05 deferred to Phase 4.
 - [x] **Phase 2** — Feedback form (FB-01..05). 197 tests.
 - [x] **Phase 3** — Circuit gallery (GAL-01..09). 247 tests, 19 pages.
-- [ ] **Phase 4** — v2 launch polish. Requirements: OPS-01..03 + Plan 01-05 carryover.
+- [x] **Phase 4** — Launch polish (OPS-01..03 + Plan 01-05 deferred decision). 6 docs.
+
+### Open carryover (operational, not phase work)
+
+1. Provision Apps Script web app + set `PUBLIC_FEEDBACK_URL` env.
+2. Run manual Lighthouse audit per `04-launch-polish/LIGHTHOUSE-PLAN.md`.
+3. Run launch-day smoke test per `04-launch-polish/LAUNCH-ANNOUNCEMENT.md` steps 1-11.
+4. Push, deploy, announce.
+5. v1 deploy carryover (if not yet shipped).
+6. After post-launch stable: `/gsd-complete-milestone v2.0` to archive `_archive-v2/` and bump to v3.0 scoping.
 
 ### v1.0 — archived
 

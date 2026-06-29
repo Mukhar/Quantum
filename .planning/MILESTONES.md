@@ -43,3 +43,55 @@ See PROJECT.md "Validated" section for the per-requirement ledger.
   pre-launch checklist. Runs whenever ready; does not block v2 work.
 
 **Archived under:** `.planning/phases/_archive-v1/`
+
+---
+
+## v2.0 — Return, Comfort, Voice (code-complete 2026-06-28)
+
+**Goal:** Close three v1 gaps — no save, no theme choice, no in-site
+feedback — without breaking the static-site, no-backend posture.
+
+**Phases (all done):**
+
+| Phase | Name | Plans | Completed |
+|-------|------|-------|-----------|
+| 1 | Theme system                       | 4/4 | 2026-06-28 |
+| 2 | Feedback form (Apps Script)        | 5/5 | 2026-06-28 |
+| 3 | Circuit gallery (IndexedDB)        | 9/9 | 2026-06-28 |
+| 4 | Launch polish (audit + announce)   | 6/6 | 2026-06-28 |
+
+**Shipped:**
+
+- Three-state theme toggle (light / dark / system), 17-token semantic
+  palette, FOUC-free inline bootstrap, themechange CustomEvent picked
+  up by Three.js + inline SVG widgets
+- `/feedback` + `/feedback/thanks` — Apps Script POST with honeypot,
+  server-side rate limit, mailto fallback, no XSS surface
+- `/gallery` + `/sandbox` Save dialog — IndexedDB via `idb-keyval`,
+  schema v1, JSON export/import, in-memory fallback for Safari Private
+  Browsing, click-card-to-reopen via existing URL-fragment codec
+- 247 vitest tests (+101 over v1), 19 pages building clean
+- v2 launch announcement, bundle audit, visual QA scorecard, Lighthouse
+  plan, Plan 01-05 visual-regression deferred decision
+
+**Requirements validated:** THEME-01..04, FB-01..05, GAL-01..09,
+OPS-01..03 (all 22 v2 requirements).
+
+**Deferred to v2.1 / backlog:**
+- Playwright visual regression harness (see
+  `.planning/phases/04-launch-polish/VISUAL-REGRESSION-DEFERRED.md`)
+- KaTeX self-host (Plan 01-06 from v1 carryover)
+
+**Bundle delta:** +44 KB site-wide (+6.9%), all in new-route chunks.
+Essay routes unchanged at 4 KB initial JS. See
+`.planning/phases/04-launch-polish/BUNDLE-AUDIT.md`.
+
+**Carryover (post-milestone tasks, not phases):**
+- Manual Lighthouse run per `04-launch-polish/LIGHTHOUSE-PLAN.md`
+- Apps Script endpoint provisioning + `PUBLIC_FEEDBACK_URL` set
+- Launch-day smoke test per `04-launch-polish/LAUNCH-ANNOUNCEMENT.md`
+- v1 deploy carryover (still open from v1.0 if not yet shipped)
+
+**Archived under:** `.planning/phases/_archive-v2/` (to be moved
+post-launch via `/gsd-complete-milestone v2.0`).
+
