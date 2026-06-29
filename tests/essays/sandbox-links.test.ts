@@ -28,13 +28,14 @@ import {
   cnotOp,
   rotOp,
   measureOp,
+  teleportationCircuit,
   type Circuit,
   type Op,
 } from "../../src/lib/quantum";
 
 // Mirrors of every essay's `STARTER` (or `bellStarter`/`DEUTSCH_F2_CIRCUIT`)
 // constant. Keep in sync with src/pages/{superposition,measurement,gates,
-// entanglement,cnot-bell,deutsch}.astro
+// entanglement,cnot-bell,deutsch,teleportation}.astro
 const STARTERS: Record<string, Circuit> = {
   superposition: {
     qubits: 1,
@@ -69,6 +70,10 @@ const STARTERS: Record<string, Circuit> = {
       [measureOp(0)],
     ],
   },
+  // Imported from src/lib/quantum so any future change to the canonical
+  // deferred-measurement circuit propagates here automatically — the
+  // essay and this mirror share one source of truth.
+  teleportation: teleportationCircuit(),
 };
 
 const THETA_QUANTUM = (Math.PI * 2) / 1024; // 10-bit codec resolution

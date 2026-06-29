@@ -39,8 +39,10 @@ const NODE_R = 10;
 
 // Top row: 5 foundations essays (qubit -> entanglement).
 // Middle row: sandbox + challenges utility nodes.
-// Bottom row: 2 algorithm essays (cnot-bell -> deutsch) — promoted to
-// primary in Plan 05-04. No more dimmed v2 placeholders in v1.
+// Bottom row: 3 algorithm essays (cnot-bell -> deutsch -> teleportation).
+// Plan 02-05 adds Teleportation; its reading-path edge wraps from
+// deutsch (rightmost row-3 node) back left to teleportation (leftmost),
+// signalling the start of the applications track.
 const nodes: Node[] = [
   { href: "/qubit",          label: "Qubit",          cx: 100,  cy: 60,  tier: "primary" },
   { href: "/superposition",  label: "Superposition",  cx: 290,  cy: 60,  tier: "primary" },
@@ -51,10 +53,11 @@ const nodes: Node[] = [
   { href: "/sandbox/challenges", label: "Challenges", cx: 580,  cy: 190, tier: "utility" },
   { href: "/cnot-bell",      label: "CNOT + Bell",    cx: 670,  cy: 310, tier: "primary" },
   { href: "/deutsch",        label: "Deutsch",        cx: 860,  cy: 310, tier: "primary" },
+  { href: "/teleportation",  label: "Teleportation",  cx: 100,  cy: 310, tier: "primary" },
 ];
 
 // Directed edges: from-node index -> to-node index. Indices match `nodes`.
-// Reading-path edges (0..4 -> 7 -> 8), plus utility entry/exit
+// Reading-path edges (0..4 -> 7 -> 8 -> 9), plus utility entry/exit
 // (qubit/deutsch -> sandbox, qubit/deutsch -> challenges).
 const edges: Array<{ from: number; to: number; dim?: boolean }> = [
   { from: 0, to: 1 },
@@ -63,6 +66,7 @@ const edges: Array<{ from: number; to: number; dim?: boolean }> = [
   { from: 3, to: 4 },
   { from: 4, to: 7 },
   { from: 7, to: 8 },
+  { from: 8, to: 9 },
   { from: 0, to: 5 },
   { from: 8, to: 5 },
   { from: 0, to: 6 },
@@ -103,7 +107,7 @@ function edgePath(a: Node, b: Node): string {
   <!-- Desktop / tablet SVG map -->
   <svg
     role="img"
-    aria-label="Visual map of the Quantum site: 7 essays in reading order (5 foundations + 2 algorithm), with sandbox and challenges as utility entry points"
+    aria-label="Visual map of the Quantum site: 8 essays in reading order (5 foundations + 3 algorithm), with sandbox and challenges as utility entry points"
     viewBox="0 0 1000 360"
     class="hidden sm:block w-full max-w-[1100px] mx-auto h-auto"
   >

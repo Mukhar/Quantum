@@ -1,0 +1,393 @@
+---
+/**
+ * "Quantum Teleportation" — Phase 2 marquee essay (Plan 02-05).
+ *
+ * The first essay where entanglement stops being a curiosity and
+ * becomes a tool. Alice has an unknown qubit; Bob ends up with that
+ * qubit; nothing ever travels between them except two classical bits
+ * and a shared Bell pair set up in advance. The state moves; the
+ * substrate doesn't.
+ *
+ * Direct sequel to /cnot-bell — that essay's Bell-pair recipe and
+ * Bell-basis discussion are the building blocks here.
+ *
+ * Widget layout (algorithm half):
+ *   - MultiBlochPanel (3 qubits, shared store) — every protocol step
+ *     visibly reshapes q0/q1/q2's reduced Bloch arrows.
+ *   - ProtocolStepper (5 steps) drives the same store; reader walks
+ *     forward and backward, watches the panel update in lockstep.
+ *   - CircuitView shows the full deferred-measurement circuit (with
+ *     the built-in "Copy as Qiskit" button from Phase 1).
+ *   - SandboxLink remixes the same circuit.
+ *
+ * Use-case half:
+ *   - QuantumNetwork (3-node Alice ↔ Repeater ↔ Bob graph) — reader
+ *     clicks each link to "entangle" it; the indicator flips on only
+ *     when both links are entangled (transitive entanglement).
+ *
+ * Deferred-measurement note: the simulator's `Op` IR has no
+ * conditional branch, so we replace classical-conditioned X^a Z^b on
+ * q2 with the textbook identity `CNOT(q1→q2) ; CZ(q0→q2)` after
+ * Alice's Bell-basis measurement (kept unitary, no collapse). The
+ * essay names this trick and links to it in the body. The circuit
+ * the reader sees and the Qiskit snippet they can copy are the
+ * deferred-measurement form — no two-circuit drift.
+ *
+ * Convention: qubit register is `|q₂ q₁ q₀⟩` (Qiskit / LSB-first).
+ *   q0 = Alice's "message" qubit (the state to be teleported)
+ *   q1 = Alice's half of the Bell pair
+ *   q2 = Bob's half of the Bell pair (the destination)
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import MultiBlochPanel from "../components/MultiBlochPanel.astro";
+import ProtocolStepper from "../components/ProtocolStepper.astro";
+import CircuitView from "../components/CircuitView.astro";
+import QuantumNetwork from "../components/QuantumNetwork.astro";
+import SandboxLink from "../components/SandboxLink.astro";
+import {
+  teleportationCircuit,
+  teleportationSteps,
+} from "../lib/quantum";
+
+const KEY = "teleportation-essay";
+
+/** Single source of truth for the circuit shown in CircuitView, copied
+ *  as Qiskit, and remixed via SandboxLink. Defaults `prepare = [X(0)]`
+ *  so the message is |1⟩ — a non-trivial input that visibly survives
+ *  the protocol and lands on q2. The corresponding labeled steps for
+ *  ProtocolStepper come from the same module with the same default. */
+const circuit = teleportationCircuit();
+const steps = teleportationSteps();
+---
+
+<EssayLayout
+  title="Quantum Teleportation"
+  subtitle="Move the state, not the substrate. One Bell pair plus two classical bits sends one qubit of information — and nothing ever travels between the endpoints except those two bits."
+  description="Walk Alice → Bob teleportation step by step: build the Bell pair, perform Alice's Bell-basis measurement, apply Bob's corrections, and watch the message qubit's Bloch arrow re-materialize on q2. Includes the deferred-measurement trick and a clickable quantum-network diagram."
+>
+  <p>
+    The <a href="/cnot-bell">previous essay</a> closed with a
+    promise: once you have a Bell pair, you can do things classical
+    bits can't, and the headline example is <em>teleportation</em>.
+    Alice has a single qubit in some unknown state. She and Bob set
+    up a shared Bell pair in advance (one half each, prepared in the
+    same lab and then carried apart). Alice runs a short protocol on
+    her two qubits — the unknown one plus her half of the Bell pair —
+    measures both, and phones Bob the two classical bits she gets.
+    Bob does one of four single-qubit corrections, and the state
+    that was on Alice's first qubit is now on Bob's.
+  </p>
+
+  <p>
+    No qubit travels. One Bell pair, set up beforehand, plus two
+    classical bits sent over a regular phone line, carries one qubit
+    of quantum information. The unknown state never leaves Alice's
+    lab as a quantum object; it disappears from her register and
+    reappears on Bob's. That's the headline. The rest of this essay
+    is the recipe and a careful look at why the picture below works.
+  </p>
+
+  <h2>The three qubits</h2>
+
+  <p data-step="0">
+    We need three qubits. Index convention matches the rest of the
+    codebase — <code>|q<sub>2</sub> q<sub>1</sub> q<sub>0</sub>⟩</code>,
+    LSB-first, Qiskit-compatible:
+  </p>
+
+  <ul class="my-4 font-mono text-sm text-ink-muted">
+    <li>q<sub>0</sub> — Alice's <em>message</em> qubit (the unknown state to send).</li>
+    <li>q<sub>1</sub> — Alice's half of the shared Bell pair.</li>
+    <li>q<sub>2</sub> — Bob's half of the shared Bell pair.</li>
+  </ul>
+
+  <p>
+    Alice can touch q<sub>0</sub> and q<sub>1</sub>. Bob can touch
+    q<sub>2</sub>. Nobody can touch each other's qubits — that's the
+    constraint that makes this interesting. The only channel between
+    them is a classical wire.
+  </p>
+
+  <h2>Step through the protocol</h2>
+
+  <p data-step="1">
+    The widget below holds three live Bloch cards (q<sub>0</sub>,
+    q<sub>1</sub>, q<sub>2</sub>), each showing that qubit's reduced
+    state. Below them, a stepper walks the five-step protocol. Each
+    step updates the shared three-qubit simulator under the hood, so
+    the cards repaint to match. Step backward and forward as much as
+    you like — the stepper replays from scratch each time, so jumps
+    can't drift.
+  </p>
+
+  <MultiBlochPanel
+    storeKey={KEY}
+    qubits={3}
+    captions={[
+      "q₀ — message (|1⟩)",
+      "q₁ — Alice's Bell half",
+      "q₂ — Bob",
+    ]}
+    caption="Per-qubit reduced Bloch arrows. Watch q₁ and q₂ shrink to the origin once the Bell pair is built — and q₂ return to full length, matching q₀'s original state, after Bob's corrections."
+  />
+
+  <ProtocolStepper
+    storeKey={KEY}
+    qubits={3}
+    steps={steps}
+    caption="Step through the protocol and watch each qubit's Bloch arrow respond."
+  />
+
+  <p data-step="2">
+    <strong>Try this:</strong> press <em>Next</em> through all five
+    steps. The cascade you should see:
+  </p>
+
+  <ol class="my-4 list-decimal space-y-2 pl-6 text-ink">
+    <li>
+      <strong>Entangle the Bell pair on (q<sub>1</sub>, q<sub>2</sub>).</strong>
+      Both arrows shrink to the origin. The "Entangled" badge lights
+      up on q<sub>1</sub> and q<sub>2</sub>. q<sub>0</sub> hasn't
+      moved.
+    </li>
+    <li>
+      <strong>Prepare the message on q<sub>0</sub>.</strong> Default
+      is <code>X</code> on q<sub>0</sub>, so the message is
+      <code>|1⟩</code> — q<sub>0</sub>'s arrow swings to the south
+      pole. The Bell pair is still maximally mixed from each half's
+      point of view.
+    </li>
+    <li>
+      <strong>Alice's Bell-basis measurement on (q<sub>0</sub>, q<sub>1</sub>).</strong>
+      We apply <code>CNOT(q<sub>0</sub> → q<sub>1</sub>)</code> then
+      <code>H</code> on q<sub>0</sub>. This rotates Alice's Bell
+      basis into the computational basis — if Alice <em>did</em>
+      measure now, she'd get one of four equally likely two-bit
+      outcomes, each pointing at a different Bell state. q<sub>0</sub>
+      and q<sub>1</sub> arrows do their own scramble; q<sub>2</sub>
+      stays at the origin.
+    </li>
+    <li>
+      <strong>Bob's first correction: CNOT(q<sub>1</sub> → q<sub>2</sub>).</strong>
+      Bob conditionally flips q<sub>2</sub> based on q<sub>1</sub>'s
+      value. q<sub>2</sub>'s arrow visibly moves.
+    </li>
+    <li>
+      <strong>Bob's second correction: CZ(q<sub>0</sub> → q<sub>2</sub>).</strong>
+      Conditional phase. q<sub>2</sub>'s arrow lands at the south
+      pole — <code>|1⟩</code>. The state that was on q<sub>0</sub>
+      after step 2 is now on q<sub>2</sub>. Teleportation complete.
+    </li>
+  </ol>
+
+  <h2>The deferred-measurement trick</h2>
+
+  <p data-step="3">
+    If you've read teleportation before, you might be squinting at
+    step 5. The textbook protocol says Alice <em>measures</em>
+    q<sub>0</sub> and q<sub>1</sub> after step 3, getting two
+    classical bits <code>(a, b)</code>, and tells Bob — who then
+    applies <code>X<sup>b</sup> Z<sup>a</sup></code> on q<sub>2</sub>.
+    The two corrections are <em>classically conditioned</em> on
+    Alice's measurement outcome. Where did the measurement go?
+  </p>
+
+  <p>
+    It's a textbook identity, sometimes called the
+    <strong>principle of deferred measurement</strong>: a quantum
+    circuit that ends with a measurement followed by a
+    classically-conditioned gate is equivalent to the same circuit
+    with the conditional gate replaced by its quantum-controlled
+    cousin and the measurement pushed all the way to the end. For
+    teleportation this means:
+  </p>
+
+  <MathBlock tex="\\text{measure}(q_0, q_1) \\;\\to\\; X^b\\, Z^a\\text{ on } q_2 \\;\\;\\equiv\\;\\; \\text{CNOT}(q_1 \\to q_2)\\;;\\;\\text{CZ}(q_0 \\to q_2)" />
+
+  <p>
+    Same final state on q<sub>2</sub>, no mid-circuit measurement
+    needed, every gate is unitary. That's what the simulator
+    underneath this page is running. Nothing has been cheaped out —
+    the picture is the textbook circuit rewritten as a unitary block,
+    and the math is exact (the appendix walks through it). The
+    "Copy as Qiskit" button on the diagram below emits the same
+    deferred-measurement circuit; you can paste it into a Jupyter
+    notebook and check.
+  </p>
+
+  <p>
+    A small naming note: there's no native <code>CZ</code> in the
+    simulator's gate set, but <code>CZ = H · CNOT · H</code> on the
+    target qubit. The circuit diagram below shows the explicit
+    three-op decomposition; the protocol stepper bundles them into
+    one labeled "Correct: deferred CZ" step.
+  </p>
+
+  <CircuitView
+    circuit={circuit}
+    caption="Deferred-measurement teleportation circuit (3 qubits). q₀ is the message; q₁ and q₂ are the Bell pair. The CNOT-then-H block on (q₀, q₁) is Alice's Bell-basis measurement (without the measurement); the trailing CNOT(q₁→q₂) and H·CNOT·H block are Bob's deferred corrections."
+  />
+
+  <p class="my-6">
+    <SandboxLink circuit={circuit} label="Remix in sandbox →" />
+  </p>
+
+  <h2>Why this isn't faster-than-light</h2>
+
+  <p>
+    No information moves between Alice and Bob without the classical
+    phone call. Before Alice's measurement (or its deferred-measurement
+    proxy), Bob's q<sub>2</sub> is in the maximally mixed state — a
+    fair coin, with the Bloch arrow at the origin. After Alice runs
+    her side of the protocol but before she calls, q<sub>2</sub> is
+    <em>still</em> in the maximally mixed state from Bob's local
+    point of view, because Bob doesn't know which of four
+    correlated branches he's in. Only after the two classical bits
+    arrive can Bob apply the right correction and recover the
+    state. The classical channel is the bottleneck. Special
+    relativity stays intact.
+  </p>
+
+  <h2>Quantum networks and repeaters</h2>
+
+  <p data-step="4">
+    Once teleportation works between two endpoints, you can chain
+    it. Suppose Alice wants to share entanglement with a distant
+    Bob, but the physical channel is lossy enough that a single Bell
+    pair won't make it. The fix is a <strong>quantum repeater</strong>:
+    an intermediate node that holds two Bell pairs — one with Alice,
+    one with Bob — and "swaps" them with a Bell-basis measurement.
+    The net effect is a fresh Bell pair shared directly between
+    Alice and Bob, despite no qubit having ever traveled the full
+    path.
+  </p>
+
+  <p>
+    The widget below is the cleanest cartoon of that. Each line is
+    a physical link that may or may not be carrying an active Bell
+    pair. Click a link to entangle it. The indicator under the
+    diagram turns on only when Alice and Bob share a continuous
+    entangled path:
+  </p>
+
+  <QuantumNetwork
+    nodes={[
+      { id: "alice",    label: "Alice",    cx:  60, cy: 100 },
+      { id: "repeater", label: "Repeater", cx: 200, cy: 100 },
+      { id: "bob",      label: "Bob",      cx: 340, cy: 100 },
+    ]}
+    edges={[
+      { from: "alice", to: "repeater" },
+      { from: "repeater", to: "bob" },
+    ]}
+    endpoints={["alice", "bob"]}
+    caption="Click each link to entangle it. Alice and Bob share a Bell pair only when both links are entangled — the repeater swaps them into one."
+  />
+
+  <p>
+    The cartoon hides a lot. Real repeaters need entanglement
+    distillation (combining several noisy pairs into one cleaner
+    pair), quantum memory long enough to wait for the second link
+    to come up, and synchronization of the Bell-basis measurements.
+    Every hop loses some fidelity, and chaining many hops without
+    error correction degrades the final pair past usefulness — which
+    is why first-generation quantum repeaters target the regime
+    where post-selection and distillation can recover the loss. A
+    fidelity-aware repeater diagram with measured loss rates is a
+    Phase 4 essay; this one stops at the topology.
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-ink">
+    <li>
+      Step the protocol to the end and look at q<sub>2</sub>'s Bloch
+      arrow. Then reset, prepare a different message on q<sub>0</sub>
+      (remix the circuit in the sandbox — change the <code>X(0)</code>
+      to <code>H(0)</code>, for example), and run the protocol again.
+      Where does q<sub>2</sub> land? Does it match what q<sub>0</sub>
+      looked like after step 2? (It should — that's the protocol.)
+    </li>
+    <li>
+      The "deferred CZ" step is actually three op dispatches in the
+      protocol stepper but a single textbook gate. Why does the
+      simulator need the decomposition? (Hint: look at the gate set
+      the circuit IR supports — there's no native CZ. Same reason
+      you'd write <code>cx; h; cx; h</code> in a different framework
+      that lacked <code>cz</code>.)
+    </li>
+  </ol>
+
+  <MathNerds title="Deferred measurement, classical-conditioned Paulis, and the Bell-basis projector">
+    <p>
+      Alice's Bell-basis measurement on (q<sub>0</sub>, q<sub>1</sub>)
+      can be written, before measurement, as the unitary
+      <MathBlock display={false} tex="U_{\\text{BSM}} \\;=\\; (H \\otimes I)\\,\\text{CNOT}(q_0 \\to q_1)" />
+      which rotates the Bell basis on (q<sub>0</sub>, q<sub>1</sub>)
+      into the computational basis. After <code>U<sub>BSM</sub></code>,
+      measuring in the computational basis yields outcomes
+      <code>(a, b) ∈ {0,1}²</code>, one per Bell state, each with
+      probability <code>1/4</code> regardless of the input on
+      q<sub>0</sub>.
+    </p>
+    <p>
+      The classical-conditioned correction is <code>X<sup>b</sup> Z<sup>a</sup></code>
+      on q<sub>2</sub>. The principle of deferred measurement says:
+      a measurement followed by a classically-conditioned Pauli is
+      equivalent to the corresponding quantum-controlled Pauli
+      followed by a measurement that's now decoupled from
+      everything downstream. Concretely:
+    </p>
+    <MathBlock tex="\\text{measure}(q_1) \\to X^b \\text{ on } q_2 \\;\\;\\equiv\\;\\; \\text{CNOT}(q_1 \\to q_2)\\;;\\;\\text{measure}(q_1)" />
+    <MathBlock tex="\\text{measure}(q_0) \\to Z^a \\text{ on } q_2 \\;\\;\\equiv\\;\\; \\text{CZ}(q_0 \\to q_2)\\;;\\;\\text{measure}(q_0)" />
+    <p>
+      Apply both substitutions, and the trailing
+      <code>measure(q<sub>0</sub>, q<sub>1</sub>)</code> commutes
+      through every remaining gate (those gates don't touch
+      q<sub>0</sub> or q<sub>1</sub> anymore). We can drop the
+      measurement entirely from the simulation and trace out
+      q<sub>0</sub>, q<sub>1</sub> at the end; the reduced state on
+      q<sub>2</sub> is exactly the input state on q<sub>0</sub>. Run
+      the algebra once and you have it forever; the proof is in
+      Nielsen &amp; Chuang §4.4.
+    </p>
+    <p>
+      And <code>CZ = H · CNOT · H</code> on the target — that's the
+      identity
+      <MathBlock display={false} tex="HXH = Z" />
+      conjugated through the CNOT's target-side action — which is
+      why the simulator can run the protocol without growing a
+      native <code>CZ</code> kind.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="footer-nav">
+    <a href="/deutsch" class="hover:text-ink">← Deutsch</a>
+    <a href="/sandbox" class="hover:text-ink">Next: open the Sandbox →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  import { attachScrolly } from "../lib/scrolly";
+  import { mountAnnotations } from "../lib/annotations";
+
+  const root = document.querySelector("article");
+  if (root) {
+    attachScrolly(root, {
+      stepSelector: "[data-step]",
+      onStep: (i) => console.debug(`[scrolly] step ${i}`),
+    });
+  }
+
+  const ann = mountAnnotations();
+  document.getElementById("reset-annotations")?.addEventListener("click", () => {
+    ann.reset();
+  });
+
+  // No inline gate buttons on this essay — the ProtocolStepper is the
+  // sole driver of the shared store. Both ProtocolStepper.astro and
+  // QuantumNetwork.astro mount themselves on DOMContentLoaded; nothing
+  // else needs wiring here.
+</script>

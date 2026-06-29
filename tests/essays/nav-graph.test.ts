@@ -39,7 +39,8 @@ const CHAIN: NavSpec[] = [
   { slug: "gates",         prev: "/measurement",   next: "/entanglement"  },
   { slug: "entanglement",  prev: "/gates",         next: "/cnot-bell"     },
   { slug: "cnot-bell",     prev: "/entanglement",  next: "/deutsch"       },
-  { slug: "deutsch",       prev: "/cnot-bell",     next: "/sandbox"       },
+  { slug: "deutsch",       prev: "/cnot-bell",     next: "/teleportation" },
+  { slug: "teleportation", prev: "/deutsch",       next: "/sandbox"       },
 ];
 
 function readEssay(slug: string): string {
