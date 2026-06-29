@@ -48,3 +48,10 @@ export {
   QISKIT_ROT_MAP,
 } from "./qiskit";
 export type { ToQiskitOptions } from "./qiskit";
+
+export {
+  cz,
+  teleportationCircuit,
+  teleportationSteps,
+} from "./teleportation";
+export type { ProtocolStep, TeleportationOpts } from "./teleportation";
