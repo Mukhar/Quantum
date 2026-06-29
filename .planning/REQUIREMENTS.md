@@ -162,9 +162,9 @@ Captured here so they're not re-discovered:
 | QSK-02  | 1 — Foundation: Qiskit export + CI gate  | TBD     | TBD |
 | QSK-03  | 1 — Foundation: Qiskit export + CI gate  | TBD     | TBD |
 | OPS-04  | 1 — Foundation: Qiskit export + CI gate  | TBD     | TBD |
-| ALG-01  | 2 — Teleportation + Quantum networks     | TBD     | TBD |
-| ALG-02  | 2 — Teleportation + Quantum networks     | TBD     | TBD |
-| USE-01  | 2 — Teleportation + Quantum networks     | TBD     | TBD |
+| ALG-01  | 2 — Teleportation + Quantum networks     | 02-01, 02-02, 02-05 | TBD |
+| ALG-02  | 2 — Teleportation + Quantum networks     | 02-01, 02-03, 02-05 | TBD |
+| USE-01  | 2 — Teleportation + Quantum networks     | 02-04, 02-05        | TBD |
 | ALG-03  | 3 — Superdense + Holevo                  | TBD     | TBD |
 | USE-02  | 3 — Superdense + Holevo                  | TBD     | TBD |
 | ALG-04  | 4 — Grover + Search reality              | TBD     | TBD |

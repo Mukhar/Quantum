@@ -93,7 +93,13 @@ across a 3-node network.
      mirror; concept-map node added with same-commit mirror update
   5. Lighthouse mobile a11y ≥ 95 in both themes
 
-**Plans:** TBD (created by `/gsd-plan-phase 2`)
+**Plans:**
+  - `02-01` — `quantum/teleportation` module + correctness tests (`src/lib/quantum/teleportation.ts`)
+  - `02-02` — Shared `ProtocolStepper.astro` component
+  - `02-03` — `MultiBlochPanel.astro` (composes 3 × `MiniBloch`)
+  - `02-04` — Generic `QuantumNetwork.astro` widget (USE-01)
+  - `02-05` — `/teleportation` essay + all mirrors + bundle-budget entry
+  - `02-06` — Bundle-ceiling recompute close-out
 
 ### Phase 3: Superdense + Holevo bound
 
@@ -205,7 +211,7 @@ on all 5 essays existing.
 | Phase | Plans Complete | Status      | Completed  |
 |-------|----------------|-------------|------------|
 | 1. Foundation — Qiskit export + bundle CI     | 0/4   | Planned     | — |
-| 2. Teleportation + Quantum networks (FLAGSHIP)| 0/TBD | Not started | — |
+| 2. Teleportation + Quantum networks (FLAGSHIP)| 0/6   | Planned     | — |
 | 3. Superdense + Holevo bound                  | 0/TBD | Not started | — |
 | 4. Grover + Search reality                    | 0/TBD | Not started | — |
 | 5. Shor + QFT + PQC threat                    | 0/TBD | Not started | — |
