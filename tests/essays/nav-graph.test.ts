@@ -33,15 +33,16 @@ interface NavSpec {
 }
 
 const CHAIN: NavSpec[] = [
-  { slug: "qubit",         prev: "/",              next: "/superposition" },
-  { slug: "superposition", prev: "/qubit",         next: "/measurement"   },
-  { slug: "measurement",   prev: "/superposition", next: "/gates"         },
-  { slug: "gates",         prev: "/measurement",   next: "/entanglement"  },
-  { slug: "entanglement",  prev: "/gates",         next: "/cnot-bell"     },
-  { slug: "cnot-bell",     prev: "/entanglement",  next: "/deutsch"       },
-  { slug: "deutsch",       prev: "/cnot-bell",     next: "/teleportation" },
-  { slug: "teleportation", prev: "/deutsch",       next: "/grover"        },
-  { slug: "grover",        prev: "/teleportation", next: "/sandbox"       },
+  { slug: "qubit",            prev: "/",                  next: "/superposition"      },
+  { slug: "superposition",    prev: "/qubit",             next: "/measurement"        },
+  { slug: "measurement",      prev: "/superposition",     next: "/gates"              },
+  { slug: "gates",            prev: "/measurement",       next: "/entanglement"       },
+  { slug: "entanglement",     prev: "/gates",             next: "/cnot-bell"          },
+  { slug: "cnot-bell",        prev: "/entanglement",      next: "/deutsch"            },
+  { slug: "deutsch",          prev: "/cnot-bell",         next: "/teleportation"      },
+  { slug: "teleportation",    prev: "/deutsch",           next: "/superdense-coding"  },
+  { slug: "superdense-coding",prev: "/teleportation",     next: "/grover"             },
+  { slug: "grover",           prev: "/superdense-coding", next: "/sandbox"            },
 ];
 
 function readEssay(slug: string): string {

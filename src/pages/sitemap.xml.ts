@@ -36,6 +36,7 @@ const ROUTES: SitemapEntry[] = [
   { path: "/cnot-bell",                   priority: 0.9  },
   { path: "/deutsch",                     priority: 0.9  },
   { path: "/teleportation",               priority: 0.9  },
+  { path: "/superdense-coding",           priority: 0.9  },
   { path: "/grover",                      priority: 0.9  },
   { path: "/sandbox",                     priority: 0.85 },
   { path: "/sandbox/challenges",          priority: 0.8  },

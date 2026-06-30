@@ -29,6 +29,7 @@ import {
   rotOp,
   measureOp,
   teleportationCircuit,
+  superdenseCircuit,
   buildGroverCircuit,
   type Circuit,
   type Op,
@@ -36,7 +37,7 @@ import {
 
 // Mirrors of every essay's `STARTER` (or `bellStarter`/`DEUTSCH_F2_CIRCUIT`)
 // constant. Keep in sync with src/pages/{superposition,measurement,gates,
-// entanglement,cnot-bell,deutsch,teleportation,grover}.astro
+// entanglement,cnot-bell,deutsch,teleportation,superdense-coding,grover}.astro
 const STARTERS: Record<string, Circuit> = {
   superposition: {
     qubits: 1,
@@ -75,6 +76,10 @@ const STARTERS: Record<string, Circuit> = {
   // deferred-measurement circuit propagates here automatically — the
   // essay and this mirror share one source of truth.
   teleportation: teleportationCircuit(),
+  // v3 Phase 3 Superdense starter: 2-qubit, locked `bits = "11"` demo.
+  // Same `superdenseCircuit("11")` constant used by /superdense-coding.astro's
+  // CircuitView and SandboxLink so they share a single source of truth.
+  "superdense-coding": superdenseCircuit("11"),
   // Plan 04 Grover starter: 2-qubit, marked |11⟩, one iteration.
   // Same `buildGroverCircuit(4, 3, 1)` constant used by /grover.astro's
   // demoCircuit so they share a single source of truth.

@@ -1,0 +1,387 @@
+---
+/**
+ * "Superdense coding" — v3 Phase 3 essay.
+ *
+ * The mirror of teleportation. Teleportation spent two classical
+ * bits plus one shared Bell pair to move one qubit; superdense
+ * spends one qubit plus one shared Bell pair to move two classical
+ * bits. Same currency (entanglement), opposite direction.
+ *
+ * Two halves under one scroll, identical rhythm to /teleportation:
+ *
+ *   1. Algorithm half (ALG-03):
+ *      - MultiBlochPanel (2 qubits, shared store) — q0=Alice,
+ *        q1=Bob. Step through the protocol and both reduced Bloch
+ *        arrows shrink to the origin (the Bell pair) and then snap
+ *        back to a unique computational-basis outcome (Bob's decode).
+ *      - ProtocolStepper (5 steps) drives the same store on the
+ *        locked default `bits = "11"` walkthrough.
+ *      - CircuitView shows the full 2-qubit circuit with the built-in
+ *        "Copy as Qiskit" button from Phase 1.
+ *      - SandboxLink remixes the same circuit.
+ *
+ *   2. Use-case half (USE-02):
+ *      - EncodingTable — clickable 2×2 grid over `00 / 01 / 10 / 11`.
+ *        Each row replays the matching superdense protocol into the
+ *        same shared store, so the MultiBlochPanel above repaints in
+ *        lockstep. Bob's decoded readout updates inline.
+ *      - HolevoBound — slider over n = 1..4 transmitted qubits with
+ *        side-by-side readouts of n (no-entanglement) vs 2n (super-
+ *        dense). Closes the "doesn't this break information limits?"
+ *        misconception in one interactive moment.
+ *
+ * Single source of truth: every circuit, step list, and encoding map
+ * comes from `src/lib/quantum/superdense.ts`. Tests in
+ * `tests/quantum/superdense.test.ts` pin the round-trip property the
+ * page silently relies on (Bob decodes exactly the bits Alice picked).
+ *
+ * Convention: qubit register is `|q1 q0⟩` (Qiskit / LSB-first).
+ *   q0 = Alice's qubit — the one she encodes onto and "sends".
+ *   q1 = Bob's half of the pre-shared Bell pair.
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import MultiBlochPanel from "../components/MultiBlochPanel.astro";
+import ProtocolStepper from "../components/ProtocolStepper.astro";
+import CircuitView from "../components/CircuitView.astro";
+import EncodingTable from "../components/EncodingTable.astro";
+import HolevoBound from "../components/HolevoBound.astro";
+import SandboxLink from "../components/SandboxLink.astro";
+import {
+  superdenseCircuit,
+  superdenseSteps,
+} from "../lib/quantum";
+
+const KEY = "superdense-essay";
+
+/** Default to the locked `"11"` pedagogical demo so the static
+ *  (no-JS) snapshot of CircuitView, ProtocolStepper, EncodingTable,
+ *  and SandboxLink all show the same encoding — readers who land
+ *  with JS disabled still see one consistent worked example. */
+const circuit = superdenseCircuit("11");
+const steps = superdenseSteps("11");
+---
+
+<EssayLayout
+  title="Superdense coding"
+  subtitle="Teleportation moved one qubit with two classical bits. Superdense moves two classical bits with one qubit. Same currency — a pre-shared Bell pair — running in the opposite direction. Then meet Holevo's bound, the ceiling that says you can't do better than 2x."
+  description="Walk Alice → Bob superdense coding step by step: prepare the shared Bell pair, encode two classical bits with one of four single-qubit gates (I, X, Z, XZ), send one qubit, decode with the Bell-basis inverse. Compare the 2x classical-capacity gain against Holevo's bound — the ceiling no quantum protocol beats."
+>
+  <p>
+    The <a href="/teleportation">previous essay</a> spent two
+    classical bits plus a pre-shared Bell pair to move one qubit of
+    quantum information from Alice to Bob. This essay is the mirror.
+    Alice has two classical bits she wants to send to Bob. They also
+    share a pre-shared Bell pair (set up in the same lab beforehand,
+    then carried apart). Alice applies one of four single-qubit
+    gates to her half of the pair, sends that single qubit over a
+    quantum channel, and Bob runs a short decode that reads off both
+    classical bits. One qubit transmitted, two classical bits
+    received. The Bell pair did the rest.
+  </p>
+
+  <p>
+    That sounds like it should break some kind of information limit
+    — and the second half of this essay is the careful look that
+    says: no, it doesn't. Pre-shared entanglement doubles classical
+    capacity from <code>n</code> bits per <code>n</code> qubits to
+    <code>2n</code>, and that's it. <strong>Holevo's bound</strong>
+    is the ceiling. Superdense meets it; nothing beats it.
+  </p>
+
+  <h2>The two qubits</h2>
+
+  <p data-step="0">
+    Two qubits, same index convention as the rest of the codebase —
+    <code>|q<sub>1</sub> q<sub>0</sub>⟩</code>, LSB-first,
+    Qiskit-compatible:
+  </p>
+
+  <ul class="my-4 font-mono text-sm text-ink-muted">
+    <li>q<sub>0</sub> — Alice's qubit. She encodes the two classical bits onto it, then ships it to Bob.</li>
+    <li>q<sub>1</sub> — Bob's half of the pre-shared Bell pair.</li>
+  </ul>
+
+  <p>
+    Alice can touch q<sub>0</sub>. Bob can touch q<sub>1</sub>, and
+    once Alice sends, he can touch q<sub>0</sub> too. The Bell pair
+    is established <em>before</em> Alice decides what to send; it's
+    a resource sitting in both labs, waiting. Nothing magical
+    happens at encode time — Alice's gate is local, on a qubit she
+    already has — yet the act of choosing which of four gates to
+    apply rotates the joint two-qubit state into one of the four
+    mutually-orthogonal Bell states. That's the trick the rest of
+    this essay unpacks.
+  </p>
+
+  <h2>Step through the protocol</h2>
+
+  <p data-step="1">
+    The widget below shows two live Bloch cards
+    (q<sub>0</sub>, q<sub>1</sub>), each rendering that qubit's
+    reduced state. Below them, a stepper walks the five-step
+    protocol on the locked default encoding <code>bits = "11"</code>
+    (Alice applies <code>XZ</code>). Each transition updates the
+    shared two-qubit simulator under the hood and the cards repaint
+    to match. Step backward and forward freely — the stepper replays
+    from scratch each time, so jumps never drift.
+  </p>
+
+  <MultiBlochPanel
+    storeKey={KEY}
+    qubits={2}
+    captions={[
+      "q₀ — Alice (encodes XZ)",
+      "q₁ — Bob",
+    ]}
+    caption="Per-qubit reduced Bloch arrows. Watch both arrows shrink to the origin once the Bell pair is built; Alice's encoding rotates the joint state without changing either reduced arrow; Bob's decode snaps both arrows back to the unique computational outcome 11."
+  />
+
+  <ProtocolStepper
+    storeKey={KEY}
+    qubits={2}
+    steps={steps}
+    caption="Step through Alice's encoding of bits = 11 and Bob's Bell-basis decode."
+  />
+
+  <p data-step="2">
+    <strong>Try this:</strong> press <em>Next</em> through all five
+    steps. The cascade you should see:
+  </p>
+
+  <ol class="my-4 list-decimal space-y-2 pl-6 text-ink">
+    <li>
+      <strong>Prepare the shared Bell pair on (q<sub>0</sub>, q<sub>1</sub>).</strong>
+      <code>H</code> on q<sub>0</sub> then <code>CNOT(q<sub>0</sub> → q<sub>1</sub>)</code>
+      builds <code>|Φ+⟩ = (|00⟩ + |11⟩) / √2</code>. Both reduced
+      arrows shrink to the origin and the "Entangled" badge lights
+      up on both cards.
+    </li>
+    <li>
+      <strong>Alice encodes <code>11</code> with <code>XZ</code>.</strong>
+      A single-qubit operation on q<sub>0</sub> only. The joint
+      state rotates from <code>|Φ+⟩</code> to <code>|Ψ-⟩</code> —
+      one of the four mutually orthogonal Bell states. From either
+      reduced-state point of view nothing changed; the joint state
+      is now in a different Bell basis vector entirely.
+    </li>
+    <li>
+      <strong>Alice sends q<sub>0</sub> to Bob.</strong> Physically
+      one qubit travels the wire. The state vector doesn't change —
+      this step is narrative — but it's the only step where
+      anything actually moves through space.
+    </li>
+    <li>
+      <strong>Bob decodes with <code>CNOT(q<sub>0</sub> → q<sub>1</sub>)</code>.</strong>
+      First half of the inverse of the Bell-pair prep. The bit-flip
+      half of Alice's encoding gets untangled into q<sub>1</sub>'s
+      computational amplitude.
+    </li>
+    <li>
+      <strong>Bob decodes with <code>H</code> on q<sub>0</sub> and reads the result.</strong>
+      Hadamard finishes the Bell-basis inverse. Both reduced
+      arrows snap to the south pole — the joint state is
+      <code>|11⟩</code>. Bob measures <code>(q<sub>1</sub>, q<sub>0</sub>) = (1, 1)</code>.
+      Exactly the two bits Alice picked.
+    </li>
+  </ol>
+
+  <h2>The full circuit</h2>
+
+  <p data-step="3">
+    The circuit below is everything the simulator runs. The first
+    two columns are the Bell-pair prep; the third column is Alice's
+    encoding (here <code>X</code> followed by <code>Z</code> for
+    <code>bits = "11"</code>); the next two columns are Bob's
+    decode — the literal inverse of the prep. The trailing two
+    measurements turn the resulting computational-basis amplitudes
+    into the two bits Bob reads. "Copy as Qiskit" emits a Python
+    snippet you can paste straight into a notebook.
+  </p>
+
+  <CircuitView
+    circuit={circuit}
+    caption="Superdense coding (2 qubits, bits = 11). Columns 1–2 = Bell-pair prep H · CNOT; column 3–4 = Alice's encoding X then Z; columns 5–6 = Bob's decode CNOT then H; columns 7–8 = the readout measurements."
+  />
+
+  <p class="my-6">
+    <SandboxLink circuit={circuit} label="Remix in sandbox →" />
+  </p>
+
+  <h2>The four encodings</h2>
+
+  <p data-step="4">
+    Alice has four choices. The mapping is locked: each pair of
+    bits picks one of <code>{`{ I, X, Z, XZ }`}</code> on
+    q<sub>0</sub>, and that gate rotates the joint Bell state into
+    one of the four orthogonal Bell states. Click any row to replay
+    that encoding into the shared store — the Bloch panel above
+    repaints to match, and Bob's decoded readout (which is
+    deterministic, courtesy of <code>decodeSuperdense</code> in
+    the simulator) updates inline.
+  </p>
+
+  <EncodingTable
+    storeKey={KEY}
+    initialBits="11"
+    caption="Click a row to encode the two classical bits on Alice's qubit. Bob's decoded bits are computed live from the simulator — they always match the input."
+  />
+
+  <p>
+    The bit-pair → gate → Bell-state map is the heart of the
+    protocol. It's the same map every textbook prints and the same
+    map the simulator runs; the round-trip property "the bits Bob
+    reads equal the bits Alice picked" is pinned by the test suite
+    so a regression would break CI before reaching this page.
+  </p>
+
+  <h2>Why this isn't a free-bandwidth tap</h2>
+
+  <p data-step="5">
+    Two classical bits delivered by transmitting one qubit looks
+    like a 2x bandwidth multiplier. It is — but only because the
+    pre-shared Bell pair was already in Bob's lab. The Bell pair
+    had to be created somewhere and carried (or beamed) to Bob
+    once, before any encoding could happen. That transit doesn't
+    show up in the "bits per channel use" figure of merit, which
+    is why superdense looks like a free-bandwidth tap and isn't.
+  </p>
+
+  <p>
+    More importantly, you can't do better. <strong>Holevo's bound</strong>
+    is a hard ceiling: no quantum protocol — superdense, anything
+    cleverer that anyone has ever invented, anything cleverer than
+    anyone <em>will</em> invent — transmits more than <code>2n</code>
+    classical bits through <code>n</code> qubits of channel use,
+    even with unlimited entanglement set up in advance. Superdense
+    is the protocol that meets the ceiling. The slider below lets
+    you watch the two lines diverge at the locked 2x ratio:
+  </p>
+
+  <HolevoBound
+    initialN={1}
+    caption="No-entanglement classical capacity is n; superdense capacity with a pre-shared Bell pair is 2n. The gap is the entanglement advantage — capped at 2x by Holevo's bound."
+  />
+
+  <p>
+    The proof of the bound is not trivial — it's an information-
+    theoretic argument about the maximum mutual information
+    between a classical message ensemble and the quantum states
+    that encode it. The bound itself,
+    <code>I(X:Y) ≤ S(ρ) − Σ p<sub>i</sub> S(ρ<sub>i</sub>)</code>,
+    is named for Alexander Holevo and was settled in 1973. The
+    upshot for an engineer pricing out bandwidth is the same as
+    the upshot for an engineer pricing out a teleportation link:
+    entanglement is a finite resource that costs something to
+    establish, and once you have it, it doubles classical capacity
+    in one direction or moves one qubit in the other. Pick which
+    way you want to spend it.
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-ink">
+    <li>
+      Click each of the four rows in the encoding table in turn and
+      watch the Bloch panel above. Why do the two reduced arrows
+      stay at the origin through Alice's encoding step — even
+      though the joint state visibly changes Bell-state identity?
+      (Hint: each qubit's reduced density matrix is <code>I / 2</code>
+      for every Bell state. Tracing out one half of any Bell state
+      gives the maximally mixed state on the other.)
+    </li>
+    <li>
+      Drag the Holevo slider to <code>n = 4</code>. The superdense
+      readout says "at most 8 classical bits." Could you build a
+      protocol that beats that — say, by chaining two Bell pairs
+      cleverly? (Answer: no. The bound is on the total. Two Bell
+      pairs let you superdense-encode 4 bits through 2 qubits, not
+      more.)
+    </li>
+  </ol>
+
+  <MathNerds title="The Bell basis, the four encodings, and why the decode works">
+    <p>
+      The four Bell states are the orthonormal basis of the
+      two-qubit Hilbert space favored by every entanglement-aware
+      protocol:
+    </p>
+    <MathBlock tex="|\Phi^+\rangle = \tfrac{1}{\sqrt 2}(|00\rangle + |11\rangle), \quad |\Psi^+\rangle = \tfrac{1}{\sqrt 2}(|01\rangle + |10\rangle)" />
+    <MathBlock tex="|\Phi^-\rangle = \tfrac{1}{\sqrt 2}(|00\rangle - |11\rangle), \quad |\Psi^-\rangle = \tfrac{1}{\sqrt 2}(|01\rangle - |10\rangle)" />
+    <p>
+      The Bell-pair prep <code>(H ⊗ I) · CNOT(q<sub>0</sub> → q<sub>1</sub>)</code>
+      — read right to left — maps <code>|00⟩ → |Φ+⟩</code>. Each
+      Pauli applied to <em>just</em> q<sub>0</sub> moves the joint
+      state to a different Bell state:
+    </p>
+    <MathBlock tex="(I \otimes I)|\Phi^+\rangle = |\Phi^+\rangle, \quad (X \otimes I)|\Phi^+\rangle = |\Psi^+\rangle" />
+    <MathBlock tex="(Z \otimes I)|\Phi^+\rangle = |\Phi^-\rangle, \quad (XZ \otimes I)|\Phi^+\rangle = |\Psi^-\rangle" />
+    <p>
+      Each is a single, purely local operation on Alice's qubit.
+      That's the encoding map: <code>bits</code> picks one of
+      <code>{`{ I, X, Z, XZ }`}</code>, and the joint state rotates
+      to the corresponding Bell vector. Notably,
+      <code>XZ ≠ ZX</code> as gates (they differ by a global phase),
+      but <code>(XZ ⊗ I)|Φ+⟩ = (ZX ⊗ I)|Φ+⟩</code> up to that
+      same global phase — so the locked table uses
+      <code>XZ</code> consistently and the math underneath is the
+      same on both sides.
+    </p>
+    <p>
+      Bob's decode is the inverse of the prep:
+      <code>(H ⊗ I) · CNOT(q<sub>0</sub> → q<sub>1</sub>)</code>
+      again (a self-inverse on each piece because <code>H · H = I</code>
+      and <code>CNOT · CNOT = I</code>). Applied to each Bell
+      state, the decode produces the computational basis vector
+      whose two bits are exactly the bits Alice picked — that's
+      the round-trip property the encoding table relies on, and
+      it's what makes the protocol "deterministic" rather than
+      "high-probability."
+    </p>
+    <p>
+      The information-theoretic ceiling above is Holevo (1973):
+      for an ensemble <code>{`{ p_i, ρ_i }`}</code> encoding the
+      classical message <code>X</code> as the quantum state
+      <code>Y</code>,
+    </p>
+    <MathBlock tex="I(X:Y) \;\leq\; S\!\bigl(\textstyle\sum_i p_i\, \rho_i\bigr) - \sum_i p_i\, S(\rho_i)" />
+    <p>
+      with <code>S</code> the von Neumann entropy. The right-hand
+      side is maximized at <code>log₂(d) = n</code> bits for
+      <code>n</code> qubits without auxiliary entanglement, and at
+      <code>2n</code> bits with a pre-shared Bell pair. Superdense
+      attains the second; that's why the chart's superdense line
+      sits on the 2n ceiling and the no-entanglement line sits on
+      the n ceiling. Nothing in between, nothing above.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="footer-nav">
+    <a href="/teleportation" class="hover:text-ink">← Teleportation</a>
+    <a href="/grover" class="hover:text-ink">Next: Grover →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  import { attachScrolly } from "../lib/scrolly";
+  import { mountAnnotations } from "../lib/annotations";
+
+  const root = document.querySelector("article");
+  if (root) {
+    attachScrolly(root, {
+      stepSelector: "[data-step]",
+      onStep: (i) => console.debug(`[scrolly] step ${i}`),
+    });
+  }
+
+  const ann = mountAnnotations();
+  document.getElementById("reset-annotations")?.addEventListener("click", () => {
+    ann.reset();
+  });
+
+  // No inline gate buttons on this essay — ProtocolStepper, EncodingTable,
+  // and HolevoBound each mount themselves on DOMContentLoaded. The
+  // shared store (`KEY`) is created by whichever sibling widget hydrates
+  // first; `ensureStore` is idempotent by key, so the order doesn't matter.
+</script>

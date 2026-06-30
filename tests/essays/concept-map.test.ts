@@ -25,7 +25,8 @@ interface ExpectedNode {
 // Mirror of the `nodes` array in ConceptMap.astro. Keep in sync.
 // As of Plan 02-05 (v3): Teleportation appended as the third algorithm
 // essay. Plan 04 (v3): Grover appended as the fourth algorithm essay.
-// v1 had 7 live essays; v3 has 9.
+// v3 Phase 3: Superdense slots in between teleportation and grover,
+// completing the communication arc. v1 had 7 live essays; v3 now has 10.
 const expected: ExpectedNode[] = [
   { href: "/qubit",                  label: "Qubit",         tier: "primary" },
   { href: "/superposition",          label: "Superposition", tier: "primary" },
@@ -37,6 +38,7 @@ const expected: ExpectedNode[] = [
   { href: "/cnot-bell",              label: "CNOT + Bell",   tier: "primary" },
   { href: "/deutsch",                label: "Deutsch",       tier: "primary" },
   { href: "/teleportation",          label: "Teleportation", tier: "primary" },
+  { href: "/superdense-coding",      label: "Superdense",    tier: "primary" },
   { href: "/grover",                 label: "Grover",        tier: "primary" },
 ];
 
@@ -44,7 +46,7 @@ describe("ConceptMap canonical node list", () => {
   it("contains every live essay slug exactly once", () => {
     const expectedEssays = [
       "/qubit", "/superposition", "/measurement", "/gates", "/entanglement",
-      "/cnot-bell", "/deutsch", "/teleportation", "/grover",
+      "/cnot-bell", "/deutsch", "/teleportation", "/superdense-coding", "/grover",
     ];
     for (const slug of expectedEssays) {
       const hits = expected.filter((n) => n.href === slug);
