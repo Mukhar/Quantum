@@ -76,3 +76,14 @@ export { replayProtocol } from "./protocolStepper";
 
 export { endpointsEntangled } from "./network";
 export type { NetworkEdgeState } from "./network";
+
+export {
+  optimalGroverIterations,
+  basisLabels,
+  prepareUniform,
+  applyPhaseOracle,
+  applyDiffusion,
+  runGrover,
+  buildGroverCircuit,
+} from "./grover";
+export type { GroverRunOptions, GroverSnapshot } from "./grover";

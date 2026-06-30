@@ -1,0 +1,306 @@
+---
+/**
+ * HolevoBound — the use-case-half payoff for `/superdense-coding`.
+ *
+ * Closes the bandwidth misconception interactively: superdense coding
+ * doubles classical capacity (`2n` bits per `n` transmitted qubits)
+ * when an entangled pair is pre-shared, but no quantum protocol — not
+ * superdense, not anything else — sends more than `2n` classical bits
+ * through `n` qubits. That ceiling is Holevo's bound.
+ *
+ * Locked v3 interaction (PHASE-CONTEXT.md "Holevo widget"):
+ *   - A single discrete slider over `n_qubits = 1..4`.
+ *   - Two readouts:
+ *       Without pre-shared entanglement: n bits
+ *       With superdense coding:          at most 2n bits
+ *   - An inline SVG line chart: x = n_qubits (1..4), y capped at 8,
+ *     with both the `n` (Holevo / no-entanglement) and `2n` (superdense)
+ *     lines drawn, plus a marker on the active slider value.
+ *   - Caption / copy makes explicit that the advantage is `2x`, full
+ *     stop — entanglement is a prerequisite, not a free-bandwidth tap.
+ *
+ * Formula-driven and self-contained. Never touches the simulator —
+ * the math here is a single multiplication. Zero state shared with
+ * other widgets.
+ */
+
+interface Props {
+  /** Initial slider position. Defaults to 1 so the small-n case is
+   *  visible first and the chart highlight starts at the leftmost
+   *  point. */
+  initialN?: number;
+  /** Optional figure-level caption shown above the slider. */
+  caption?: string;
+}
+
+const N_MIN = 1;
+const N_MAX = 4;
+const Y_MAX = 8;
+
+const rawN = (Astro.props as Props).initialN ?? 1;
+const initialN = Math.max(N_MIN, Math.min(N_MAX, rawN | 0));
+const { caption } = Astro.props as Props;
+
+// SVG geometry. The chart is the entire interactive payoff — the
+// slider is a thin secondary control — so the diagram is sized for
+// the essay's prose column and stays legible on mobile.
+const W = 320;
+const H = 180;
+const PAD_L = 36;
+const PAD_R = 16;
+const PAD_T = 16;
+const PAD_B = 32;
+const PLOT_W = W - PAD_L - PAD_R;
+const PLOT_H = H - PAD_T - PAD_B;
+
+const xFor = (n: number): number =>
+  PAD_L + ((n - N_MIN) / (N_MAX - N_MIN)) * PLOT_W;
+const yFor = (bits: number): number =>
+  PAD_T + (1 - bits / Y_MAX) * PLOT_H;
+
+const N_TICKS = [1, 2, 3, 4];
+const Y_TICKS = [0, 2, 4, 6, 8];
+
+const holevoLine = N_TICKS.map((n) => `${xFor(n)},${yFor(n)}`).join(" ");
+const superdenseLine = N_TICKS.map((n) => `${xFor(n)},${yFor(2 * n)}`).join(
+  " ",
+);
+---
+
+<figure
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5 space-y-3"
+  data-widget="holevo-bound"
+  data-n-min={N_MIN}
+  data-n-max={N_MAX}
+  data-y-max={Y_MAX}
+  aria-label={caption ?? "Holevo bound: classical bits per transmitted qubit"}
+>
+  {caption && (
+    <figcaption class="text-sm text-ink-subtle">{caption}</figcaption>
+  )}
+
+  <div class="flex flex-col gap-2">
+    <label class="flex items-center gap-3 text-sm">
+      <span class="text-ink-subtle">Transmitted qubits</span>
+      <input
+        type="range"
+        min={N_MIN}
+        max={N_MAX}
+        step="1"
+        value={initialN}
+        data-role="n-slider"
+        aria-label="Number of transmitted qubits"
+        class="flex-1 accent-accent"
+      />
+      <span
+        data-role="n-value"
+        class="font-mono text-base text-ink tabular-nums w-6 text-right"
+      >
+        {initialN}
+      </span>
+    </label>
+  </div>
+
+  <dl
+    aria-live="polite"
+    class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm"
+  >
+    <div class="rounded-md border border-line bg-surface-sunken/40 px-3 py-2">
+      <dt class="text-xs uppercase tracking-wide text-ink-subtle">
+        Without pre-shared entanglement
+      </dt>
+      <dd class="font-mono text-base text-ink mt-1">
+        <span data-role="holevo-bits">{initialN}</span> classical bits
+      </dd>
+    </div>
+    <div class="rounded-md border border-accent/40 bg-accent/10 px-3 py-2">
+      <dt class="text-xs uppercase tracking-wide text-accent-emphasis">
+        With superdense coding (Bell pair pre-shared)
+      </dt>
+      <dd class="font-mono text-base text-ink mt-1">
+        at most <span data-role="superdense-bits">{2 * initialN}</span> classical bits
+      </dd>
+    </div>
+  </dl>
+
+  <svg
+    role="img"
+    aria-label={`Holevo bound chart: n classical bits without entanglement vs. 2n with superdense coding, for n=${N_MIN} to ${N_MAX} qubits.`}
+    viewBox={`0 0 ${W} ${H}`}
+    class="w-full max-w-full h-auto"
+  >
+    <!-- Y-axis grid + ticks -->
+    {Y_TICKS.map((y) => (
+      <g>
+        <line
+          x1={PAD_L}
+          x2={W - PAD_R}
+          y1={yFor(y)}
+          y2={yFor(y)}
+          style="stroke: rgb(var(--color-line)); stroke-width: 1; stroke-dasharray: 2 4"
+        />
+        <text
+          x={PAD_L - 6}
+          y={yFor(y) + 4}
+          text-anchor="end"
+          font-size="11"
+          font-family="ui-sans-serif, system-ui, sans-serif"
+          style="fill: rgb(var(--color-ink-subtle))"
+        >{y}</text>
+      </g>
+    ))}
+
+    <!-- X-axis ticks -->
+    {N_TICKS.map((n) => (
+      <g>
+        <line
+          x1={xFor(n)}
+          x2={xFor(n)}
+          y1={H - PAD_B}
+          y2={H - PAD_B + 4}
+          style="stroke: rgb(var(--color-line-strong)); stroke-width: 1"
+        />
+        <text
+          x={xFor(n)}
+          y={H - PAD_B + 18}
+          text-anchor="middle"
+          font-size="11"
+          font-family="ui-sans-serif, system-ui, sans-serif"
+          style="fill: rgb(var(--color-ink-subtle))"
+        >{n}</text>
+      </g>
+    ))}
+
+    <!-- Axis labels -->
+    <text
+      x={PAD_L + PLOT_W / 2}
+      y={H - 4}
+      text-anchor="middle"
+      font-size="11"
+      font-family="ui-sans-serif, system-ui, sans-serif"
+      style="fill: rgb(var(--color-ink-subtle))"
+    >n (transmitted qubits)</text>
+    <text
+      x={12}
+      y={PAD_T + PLOT_H / 2}
+      text-anchor="middle"
+      font-size="11"
+      font-family="ui-sans-serif, system-ui, sans-serif"
+      style="fill: rgb(var(--color-ink-subtle))"
+      transform={`rotate(-90, 12, ${PAD_T + PLOT_H / 2})`}
+    >classical bits</text>
+
+    <!-- Holevo (n) line — the no-entanglement ceiling. -->
+    <polyline
+      points={holevoLine}
+      fill="none"
+      stroke-width="2"
+      style="stroke: rgb(var(--color-ink-subtle))"
+    />
+    <text
+      x={xFor(N_MAX) - 4}
+      y={yFor(N_MAX) - 6}
+      text-anchor="end"
+      font-size="11"
+      font-family="ui-sans-serif, system-ui, sans-serif"
+      style="fill: rgb(var(--color-ink-subtle))"
+    >n (Holevo bound)</text>
+
+    <!-- Superdense (2n) line — capped at the Holevo 2n ceiling. -->
+    <polyline
+      points={superdenseLine}
+      fill="none"
+      stroke-width="2"
+      style="stroke: rgb(var(--color-accent))"
+    />
+    <text
+      x={xFor(N_MAX) - 4}
+      y={yFor(2 * N_MAX) + 14}
+      text-anchor="end"
+      font-size="11"
+      font-family="ui-sans-serif, system-ui, sans-serif"
+      style="fill: rgb(var(--color-accent))"
+    >2n (superdense)</text>
+
+    <!-- Active markers: filled circles at the current n on both lines. -->
+    <circle
+      data-role="marker-holevo"
+      cx={xFor(initialN)}
+      cy={yFor(initialN)}
+      r="4.5"
+      style="fill: rgb(var(--color-ink))"
+    />
+    <circle
+      data-role="marker-superdense"
+      cx={xFor(initialN)}
+      cy={yFor(2 * initialN)}
+      r="4.5"
+      style="fill: rgb(var(--color-accent))"
+    />
+  </svg>
+
+  <p class="text-xs text-ink-subtle">
+    Pre-shared entanglement doubles classical capacity from <code>n</code> to
+    <code>2n</code> — not more. The cap is Holevo's bound: no quantum
+    protocol sends more than <code>2n</code> classical bits through
+    <code>n</code> transmitted qubits, even with unlimited entanglement
+    in advance. Superdense coding meets the ceiling; nothing beats it.
+  </p>
+</figure>
+
+<script>
+  function mount(el: HTMLElement) {
+    const slider = el.querySelector<HTMLInputElement>(
+      '[data-role="n-slider"]',
+    );
+    if (!slider) return;
+    const nValue = el.querySelector<HTMLElement>('[data-role="n-value"]')!;
+    const holevoBits = el.querySelector<HTMLElement>('[data-role="holevo-bits"]')!;
+    const superdenseBits = el.querySelector<HTMLElement>(
+      '[data-role="superdense-bits"]',
+    )!;
+    const markerH = el.querySelector<SVGCircleElement>(
+      '[data-role="marker-holevo"]',
+    )!;
+    const markerS = el.querySelector<SVGCircleElement>(
+      '[data-role="marker-superdense"]',
+    )!;
+
+    // Mirror the .astro geometry so the marker stays glued to the line
+    // when the slider moves. Keep these constants in sync with the
+    // frontmatter PAD/W/H/Y_MAX values above.
+    const N_MIN = Number(el.dataset.nMin ?? "1");
+    const N_MAX = Number(el.dataset.nMax ?? "4");
+    const Y_MAX = Number(el.dataset.yMax ?? "8");
+    const W = 320;
+    const H = 180;
+    const PAD_L = 36;
+    const PAD_R = 16;
+    const PAD_T = 16;
+    const PAD_B = 32;
+    const PLOT_W = W - PAD_L - PAD_R;
+    const PLOT_H = H - PAD_T - PAD_B;
+    const xFor = (n: number) =>
+      PAD_L + ((n - N_MIN) / (N_MAX - N_MIN)) * PLOT_W;
+    const yFor = (bits: number) =>
+      PAD_T + (1 - bits / Y_MAX) * PLOT_H;
+
+    const refresh = () => {
+      const n = Math.max(N_MIN, Math.min(N_MAX, Number(slider.value) | 0));
+      nValue.textContent = String(n);
+      holevoBits.textContent = String(n);
+      superdenseBits.textContent = String(2 * n);
+      markerH.setAttribute("cx", String(xFor(n)));
+      markerH.setAttribute("cy", String(yFor(n)));
+      markerS.setAttribute("cx", String(xFor(n)));
+      markerS.setAttribute("cy", String(yFor(2 * n)));
+    };
+
+    slider.addEventListener("input", refresh);
+    refresh();
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="holevo-bound"]')
+    .forEach(mount);
+</script>
