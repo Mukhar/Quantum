@@ -1,0 +1,323 @@
+---
+/**
+ * PeriodFinding — toy a^x mod N period demo for /shor.
+ *
+ * Phase 5a Plan 05-03. ALG-06 asks for an interactive period-finding
+ * widget that bridges the abstract QFTVisualizer spikes and the
+ * factoring story we hand off to Phase 5b. The widget never claims
+ * to factor anything — it just shows the classical multiplicative
+ * order r of a mod N, the cycle that generates it, and where the
+ * QFT would peak if you sampled this function on a 4-qubit register.
+ *
+ * Locked decisions consumed (PHASE-CONTEXT D-10..D-13):
+ *
+ *   - Continuous recompute on change with 80 ms debounce; no Run
+ *     button. Sub-millisecond compute time at N ≤ 15.
+ *   - Non-coprime / out-of-range inputs render an explanatory
+ *     message and disable misleading period output — never throw.
+ *   - Canonical examples listed inline: N=15, a in {2,4,7,11}.
+ *   - 'No period in this window' message for the not-found path.
+ *
+ * The widget is self-contained: it embeds the modular-arithmetic
+ * sequence + period peaks at SSR using helpers from qft.ts and lets
+ * the client swap (a, N) without re-importing the math module.
+ */
+import {
+  basisLabels,
+  findMultiplicativePeriod,
+  periodPeakHints,
+  type PeriodResult,
+} from "../lib/quantum/qft";
+
+interface Props {
+  caption?: string;
+  /** Initial a — defaults to 7 so the on-load view shows r=4. */
+  initialA?: number;
+  /** Initial N — defaults to 15, the locked Shor toy modulus. */
+  initialN?: number;
+}
+
+const { caption, initialA = 7, initialN = 15 } = Astro.props as Props;
+
+const N_MIN = 2;
+const N_MAX = 15;
+const A_MIN = 2;
+const REGISTER_QUBITS = 4;
+const REGISTER_SIZE = 1 << REGISTER_QUBITS; // 16 — matches QFTVisualizer width
+const LABELS = basisLabels(REGISTER_QUBITS);
+
+/** Compute the JSON payload the client will rehydrate from. */
+function build(a: number, N: number) {
+  const result = findMultiplicativePeriod(a, N);
+  const peaks =
+    result.kind === "period" ? periodPeakHints(result.period, REGISTER_QUBITS) : [];
+  return { a, N, result, peaks };
+}
+
+const initial = build(initialA, initialN);
+
+function summarize(r: PeriodResult): string {
+  if (r.kind === "period") {
+    return `Period r = ${r.period}.`;
+  }
+  if (r.kind === "not-found") {
+    return "No period found in this window — try a smaller a.";
+  }
+  return r.reason;
+}
+const initialSummary = summarize(initial.result);
+const peaksLabel = initial.peaks.map((idx) => LABELS[idx]).join(", ");
+const initialKind = initial.result.kind;
+---
+
+<figure
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5 space-y-4"
+  data-widget="period-finding"
+  data-register-qubits={REGISTER_QUBITS}
+  data-labels={JSON.stringify(LABELS)}
+  data-initial-a={initialA}
+  data-initial-n={initialN}
+  tabindex="0"
+>
+  {caption && (
+    <figcaption class="text-sm text-ink-subtle">{caption}</figcaption>
+  )}
+
+  <div class="flex flex-wrap items-center gap-4 text-sm">
+    <label class="flex items-center gap-2">
+      <span class="text-ink-muted">N</span>
+      <input
+        type="number"
+        data-action="set-n"
+        min={N_MIN}
+        max={N_MAX}
+        step="1"
+        value={initialN}
+        class="w-20 rounded-md border border-line-strong bg-surface-sunken/60 px-2 py-1 font-mono text-xs text-ink tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        aria-label="Modulus N"
+      />
+    </label>
+    <label class="flex items-center gap-2">
+      <span class="text-ink-muted">a</span>
+      <input
+        type="number"
+        data-action="set-a"
+        min={A_MIN}
+        max={N_MAX - 1}
+        step="1"
+        value={initialA}
+        class="w-20 rounded-md border border-line-strong bg-surface-sunken/60 px-2 py-1 font-mono text-xs text-ink tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        aria-label="Base a"
+      />
+    </label>
+    <p class="text-xs text-ink-subtle">
+      Constraints: <code class="font-mono">2 ≤ N ≤ 15</code>,
+      <code class="font-mono">1 &lt; a &lt; N</code>,
+      <code class="font-mono">gcd(a, N) = 1</code>.
+    </p>
+  </div>
+
+  <div
+    data-role="period-status"
+    class:list={[
+      "rounded-md border px-3 py-2 text-sm",
+      initialKind === "period"
+        ? "border-positive/40 bg-positive/10 text-positive"
+        : initialKind === "not-found"
+          ? "border-warning/40 bg-warning/10 text-warning"
+          : "border-line-strong bg-surface-sunken/60 text-ink-subtle",
+    ]}
+    aria-live="polite"
+  >
+    <span data-role="period-readout">{initialSummary}</span>
+  </div>
+
+  <div data-role="sequence-wrap">
+    <p class="mb-1 text-xs uppercase tracking-widest text-ink-subtle">
+      Sequence: a<sup>x</sup> mod N
+    </p>
+    <div class="overflow-x-auto rounded-md border border-line bg-surface-sunken/40">
+      <table class="min-w-full text-sm" data-role="sequence-table">
+        <thead class="bg-surface-elevated/40">
+          <tr>
+            <th class="px-3 py-2 text-left font-mono text-xs text-ink-subtle">x</th>
+            <th class="px-3 py-2 text-left font-mono text-xs text-ink-subtle">a<sup>x</sup> mod N</th>
+          </tr>
+        </thead>
+        <tbody data-role="sequence-rows">
+          {initial.result.sequence.map((value, x) => (
+            <tr class:list={["border-t border-line", value === 1 && x > 0 ? "bg-positive/10" : ""]}>
+              <td class="px-3 py-1 font-mono text-xs tabular-nums text-ink">{x}</td>
+              <td class="px-3 py-1 font-mono text-xs tabular-nums text-ink">{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div data-role="peak-wrap" class:list={[initialKind === "period" ? "" : "hidden"]}>
+    <p class="mb-1 text-xs uppercase tracking-widest text-ink-subtle">
+      QFT peak hints (4-qubit register, Q = 16)
+    </p>
+    <p class="text-xs text-ink-subtle">
+      If you ran this through a 4-qubit QFT, probability would
+      concentrate near
+      <span data-role="peak-bins" class="font-mono text-ink">{peaksLabel}</span>.
+      Each peak sits at <code class="font-mono">j · Q / r</code> for
+      <code class="font-mono">j = 0, 1, …, r − 1</code>.
+    </p>
+  </div>
+
+  <details class="rounded-md border border-line bg-surface-sunken/40 p-3 text-xs text-ink-subtle">
+    <summary class="cursor-pointer text-ink-muted">Canonical N = 15 examples</summary>
+    <ul class="mt-2 list-disc space-y-1 pl-5 font-mono">
+      <li>a = 2 &rarr; r = 4 &nbsp;&nbsp;(2, 4, 8, 1, …)</li>
+      <li>a = 4 &rarr; r = 2 &nbsp;&nbsp;(4, 1, …)</li>
+      <li>a = 7 &rarr; r = 4 &nbsp;&nbsp;(7, 4, 13, 1, …)</li>
+      <li>a = 11 &rarr; r = 2 &nbsp;(11, 1, …)</li>
+    </ul>
+  </details>
+</figure>
+
+<script>
+  // Tiny copy of the modular-period helper from src/lib/quantum/qft.ts.
+  // Keeping it inline here means the widget ships with no module import
+  // — the math is small enough that duplication is cheaper than a
+  // bundled module for a single-widget consumer.
+  const MAX_N = 15;
+  const MAX_X = 256;
+
+  type PeriodResult =
+    | { kind: "period"; period: number; sequence: number[] }
+    | { kind: "invalid"; reason: string; sequence: number[] }
+    | { kind: "not-found"; sequence: number[] };
+
+  function gcd(a: number, b: number): number {
+    let x = Math.abs(a);
+    let y = Math.abs(b);
+    while (y !== 0) {
+      const t = y;
+      y = x % y;
+      x = t;
+    }
+    return x;
+  }
+
+  function findPeriod(a: number, N: number): PeriodResult {
+    if (!Number.isInteger(N) || N < 2 || N > MAX_N) {
+      return { kind: "invalid", reason: `N must be an integer in [2, ${MAX_N}], got ${N}`, sequence: [] };
+    }
+    if (!Number.isInteger(a) || a <= 1 || a >= N) {
+      return { kind: "invalid", reason: `a must be an integer in (1, N), got a=${a} for N=${N}`, sequence: [] };
+    }
+    const g = gcd(a, N);
+    if (g !== 1) {
+      return { kind: "invalid", reason: `gcd(a, N) = ${g} ≠ 1 — pick an a coprime to N=${N}`, sequence: [] };
+    }
+    const sequence: number[] = [1];
+    let current = 1;
+    for (let x = 1; x <= MAX_X; x++) {
+      current = (current * a) % N;
+      sequence.push(current);
+      if (current === 1) return { kind: "period", period: x, sequence };
+    }
+    return { kind: "not-found", sequence };
+  }
+
+  function peakHints(period: number, qubits: number): number[] {
+    const Q = 1 << qubits;
+    if (period > Q) return [0];
+    const out = new Set<number>();
+    for (let j = 0; j < period; j++) {
+      out.add(Math.round((j * Q) / period) % Q);
+    }
+    return Array.from(out).sort((x, y) => x - y);
+  }
+
+  function summarize(r: PeriodResult): string {
+    if (r.kind === "period") return `Period r = ${r.period}.`;
+    if (r.kind === "not-found") return "No period found in this window — try a smaller a.";
+    return r.reason;
+  }
+
+  function statusClasses(kind: PeriodResult["kind"]): string {
+    if (kind === "period") return "border-positive/40 bg-positive/10 text-positive";
+    if (kind === "not-found") return "border-warning/40 bg-warning/10 text-warning";
+    return "border-line-strong bg-surface-sunken/60 text-ink-subtle";
+  }
+
+  const ALL_STATUS_CLASSES =
+    "border-positive/40 bg-positive/10 text-positive border-warning/40 bg-warning/10 text-warning border-line-strong bg-surface-sunken/60 text-ink-subtle".split(
+      /\s+/,
+    );
+
+  function mount(el: HTMLElement) {
+    const qubits = Number(el.dataset.registerQubits ?? "4");
+    let labels: string[];
+    try {
+      labels = JSON.parse(el.dataset.labels ?? "[]");
+    } catch {
+      console.warn("PeriodFinding: could not parse labels", el);
+      return;
+    }
+
+    const inputN = el.querySelector<HTMLInputElement>('[data-action="set-n"]')!;
+    const inputA = el.querySelector<HTMLInputElement>('[data-action="set-a"]')!;
+    const status = el.querySelector<HTMLElement>('[data-role="period-status"]')!;
+    const readout = el.querySelector<HTMLElement>('[data-role="period-readout"]')!;
+    const rows = el.querySelector<HTMLElement>('[data-role="sequence-rows"]')!;
+    const peakWrap = el.querySelector<HTMLElement>('[data-role="peak-wrap"]')!;
+    const peakBins = el.querySelector<HTMLElement>('[data-role="peak-bins"]')!;
+
+    const update = () => {
+      const a = Math.trunc(Number(inputA.value));
+      const N = Math.trunc(Number(inputN.value));
+      const result = findPeriod(a, N);
+
+      readout.textContent = summarize(result);
+
+      // Reset and re-apply status classes for the chosen kind.
+      for (const cls of ALL_STATUS_CLASSES) status.classList.remove(cls);
+      for (const cls of statusClasses(result.kind).split(/\s+/)) {
+        if (cls) status.classList.add(cls);
+      }
+
+      // Re-render the sequence table.
+      const fragments: string[] = [];
+      for (let x = 0; x < result.sequence.length; x++) {
+        const v = result.sequence[x];
+        const closing = v === 1 && x > 0 ? "bg-positive/10" : "";
+        fragments.push(
+          `<tr class="border-t border-line ${closing}">` +
+            `<td class="px-3 py-1 font-mono text-xs tabular-nums text-ink">${x}</td>` +
+            `<td class="px-3 py-1 font-mono text-xs tabular-nums text-ink">${v}</td>` +
+            `</tr>`,
+        );
+      }
+      rows.innerHTML = fragments.join("");
+
+      if (result.kind === "period") {
+        const peaks = peakHints(result.period, qubits);
+        peakWrap.classList.remove("hidden");
+        peakBins.textContent = peaks
+          .map((idx) => labels[idx] ?? `|${idx}⟩`)
+          .join(", ");
+      } else {
+        peakWrap.classList.add("hidden");
+      }
+    };
+
+    let debounce: number | undefined;
+    const onInput = () => {
+      if (debounce !== undefined) window.clearTimeout(debounce);
+      debounce = window.setTimeout(update, 80);
+    };
+    inputN.addEventListener("input", onInput);
+    inputA.addEventListener("input", onInput);
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="period-finding"]')
+    .forEach(mount);
+</script>
