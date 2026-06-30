@@ -1,7 +1,7 @@
 # State
 
-*Last updated: 2026-06-30 — v3.0 Phase 1 + Phase 2 verified complete
-(retroactive bookkeeping during autonomous run). Phases 3–6 next.*
+*Last updated: 2026-06-30 — v3.0 Phase 5 split planned during autonomous run.
+Phase 1 + Phase 2 verified complete; Phases 3–6 continue autonomously.*
 
 ## Project Reference
 
@@ -29,8 +29,8 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 |---|---|
 | Phase | 3 (Superdense + Holevo bound) — discuss in progress |
 | Plan | — |
-| Status | Autonomous run — parallel discuss agents spawned for P3/P4/P5 |
-| Last activity | 2026-06-30 — Phase 1 + Phase 2 VERIFICATION + SUMMARY backfilled |
+| Status | Autonomous run — P5 split into planned 5a/5b; P3/P4/P6 continue |
+| Last activity | 2026-06-30 — Phase 5 split planned into 5a (QFT/period-finding) and 5b (Shor N=15/RSA/PQC) |
 
 ## Where we are
 
@@ -44,8 +44,8 @@ Phase numbering reset to 1 for v3 (matching v2's pattern).
   *Done 2026-06-29 (UAT 13/14 pass + cosmetic fix landed).*
 - [ ] **Phase 3** — Superdense coding + Bandwidth / Holevo bound.
 - [ ] **Phase 4** — Grover + Search reality check.
-- [ ] **Phase 5** — Shor + QFT + Post-quantum crypto threat
-  (auto-split to 5a/5b if PLAN.md exceeds 6 plans).
+- [ ] **Phase 5a** — Shor: QFT + period-finding. *Planned 2026-06-30; split from original dense P5.*
+- [ ] **Phase 5b** — Shor: N=15 circuit + RSACountdown + Post-quantum crypto threat. *Planned 2026-06-30; depends on 5a.*
 - [ ] **Phase 6** — VQE + Quantum chemistry + progress indicator + v3 launch.
 
 ### v2.0 — code-complete (operational launch tasks carrying over)
@@ -130,8 +130,8 @@ From `docs/plans/2026-06-29-v3-design.md` §8:
 
 ## Open risks for v3
 
-- **Phase 5 (Shor + QFT + PQC) density** — biggest risk; may need to
-  split or extend. Plan-phase should explicitly budget against this.
+- **Phase 5 density resolved by split** — original Shor + QFT + PQC work is
+  now planned as 5a (QFT + period-finding) and 5b (N=15 Shor + RSA/PQC).
 - **Qiskit export drift** — golden tests per gate (QSK-03) are the
   mitigation; gate set evolves over the milestone.
 - **Bundle bloat from 5 new essays + widgets** — bundle CI gate

@@ -1,8 +1,8 @@
 # Phase 5b: Shor N=15 + RSACountdown + PQC - Context
 
-**Gathered:** 2026-06-30T00:31:16+05:30  
-**Extracted:** 2026-06-30 during `/gsd-autonomous` split planning  
-**Status:** Ready for planning  
+**Gathered:** 2026-06-30T00:31:16+05:30
+**Extracted:** 2026-06-30 during `/gsd-autonomous` split planning
+**Status:** Ready for planning
 **Mode:** Extracted from `.planning/phases/05-shor/PHASE-CONTEXT.md` after the user-locked split trigger fired. Original discuss attribution is preserved: autonomous discuss-phase agent for Phase 5, user Mukhar AFK, decisions locked by `autonomous-decisions.md`.
 
 <domain>
@@ -131,5 +131,5 @@ execution.
 
 ---
 
-*Phase: 05b-shor-pqc*  
+*Phase: 05b-shor-pqc*
 *Context extracted from original Phase 05-shor discuss artifact; original gathered timestamp 2026-06-30.*

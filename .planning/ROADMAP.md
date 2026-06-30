@@ -33,7 +33,8 @@ v1+v2 historical context lives in `.planning/MILESTONES.md`.
 - [x] **Phase 2: Teleportation + Quantum networks (FLAGSHIP)** — `/teleportation` essay with `ProtocolStepper`, mixed-state `MultiBlochPanel`, and `QuantumNetwork` interactive ✅
 - [ ] **Phase 3: Superdense + Holevo bound** — `/superdense-coding` essay with `EncodingTable` and `HolevoBound` widgets
 - [ ] **Phase 4: Grover + Search reality** — `/grover` essay with oracle/diffusion, `AmplitudeBars` iterator, and `SearchComparison` widget
-- [ ] **Phase 5: Shor + QFT + PQC threat** — `/shor` essay with `QFT` visualizer, `PeriodFinding` demo, static full-N=15 `CircuitView`, and `RSACountdown` widget
+- [ ] **Phase 5a: Shor — QFT + period-finding** — `/shor` essay scaffold with `QFT` visualizer and `PeriodFinding` demo (depends_on = P1, P4)
+- [ ] **Phase 5b: Shor — N=15 circuit + RSACountdown + PQC** — extend `/shor` with static full-N=15 Shor circuit, prominent Qiskit export, and RSA/PQC threat section (depends_on = 5a)
 - [ ] **Phase 6: VQE + Chemistry + v3 launch** — `/vqe` essay with vanilla-TS optimizer + `EnergyLandscape` + `MoleculeGallery`, concept-map progress indicator, OPS audit, v3 announcement
 
 ## Phase Details
@@ -146,32 +147,48 @@ magic.
 
 **Plans:** TBD (created by `/gsd-plan-phase 4`)
 
-### Phase 5: Shor + QFT + PQC threat
+### Phase 5a: Shor — QFT + period-finding
 
-**Goal:** Ship `/shor` — the densest v3 essay. QFT taught inline as
-Shor's engine (interactive at 4 qubits); period-finding demoed live
-on small `N`; full N=15 Shor rendered statically with the Qiskit-
-export button being the bridge to actually running it. Use-case half
-is the PQC threat: RSACountdown + NIST PQC links.
-**Depends on:** Phase 1 (Qiskit export is the **point** of this
-essay's last section), Phase 4 (Grover handoff).
-**Requirements:** ALG-05, ALG-06, ALG-07, USE-04
+**Goal:** Ship the first split slice of `/shor`: teach QFT inline as
+Shor's engine, render the locked 4-qubit QFT probability-bars visualizer,
+and let readers run toy period finding in-browser for small `N`.
+**Depends on:** Phase 1 (Qiskit/export + bundle gate), Phase 4 (Grover
+handoff).
+**Requirements:** ALG-05, ALG-06, OPS-04
 **Success Criteria:**
   1. `QFT` visualizer renders 4-qubit QFT input vs. output as
      probability bars; reader can adjust input state
   2. `PeriodFinding` widget runs in-browser for `a^x mod N` with
      `N ≤ 15`; QFT peak pins the period; tests cover canonical periods
-  3. Full N=15 Shor circuit rendered statically via `CircuitView`
-     (not executed in-browser) with the "Copy as Qiskit" button
-     prominent and body text framing it as "now go run this for real"
-  4. `RSACountdown` widget takes RSA key size (2048 / 3072 / 4096) and
-     a logical-qubit slider; projects qubits-to-break + links the 4
-     NIST PQC primitives (Kyber, Dilithium, Falcon, SPHINCS+)
-  5. Concept-map + nav-graph + sandbox-links mirrors updated; bundle
-     stays under per-route ceiling (OPS-04); Lighthouse mobile a11y
-     ≥ 95 in both themes
+  3. `/shor` route scaffold exists and explicitly defers full Shor N=15
+     + RSA/PQC closure to Phase 5b on the same URL
+  4. Concept-map + nav-graph + sandbox-links mirrors updated in the
+     same commit as `/shor`; bundle stays under per-route ceiling
+     (OPS-04)
 
-**Plans:** TBD (created by `/gsd-plan-phase 5`)
+**Plans:** `.planning/phases/05-shor/PLAN.md`
+
+### Phase 5b: Shor — N=15 circuit + RSACountdown + PQC
+
+**Goal:** Complete `/shor` by adding the static full N=15 Shor circuit,
+a prominent Qiskit export path, and the grounded RSA/PQC threat section.
+This extends the 5a route; it does not add a new URL.
+**Depends on:** Phase 5a.
+**Requirements:** ALG-07, USE-04, OPS-04
+**Success Criteria:**
+  1. Full N=15 Shor circuit rendered statically (not executed
+     in-browser) with a prominent Shor-specific Qiskit copy/export CTA
+  2. Large-static circuit path preserves simulator/sandbox `MAX_QUBITS = 4`
+     and does not route N=15 through sandbox codec validation
+  3. `RSACountdown` widget takes RSA key size (2048 / 3072 / 4096) and
+     a logical-qubit slider; projects qubits-to-break with sourced,
+     caveated language and milestone markers
+  4. Inline NIST PQC cards link Kyber/ML-KEM, Dilithium/ML-DSA, Falcon,
+     and SPHINCS+/SLH-DSA to official sources
+  5. `/shor` reads as a complete essay; mirrors and bundle budget remain
+     green; Lighthouse/mobile a11y target ≥ 95 in both themes
+
+**Plans:** `.planning/phases/05b-shor-pqc/PLAN.md`
 
 ### Phase 6: VQE + Chemistry + v3 launch
 
@@ -206,7 +223,7 @@ on all 5 essays existing.
 
 ## Progress
 
-**Execution Order:** Phases run in numeric order: 1 → 2 → 3 → 4 → 5 → 6.
+**Execution Order:** Phases run in numeric order: 1 → 2 → 3 → 4 → 5a → 5b → 6.
 
 | Phase | Plans Complete | Status      | Completed  |
 |-------|----------------|-------------|------------|
@@ -214,7 +231,8 @@ on all 5 essays existing.
 | 2. Teleportation + Quantum networks (FLAGSHIP)| 6/6   | ✅ Complete | 2026-06-29 |
 | 3. Superdense + Holevo bound                  | 0/TBD | Discuss     | — |
 | 4. Grover + Search reality                    | 0/TBD | Discuss     | — |
-| 5. Shor + QFT + PQC threat                    | 0/TBD | Discuss     | — |
+| 5a. Shor — QFT + period-finding              | 0/5   | Planned     | — |
+| 5b. Shor — N=15 + RSACountdown + PQC          | 0/5   | Planned     | — |
 | 6. VQE + Chemistry + v3 launch                | 0/TBD | Not started | — |
 
 **Parallel ops tasks (not phase work):**
