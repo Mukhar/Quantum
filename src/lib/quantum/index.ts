@@ -100,3 +100,17 @@ export {
   periodPeakHints,
 } from "./qft";
 export type { PeriodResult } from "./qft";
+
+export {
+  buildShor15,
+  toQiskitShor15,
+  SHOR15_QUBITS,
+  SHOR15_DESCRIPTION,
+} from "./shor";
+export type {
+  ShorStaticCircuit,
+  StaticCircuitOp,
+  ShorBlock,
+  ShorBlockId,
+  ShorRegisterLayout,
+} from "./shor";
