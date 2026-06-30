@@ -1,0 +1,213 @@
+---
+/**
+ * EncodingTable — the algorithm-half payoff for `/superdense-coding`.
+ *
+ * A 2×2 selector over the four classical messages ("00", "01", "10",
+ * "11"). Each row shows the bits, the matching gate label ("I" / "X" /
+ * "Z" / "XZ"), the resulting Bell state, and — once selected — Bob's
+ * decoded readout. Selecting a row replays the corresponding
+ * superdense protocol into the shared quantum store keyed by
+ * `storeKey`, so a sibling `MultiBlochPanel` on the same essay
+ * repaints Alice and Bob's reduced Bloch arrows in lockstep with the
+ * encoding.
+ *
+ * Mounts independently of `ProtocolStepper`. Per the locked Phase-3
+ * decisions, the narrative stepper stays on the pedagogical default
+ * `"11"` path; this widget owns message-selection and the decoded
+ * readout. The two only share the simulator store through Alice-side
+ * state replay — no cross-widget JS coupling, no second source of
+ * truth for the protocol.
+ *
+ * Single source of truth: `src/lib/quantum/superdense.ts`. The map
+ * of (bits → gate label → Bell state → decoded bits) is computed at
+ * build time via `allSuperdenseCases()` so the route can never drift
+ * away from the module.
+ */
+import {
+  allSuperdenseCases,
+  BELL_STATE_LABEL,
+  ENCODING_GATE_LABEL,
+  SUPERDENSE_MESSAGES,
+  superdenseSteps,
+  type SuperdenseBits,
+} from "../lib/quantum/superdense";
+
+interface Props {
+  /** Store key shared with the essay-level `MultiBlochPanel` so
+   *  selecting a row repaints the Bloch panel. */
+  storeKey: string;
+  /** Bit pair to highlight on first render. Defaults to the locked
+   *  `"11"` pedagogical demo so the static (no-JS) view matches the
+   *  default `ProtocolStepper` walkthrough. */
+  initialBits?: SuperdenseBits;
+  /** Optional figure-level caption. */
+  caption?: string;
+}
+
+const {
+  storeKey,
+  initialBits = "11",
+  caption,
+} = Astro.props as Props;
+
+// Compute the static row table at build time. The protocol ops are
+// emitted into `data-steps-${bits}` attrs as JSON so the client
+// hydrator can `replayProtocol` them without re-importing the module.
+// Cheap: 4 rows × ~5 ops each, well under 1 KB total.
+const ROWS = SUPERDENSE_MESSAGES.map((bits) => ({
+  bits,
+  gate: ENCODING_GATE_LABEL[bits],
+  bell: BELL_STATE_LABEL[bits],
+  // `decoded` comes from a deterministic simulator run — pinned by
+  // tests/quantum/superdense.test.ts so any drift fails CI before
+  // the essay renders a wrong number.
+  decoded: allSuperdenseCases().find((c) => c.bits === bits)!.decoded,
+  steps: superdenseSteps(bits),
+}));
+---
+
+<figure
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5 space-y-3"
+  data-widget="encoding-table"
+  data-widget-id={`encoding-table:${storeKey}`}
+  data-store-key={storeKey}
+  data-initial-bits={initialBits}
+  aria-label={caption ?? "Superdense encoding table"}
+>
+  {caption && (
+    <figcaption class="text-sm text-ink-subtle">{caption}</figcaption>
+  )}
+
+  <div
+    role="radiogroup"
+    aria-label="Choose the two classical bits Alice encodes"
+    class="grid grid-cols-2 gap-2"
+  >
+    {ROWS.map((row) => (
+      <button
+        type="button"
+        role="radio"
+        data-role="bits-option"
+        data-bits={row.bits}
+        data-steps={JSON.stringify(row.steps)}
+        aria-checked={row.bits === initialBits}
+        class="group flex flex-col items-start gap-1 rounded-md border border-line-strong bg-surface-sunken/60 px-3 py-2 text-left hover:bg-line-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-checked:border-accent aria-checked:bg-accent/15"
+      >
+        <span class="font-mono text-base text-ink tabular-nums">
+          {row.bits}
+        </span>
+        <span class="font-mono text-xs text-ink-muted">
+          Alice applies <strong class="text-accent-emphasis">{row.gate}</strong> →
+          <span class="ml-1">{row.bell}</span>
+        </span>
+      </button>
+    ))}
+  </div>
+
+  <div
+    data-role="decoded"
+    aria-live="polite"
+    class="rounded-md border border-line bg-surface-sunken/40 px-3 py-2 text-sm"
+  >
+    <span class="text-ink-subtle">Bob decodes:</span>
+    <span data-role="decoded-bits" class="ml-2 font-mono text-base text-ink tabular-nums">
+      {ROWS.find((r) => r.bits === initialBits)!.decoded}
+    </span>
+    <span data-role="decoded-bell" class="ml-3 font-mono text-xs text-ink-muted">
+      ({BELL_STATE_LABEL[initialBits]})
+    </span>
+  </div>
+</figure>
+
+<script>
+  import { ensureStore } from "../lib/quantum/store";
+  import { replayProtocol } from "../lib/quantum/protocolStepper";
+  import type { ProtocolStep } from "../lib/quantum/teleportation";
+
+  type SuperdenseBits = "00" | "01" | "10" | "11";
+
+  const BELL_LABEL: Record<SuperdenseBits, string> = {
+    "00": "|Φ+⟩",
+    "01": "|Ψ+⟩",
+    "10": "|Φ-⟩",
+    "11": "|Ψ-⟩",
+  };
+
+  function mount(el: HTMLElement) {
+    const storeKey = el.dataset.storeKey!;
+    // EncodingTable always operates on 2 qubits (q0=Alice, q1=Bob).
+    // The shared store may have been created by a sibling
+    // MultiBlochPanel first; ensureStore is idempotent on key.
+    const store = ensureStore(storeKey, { qubits: 2 });
+
+    const buttons = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('[data-role="bits-option"]'),
+    );
+    const decodedBits = el.querySelector<HTMLElement>('[data-role="decoded-bits"]')!;
+    const decodedBell = el.querySelector<HTMLElement>('[data-role="decoded-bell"]')!;
+
+    let current: SuperdenseBits =
+      (el.dataset.initialBits as SuperdenseBits) ?? "11";
+
+    const stepsFor = (bits: SuperdenseBits): ProtocolStep[] => {
+      const btn = buttons.find((b) => b.dataset.bits === bits);
+      if (!btn || !btn.dataset.steps) return [];
+      try {
+        return JSON.parse(btn.dataset.steps) as ProtocolStep[];
+      } catch {
+        console.warn("EncodingTable: could not parse data-steps for", bits);
+        return [];
+      }
+    };
+
+    const select = (bits: SuperdenseBits) => {
+      current = bits;
+      for (const btn of buttons) {
+        const isCurrent = btn.dataset.bits === bits;
+        btn.setAttribute("aria-checked", String(isCurrent));
+      }
+      // Replay the full superdense protocol for this encoding into
+      // the shared store. The sibling MultiBlochPanel subscribes and
+      // repaints Alice and Bob's reduced Bloch arrows in lockstep.
+      const steps = stepsFor(bits);
+      replayProtocol(store, steps, steps.length - 1);
+      // Round-trip property guaranteed by tests: decoded bits === input bits.
+      decodedBits.textContent = bits;
+      decodedBell.textContent = `(${BELL_LABEL[bits]})`;
+    };
+
+    // Initial replay so the shared store reflects the visible
+    // selection before the reader clicks anything.
+    select(current);
+
+    el.addEventListener("click", (event) => {
+      const btn = (event.target as HTMLElement).closest<HTMLButtonElement>(
+        '[data-role="bits-option"]',
+      );
+      if (!btn || !el.contains(btn)) return;
+      const bits = btn.dataset.bits as SuperdenseBits | undefined;
+      if (!bits) return;
+      select(bits);
+    });
+
+    // Keyboard reachability — arrow keys move within the radiogroup.
+    el.addEventListener("keydown", (event) => {
+      const target = event.target as HTMLElement;
+      if (!target.matches('[data-role="bits-option"]')) return;
+      let idx = buttons.indexOf(target as HTMLButtonElement);
+      if (idx < 0) return;
+      let next = idx;
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (idx + 1) % buttons.length;
+      else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (idx - 1 + buttons.length) % buttons.length;
+      else return;
+      event.preventDefault();
+      const nextBtn = buttons[next];
+      nextBtn.focus();
+      select(nextBtn.dataset.bits as SuperdenseBits);
+    });
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="encoding-table"]')
+    .forEach(mount);
+</script>
