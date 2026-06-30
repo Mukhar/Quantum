@@ -4,7 +4,7 @@
   "routes": {
     "404": 1024,
     "cnot-bell": 1024,
-    "deutsch": 1024,
+    "deutsch": 2048,
     "entanglement": 1024,
     "feedback": 2048,
     "feedback/thanks": 1024,
@@ -25,6 +25,6 @@
     "superdense-coding": 2048,
     "superposition": 1024,
     "teleportation": 2048,
-    "vqe": 4096
+    "vqe": 3072
   }
 }
