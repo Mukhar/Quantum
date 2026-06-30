@@ -1,7 +1,7 @@
 # State
 
-*Last updated: 2026-06-30 — v3.0 Phase 5a closed out;
-5b/6 continue autonomously.*
+*Last updated: 2026-06-30 — v3.0 Phase 5b closed out;
+Phase 6 next.*
 
 ## Project Reference
 
@@ -19,21 +19,22 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 - **v2.0 status:** **Code-complete, deploy pending.** All 4 v2 phases
   shipped (247 tests, 19 pages, +44 KB site bundle). Pending: Apps
   Script provisioning, Lighthouse run, launch smoke test, ship.
-- **v3.0 status:** **Phases 1–5a complete.** Foundation infra,
+- **v3.0 status:** **Phases 1–5b complete.** Foundation infra,
   Teleportation flagship, Superdense + Holevo, Grover + Search
-  reality, and Shor's QFT + period-finding half all shipped with
-  SUMMARY + VERIFICATION written. 483 tests, 23 pages, all routes
-  within bundle ceilings. Next: Phase 5b (Shor — N=15 circuit +
-  RSACountdown + Post-quantum crypto cards).
+  reality, Shor's QFT + period-finding half (5a), and the full
+  N=15 Shor circuit + RSACountdown + NIST PQC cards (5b) all
+  shipped with SUMMARY + VERIFICATION written. 548 tests, 23 pages,
+  all routes within bundle ceilings. Next: Phase 6 (VQE + Quantum
+  chemistry + progress indicator + v3 launch).
 
 ## Current Position
 
 | | |
 |---|---|
-| Phase | 5b (Shor — N=15 circuit + RSACountdown + PQC) — planned, ready to execute |
-| Plan | PLAN.md expected at .planning/phases/05b-shor-rsa-pqc/PLAN.md (not yet created) |
-| Status | Phase 5a closed out — next: gsd-plan-phase 5b, then gsd-execute-phase 5b |
-| Last activity | 2026-06-30 — Phase 5a close-out artifacts written (05a-SUMMARY.md + 05a-VERIFICATION.md + state/roadmap update) |
+| Phase | 6 (VQE + Quantum chemistry + progress indicator + v3 launch) — not yet planned |
+| Plan | PLAN.md expected at .planning/phases/06-vqe-launch/PLAN.md (not yet created) |
+| Status | Phase 5b closed out — next: gsd-discuss-phase 6 → gsd-plan-phase 6 → gsd-execute-phase 6 |
+| Last activity | 2026-06-30 — Phase 5b close-out artifacts written (05b-SUMMARY.md + 05b-VERIFICATION.md + state/roadmap update) |
 
 ## Where we are
 
@@ -54,7 +55,9 @@ Phase numbering reset to 1 for v3 (matching v2's pattern).
 - [x] **Phase 5a** — Shor: QFT + period-finding.
   *Done 2026-06-30 (483 tests, /shor 2.5/3.0 KB,
   05a-SUMMARY.md + 05a-VERIFICATION.md).*
-- [ ] **Phase 5b** — Shor: N=15 circuit + RSACountdown + Post-quantum crypto threat. *Planned 2026-06-30; depends on 5a.*
+- [x] **Phase 5b** — Shor: N=15 circuit + RSACountdown + Post-quantum crypto threat.
+  *Done 2026-06-30 (548 tests, /shor 3.2/4.0 KB,
+  05b-SUMMARY.md + 05b-VERIFICATION.md).*
 - [ ] **Phase 6** — VQE + Quantum chemistry + progress indicator + v3 launch.
 
 ### v2.0 — code-complete (operational launch tasks carrying over)
