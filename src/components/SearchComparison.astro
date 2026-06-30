@@ -1,0 +1,186 @@
+---
+/**
+ * SearchComparison — the honest-disappointment widget.
+ *
+ * Slider over a locked set of unstructured-search sizes
+ * `[16, 32, 64, 128, 256, 512, 1024]`. Two lanes:
+ *   - Classical: average probes `N/2` (worst case `N - 1`).
+ *   - Grover:    `floor((pi/4) * sqrt(N))` iterations.
+ *
+ * The widget is formula-only: it never imports the simulator. The
+ * `N > 16` callout makes that explicit so the reader doesn't think
+ * we're quietly running a 10-qubit simulation in the background —
+ * the in-browser simulator is hard-capped at 4 qubits (REQ-13).
+ */
+
+interface Props {
+  stops?: number[];
+  initialN?: number;
+  caption?: string;
+}
+
+const STOPS_DEFAULT = [16, 32, 64, 128, 256, 512, 1024] as const;
+const SIM_CAP_N = 16;
+
+const {
+  stops = [...STOPS_DEFAULT],
+  initialN = 16,
+  caption,
+} = Astro.props as Props;
+
+if (stops.length === 0) {
+  throw new Error("SearchComparison: stops must contain at least one value");
+}
+
+const initialIdx = Math.max(0, stops.indexOf(initialN));
+const safeInitial = initialIdx === -1 ? 0 : initialIdx;
+
+const groverIterations = (N: number) => Math.floor((Math.PI / 4) * Math.sqrt(N));
+const classicalAverage = (N: number) => N / 2;
+const log2 = (N: number) => Math.log2(N);
+
+const initialNValue = stops[safeInitial];
+const initialGrover = groverIterations(initialNValue);
+const initialClassical = classicalAverage(initialNValue);
+const initialLog2 = log2(initialNValue);
+---
+
+<figure
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5 space-y-4"
+  data-widget="search-comparison"
+  data-stops={JSON.stringify(stops)}
+  data-initial-index={safeInitial}
+  data-sim-cap={SIM_CAP_N}
+>
+  {caption && (
+    <figcaption class="text-sm text-ink-subtle">{caption}</figcaption>
+  )}
+
+  <div class="space-y-2">
+    <label class="flex items-center gap-3 text-sm">
+      <span class="text-ink-muted shrink-0">N (search space)</span>
+      <input
+        type="range"
+        data-action="n-slider"
+        min="0"
+        max={stops.length - 1}
+        step="1"
+        value={safeInitial}
+        class="flex-1 accent-accent"
+        aria-label="Search space size N"
+      />
+      <span
+        data-role="n-readout"
+        class="font-mono text-sm text-ink-emphasis tabular-nums w-32 text-right"
+      >
+        N = {initialNValue.toLocaleString()} · log₂N = {initialLog2}
+      </span>
+    </label>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div
+      class="rounded-md border border-line-strong bg-surface-sunken/40 p-3"
+      data-role="lane-classical"
+    >
+      <p class="text-xs uppercase tracking-wide text-ink-subtle">
+        Classical linear scan
+      </p>
+      <p class="mt-1 font-mono text-2xl tabular-nums text-ink-emphasis">
+        <span data-role="classical-value">{initialClassical.toLocaleString()}</span>
+        <span class="text-xs text-ink-subtle"> avg probes</span>
+      </p>
+      <p class="mt-1 text-xs text-ink-subtle">
+        Worst case: <span data-role="classical-worst">{(initialNValue - 1).toLocaleString()}</span> probes.
+      </p>
+    </div>
+
+    <div
+      class="rounded-md border border-accent/40 bg-accent/10 p-3"
+      data-role="lane-grover"
+    >
+      <p class="text-xs uppercase tracking-wide text-accent-emphasis">
+        Grover (⌊π/4·√N⌋)
+      </p>
+      <p class="mt-1 font-mono text-2xl tabular-nums text-accent-emphasis">
+        <span data-role="grover-value">{initialGrover}</span>
+        <span class="text-xs"> iterations</span>
+      </p>
+      <p class="mt-1 text-xs text-ink-subtle">
+        Each iteration is one oracle call + one diffusion.
+      </p>
+    </div>
+  </div>
+
+  <p
+    class="text-xs text-ink-subtle"
+    data-role="readout"
+    aria-live="polite"
+  >
+    N = {initialNValue.toLocaleString()}: classical {initialClassical.toLocaleString()} avg probes vs Grover {initialGrover} iterations.
+  </p>
+
+  <p class="text-xs text-amber-600 dark:text-amber-400" data-role="sim-cap-note">
+    N &gt; 16 is formula-only here; the in-browser simulator stays capped at 4 qubits.
+  </p>
+</figure>
+
+<script>
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function mount(el: HTMLElement) {
+    let stops: number[];
+    try {
+      stops = JSON.parse(el.dataset.stops ?? "[]") as number[];
+    } catch {
+      console.warn("SearchComparison: could not parse data-stops", el);
+      return;
+    }
+    if (stops.length === 0) return;
+
+    const slider = el.querySelector<HTMLInputElement>('[data-action="n-slider"]')!;
+    const nReadout = el.querySelector<HTMLElement>('[data-role="n-readout"]')!;
+    const classicalEl = el.querySelector<HTMLElement>('[data-role="classical-value"]')!;
+    const classicalWorstEl = el.querySelector<HTMLElement>('[data-role="classical-worst"]')!;
+    const groverEl = el.querySelector<HTMLElement>('[data-role="grover-value"]')!;
+    const readout = el.querySelector<HTMLElement>('[data-role="readout"]')!;
+
+    const groverIterations = (N: number) =>
+      Math.floor((Math.PI / 4) * Math.sqrt(N));
+    const classicalAverage = (N: number) => N / 2;
+
+    if (!reduceMotion) {
+      classicalEl.style.transition = "color 200ms ease-out";
+      groverEl.style.transition = "color 200ms ease-out";
+    }
+
+    const render = (index: number) => {
+      const safe = Math.max(0, Math.min(stops.length - 1, index));
+      const N = stops[safe];
+      const grover = groverIterations(N);
+      const classical = classicalAverage(N);
+      const log2N = Math.log2(N);
+
+      nReadout.textContent = `N = ${N.toLocaleString()} · log₂N = ${log2N}`;
+      classicalEl.textContent = classical.toLocaleString();
+      classicalWorstEl.textContent = (N - 1).toLocaleString();
+      groverEl.textContent = String(grover);
+      readout.textContent = `N = ${N.toLocaleString()}: classical ${classical.toLocaleString()} avg probes vs Grover ${grover} iterations.`;
+    };
+
+    slider.addEventListener("input", (event) => {
+      const next = Number((event.target as HTMLInputElement).value);
+      if (!Number.isFinite(next)) return;
+      render(Math.round(next));
+    });
+
+    render(Number(slider.value));
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="search-comparison"]')
+    .forEach(mount);
+</script>
