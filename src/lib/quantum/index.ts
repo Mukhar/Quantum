@@ -131,3 +131,18 @@ export {
   DEFAULT_SLIDER_STEP,
 } from "./rsaCountdown";
 export type { RSAKeySize, RSAMarker, CountdownGap } from "./rsaCountdown";
+
+export {
+  gradientDescent,
+  h2Energy,
+  H2_TRUE_MINIMUM,
+  sampleSurface,
+  interpolateSurface,
+  RESEED_SEEDS,
+  DEFAULT_INITIAL_THETAS,
+} from "./vqe";
+export type {
+  OptimizerStep,
+  GradientDescentOpts,
+  SampledSurface,
+} from "./vqe";
