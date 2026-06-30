@@ -1,0 +1,109 @@
+---
+/**
+ * PQCCards — USE-04 sibling.
+ *
+ * Static card grid of the four NIST-standardized / final post-quantum
+ * algorithms. Each card carries:
+ *   - Algorithm name + NIST FIPS standard name (where finalized).
+ *   - One-line "what is it for" purpose.
+ *   - A single external link to the official NIST/FIPS publication.
+ *
+ * No marketing copy, no roadmap dates, no "X is better than Y." This
+ * is a sourced reference, not a recommendation engine. D-22 in
+ * PHASE-CONTEXT.md requires sourced caveated framing only.
+ *
+ * Standards as of Q3 2024 (FIPS 203/204/205 finalized; FN-DSA/Falcon
+ * draft in progress). If FN-DSA finalizes, only the third card's
+ * `standard` and `href` need updating.
+ */
+
+interface PQCCard {
+  name: string;
+  standard: string;
+  kind: "KEM" | "Signature";
+  purpose: string;
+  href: string;
+  hrefText: string;
+}
+
+const PQC_CARDS: PQCCard[] = [
+  {
+    name: "ML-KEM (Kyber)",
+    standard: "FIPS 203 (2024)",
+    kind: "KEM",
+    purpose:
+      "Lattice-based key-encapsulation. Replaces RSA / ECDH for establishing shared secrets over an insecure channel.",
+    href: "https://csrc.nist.gov/pubs/fips/203/final",
+    hrefText: "NIST FIPS 203 — ML-KEM",
+  },
+  {
+    name: "ML-DSA (Dilithium)",
+    standard: "FIPS 204 (2024)",
+    kind: "Signature",
+    purpose:
+      "Lattice-based digital signatures. General-purpose replacement for RSA / ECDSA in authentication and code signing.",
+    href: "https://csrc.nist.gov/pubs/fips/204/final",
+    hrefText: "NIST FIPS 204 — ML-DSA",
+  },
+  {
+    name: "FN-DSA (Falcon)",
+    standard: "Draft FIPS 206 (2024)",
+    kind: "Signature",
+    purpose:
+      "Lattice-based signatures with smaller signatures than ML-DSA. Useful where bandwidth is constrained.",
+    href: "https://csrc.nist.gov/projects/post-quantum-cryptography",
+    hrefText: "NIST PQC Project — FN-DSA / Falcon status",
+  },
+  {
+    name: "SLH-DSA (SPHINCS+)",
+    standard: "FIPS 205 (2024)",
+    kind: "Signature",
+    purpose:
+      "Hash-based signatures. Conservative fallback that relies only on the security of cryptographic hash functions.",
+    href: "https://csrc.nist.gov/pubs/fips/205/final",
+    hrefText: "NIST FIPS 205 — SLH-DSA",
+  },
+];
+---
+
+<section
+  class="my-6 space-y-3"
+  aria-labelledby="pqc-cards-heading"
+  data-widget="pqc-cards"
+>
+  <h3 id="pqc-cards-heading" class="text-lg font-semibold text-ink">
+    Post-quantum standards in active migration
+  </h3>
+  <p class="text-sm text-ink-subtle">
+    NIST-finalized algorithms governments and large vendors are already deploying. Every link goes
+    to the official publication — verify the standard yourself, don't take a website's word for it.
+  </p>
+  <ul class="grid gap-3 sm:grid-cols-2" role="list">
+    {
+      PQC_CARDS.map((card) => (
+        <li
+          class="rounded-lg border border-line bg-surface-elevated/40 p-4 space-y-2"
+          data-pqc-card={card.name}
+        >
+          <div class="flex items-baseline justify-between gap-2">
+            <h4 class="font-semibold text-ink">{card.name}</h4>
+            <span class="text-xs uppercase tracking-wide text-ink-subtle" data-role="kind">
+              {card.kind}
+            </span>
+          </div>
+          <p class="text-xs text-ink-subtle" data-role="standard">{card.standard}</p>
+          <p class="text-sm text-ink" data-role="purpose">{card.purpose}</p>
+          <a
+            href={card.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm text-accent underline"
+            data-role="source"
+          >
+            {card.hrefText} ↗
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</section>

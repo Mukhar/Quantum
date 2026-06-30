@@ -1,0 +1,324 @@
+---
+/**
+ * RSACountdown — USE-04 self-contained widget.
+ *
+ * Renders an RSA-key-size selector (2048 / 3072 / 4096), a slider over
+ * "logical qubits available," and an `aria-live="polite"` summary line
+ * that describes the gap between the slider and the
+ * `estimateLogicalQubits(k)` threshold.
+ *
+ * Three markers paint the band:
+ *   - "today" (TODAY_LOGICAL_QUBITS)
+ *   - "vendor roadmap" (VENDOR_ROADMAP_LOGICAL_QUBITS)
+ *   - "break RSA-k" — recomputed when the user changes the key size.
+ *
+ * Hard requirement (D-21..D-23): every numeric claim links out to a
+ * source, and the widget never asserts a specific calendar year RSA
+ * breaks. It frames pressure, not prophecy.
+ *
+ * No client framework — server-rendered SVG/HTML + inline hydrator,
+ * matching every other widget in this repo. All numeric logic lives
+ * in `src/lib/quantum/rsaCountdown.ts` so the widget itself is mostly
+ * markup + a tiny state machine.
+ */
+
+import {
+  RSA_KEY_SIZES,
+  buildRSAMarkers,
+  countdownGap,
+  estimateLogicalQubits,
+  DEFAULT_SLIDER_MIN,
+  DEFAULT_SLIDER_MAX,
+  DEFAULT_SLIDER_STEP,
+  LOGICAL_OVERHEAD,
+  TODAY_LOGICAL_QUBITS,
+  type RSAKeySize,
+} from "../lib/quantum";
+
+interface Props {
+  /** Initial RSA key size. Defaults to 2048 (the realistic-pressure case). */
+  initialKeySize?: RSAKeySize;
+  /** Initial slider position in logical qubits. Defaults to "today". */
+  initialQubits?: number;
+}
+
+const initialKeySize = (Astro.props as Props).initialKeySize ?? 2048;
+const initialQubits = (Astro.props as Props).initialQubits ?? TODAY_LOGICAL_QUBITS;
+
+// Serialize the initial marker set so the hydrator can recompute on
+// key-size changes without re-importing the module client-side.
+const initialMarkers = buildRSAMarkers(initialKeySize);
+const initialGap = countdownGap(initialQubits, initialKeySize);
+
+const VIEWBOX_W = 800;
+const VIEWBOX_H = 110;
+const BAND_X = 60;
+const BAND_Y = 50;
+const BAND_W = VIEWBOX_W - BAND_X - 40;
+const BAND_H = 14;
+
+const qubitsToX = (q: number, max: number): number =>
+  BAND_X + (Math.min(q, max) / max) * BAND_W;
+
+// Precompute the SVG marker positions for the initial render so the
+// page is meaningful before the script runs.
+const initialMaxMarker = initialMarkers[initialMarkers.length - 1].qubits;
+const initialAxisMax = Math.max(initialMaxMarker, DEFAULT_SLIDER_MAX);
+---
+
+<figure
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5 space-y-4"
+  data-widget="rsa-countdown"
+  data-key-size={initialKeySize}
+  data-qubits={initialQubits}
+  data-axis-max={initialAxisMax}
+  aria-label="RSA quantum-break threshold pressure chart"
+>
+  <figcaption class="text-sm text-ink-subtle">
+    How far is today's hardware from breaking RSA?
+  </figcaption>
+
+  <div class="flex flex-wrap gap-3 items-center text-sm">
+    <label for="rsa-key-size" class="font-medium text-ink">RSA key size</label>
+    <select
+      id="rsa-key-size"
+      class="rounded border border-line bg-surface px-2 py-1 text-ink"
+      data-role="key-size"
+    >
+      {
+        RSA_KEY_SIZES.map((k) => (
+          <option value={k} selected={k === initialKeySize}>
+            RSA-{k}
+          </option>
+        ))
+      }
+    </select>
+
+    <label for="rsa-qubits" class="font-medium text-ink ml-2">Logical qubits available</label>
+    <input
+      id="rsa-qubits"
+      type="range"
+      min={DEFAULT_SLIDER_MIN}
+      max={DEFAULT_SLIDER_MAX}
+      step={DEFAULT_SLIDER_STEP}
+      value={initialQubits}
+      data-role="qubits-slider"
+      class="flex-1 min-w-[200px]"
+      aria-describedby="rsa-summary"
+    />
+    <output
+      data-role="qubits-readout"
+      class="font-mono text-ink-subtle tabular-nums w-24 text-right"
+    >
+      {initialQubits.toLocaleString()}
+    </output>
+  </div>
+
+  <svg
+    viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}
+    role="img"
+    aria-label={`RSA-${initialKeySize} break threshold band with markers for today, vendor roadmap, and break RSA-${initialKeySize}.`}
+    class="w-full h-auto"
+    data-role="band-svg"
+  >
+    {/* Background band */}
+    <rect
+      x={BAND_X}
+      y={BAND_Y}
+      width={BAND_W}
+      height={BAND_H}
+      rx="4"
+      fill="rgb(var(--color-surface-elevated))"
+      stroke="rgb(var(--color-line))"
+    />
+    {/* Slider thumb indicator on band */}
+    <line
+      data-role="slider-indicator"
+      x1={qubitsToX(initialQubits, initialAxisMax)}
+      x2={qubitsToX(initialQubits, initialAxisMax)}
+      y1={BAND_Y - 8}
+      y2={BAND_Y + BAND_H + 8}
+      stroke="rgb(var(--color-accent))"
+      stroke-width="2"
+    />
+    {
+      initialMarkers.map((m) => {
+        const x = qubitsToX(m.qubits, initialAxisMax);
+        return (
+          <g data-marker={m.id}>
+            <line
+              x1={x}
+              x2={x}
+              y1={BAND_Y - 4}
+              y2={BAND_Y + BAND_H + 4}
+              stroke="rgb(var(--color-ink-subtle))"
+              stroke-width="1"
+              stroke-dasharray="2 2"
+              data-role="marker-line"
+            />
+            <text
+              x={x}
+              y={BAND_Y - 8}
+              text-anchor="middle"
+              class="text-[11px] fill-ink"
+              data-role="marker-label"
+            >
+              {m.label}
+            </text>
+            <text
+              x={x}
+              y={BAND_Y + BAND_H + 18}
+              text-anchor="middle"
+              class="text-[10px] fill-ink-subtle"
+              data-role="marker-qubits"
+            >
+              {m.qubits.toLocaleString()}
+            </text>
+          </g>
+        );
+      })
+    }
+  </svg>
+
+  <p
+    id="rsa-summary"
+    role="status"
+    aria-live="polite"
+    class="text-sm text-ink"
+    data-role="summary"
+  >
+    {initialGap.pastThreshold
+      ? `${initialGap.available.toLocaleString()} logical qubits available — past the RSA-${initialKeySize} estimate of ${initialGap.required.toLocaleString()} by ${Math.abs(initialGap.gap).toLocaleString()}.`
+      : `${initialGap.available.toLocaleString()} logical qubits available — ${initialGap.gap.toLocaleString()} short of the RSA-${initialKeySize} estimate of ${initialGap.required.toLocaleString()}.`}
+  </p>
+
+  <details class="text-sm text-ink-subtle">
+    <summary class="cursor-pointer font-medium text-ink">How is the estimate computed?</summary>
+    <p class="mt-2">
+      Textbook Shor needs roughly <code>2·k + {LOGICAL_OVERHEAD}</code> logical qubits to factor an
+      RSA-<em>k</em> integer (Beauregard 2002 modular-adder construction; the constant <code>{LOGICAL_OVERHEAD}</code>
+      covers QFT ancillas). So RSA-2048 ≈ {estimateLogicalQubits(2048).toLocaleString()} logical, RSA-3072 ≈
+      {" "}{estimateLogicalQubits(3072).toLocaleString()}, RSA-4096 ≈ {estimateLogicalQubits(4096).toLocaleString()}.
+      These are <strong>logical</strong> qubits — the physical-qubit cost under surface-code error correction is
+      orders of magnitude larger (see Gidney &amp; Ekerå 2021, linked below).
+    </p>
+    <ul class="mt-3 space-y-1 list-disc list-inside" data-role="sources">
+      <li>
+        <a
+          href="https://arxiv.org/abs/1905.09749"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-accent underline"
+          >Gidney &amp; Ekerå (2021) — physical-qubit cost to factor RSA-2048, arXiv:1905.09749</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://research.google/blog/making-quantum-error-correction-work/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-accent underline"
+          >Google Quantum AI — below-threshold logical qubit (2024)</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://www.ibm.com/quantum/technology"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-accent underline"
+          >IBM Quantum Roadmap (public)</a
+        >
+      </li>
+    </ul>
+    <p class="mt-2 text-xs">
+      This widget shows pressure, not a date. We don't claim a specific calendar year when RSA breaks.
+    </p>
+  </details>
+</figure>
+
+<script>
+  type RSAKeySize = 2048 | 3072 | 4096;
+
+  const LOGICAL_OVERHEAD = 8;
+  const TODAY_LOGICAL_QUBITS = 5;
+  const VENDOR_ROADMAP_LOGICAL_QUBITS = 200;
+
+  const estimateLogicalQubits = (k: number): number => 2 * k + LOGICAL_OVERHEAD;
+
+  interface Marker {
+    id: "today" | "roadmap" | "break";
+    label: string;
+    qubits: number;
+  }
+
+  const buildMarkers = (k: RSAKeySize): Marker[] => [
+    { id: "today", label: "today", qubits: TODAY_LOGICAL_QUBITS },
+    { id: "roadmap", label: "vendor roadmap", qubits: VENDOR_ROADMAP_LOGICAL_QUBITS },
+    { id: "break", label: `break RSA-${k}`, qubits: estimateLogicalQubits(k) },
+  ];
+
+  document.querySelectorAll<HTMLElement>('[data-widget="rsa-countdown"]').forEach((root) => {
+    const select = root.querySelector<HTMLSelectElement>('[data-role="key-size"]');
+    const slider = root.querySelector<HTMLInputElement>('[data-role="qubits-slider"]');
+    const readout = root.querySelector<HTMLOutputElement>('[data-role="qubits-readout"]');
+    const summary = root.querySelector<HTMLParagraphElement>('[data-role="summary"]');
+    const svg = root.querySelector<SVGSVGElement>('[data-role="band-svg"]');
+    const indicator = root.querySelector<SVGLineElement>('[data-role="slider-indicator"]');
+    if (!select || !slider || !readout || !summary || !svg || !indicator) return;
+
+    const BAND_X = 60;
+    const BAND_W = 800 - BAND_X - 40;
+
+    const qubitsToX = (q: number, max: number) => BAND_X + (Math.min(q, max) / max) * BAND_W;
+
+    const render = () => {
+      const k = Number(select.value) as RSAKeySize;
+      const q = Number(slider.value);
+      const markers = buildMarkers(k);
+      const axisMax = Math.max(markers[markers.length - 1].qubits, Number(slider.max));
+      root.dataset.keySize = String(k);
+      root.dataset.qubits = String(q);
+      root.dataset.axisMax = String(axisMax);
+
+      readout.textContent = q.toLocaleString();
+
+      // Update slider indicator
+      const sx = qubitsToX(q, axisMax);
+      indicator.setAttribute("x1", String(sx));
+      indicator.setAttribute("x2", String(sx));
+
+      // Update each marker group
+      markers.forEach((m) => {
+        const g = svg.querySelector<SVGGElement>(`[data-marker="${m.id}"]`);
+        if (!g) return;
+        const x = qubitsToX(m.qubits, axisMax);
+        g.querySelectorAll<SVGElement>('[data-role="marker-line"]').forEach((line) => {
+          line.setAttribute("x1", String(x));
+          line.setAttribute("x2", String(x));
+        });
+        const labelText = g.querySelector<SVGTextElement>('[data-role="marker-label"]');
+        if (labelText) {
+          labelText.setAttribute("x", String(x));
+          labelText.textContent = m.label;
+        }
+        const qubitsText = g.querySelector<SVGTextElement>('[data-role="marker-qubits"]');
+        if (qubitsText) {
+          qubitsText.setAttribute("x", String(x));
+          qubitsText.textContent = m.qubits.toLocaleString();
+        }
+      });
+
+      // Update aria-live summary
+      const required = estimateLogicalQubits(k);
+      const past = q >= required;
+      const gap = required - q;
+      summary.textContent = past
+        ? `${q.toLocaleString()} logical qubits available — past the RSA-${k} estimate of ${required.toLocaleString()} by ${Math.abs(gap).toLocaleString()}.`
+        : `${q.toLocaleString()} logical qubits available — ${gap.toLocaleString()} short of the RSA-${k} estimate of ${required.toLocaleString()}.`;
+    };
+
+    select.addEventListener("change", render);
+    slider.addEventListener("input", render);
+  });
+</script>

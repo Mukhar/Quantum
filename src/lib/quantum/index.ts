@@ -114,3 +114,20 @@ export type {
   ShorBlockId,
   ShorRegisterLayout,
 } from "./shor";
+
+export {
+  RSA_KEY_SIZES,
+  LOGICAL_OVERHEAD,
+  estimateLogicalQubits,
+  buildRSAMarkers,
+  countdownGap,
+  TODAY_LOGICAL_QUBITS,
+  TODAY_SOURCE,
+  VENDOR_ROADMAP_LOGICAL_QUBITS,
+  VENDOR_ROADMAP_SOURCE,
+  BREAK_SOURCE,
+  DEFAULT_SLIDER_MIN,
+  DEFAULT_SLIDER_MAX,
+  DEFAULT_SLIDER_STEP,
+} from "./rsaCountdown";
+export type { RSAKeySize, RSAMarker, CountdownGap } from "./rsaCountdown";
