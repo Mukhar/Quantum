@@ -244,3 +244,70 @@ function edgePath(a: Node, b: Node): string {
     ))}
   </ol>
 </nav>
+
+{/* PROG-01 visited-state hydrator (D-34, D-36).
+    Reads the local visited list and marks matching <a> nodes with
+    `data-visited="true"`. A single querySelectorAll('a[href]') inside
+    the nav catches BOTH the desktop SVG anchors AND the mobile <ol>
+    fallback — same code path, same surface coverage. Updates the
+    aria-label so screen readers announce visited state — brightness
+    alone is not accessible (D-34). */}
+<script>
+  import { getVisited } from "../lib/progress";
+
+  function hydrateConceptMap(): void {
+    const visited = new Set(getVisited());
+    if (visited.size === 0) return;
+    const nav = document.querySelector(
+      'nav[aria-label="Site concept map"]',
+    );
+    if (!nav) return;
+    // One selector — catches both the SVG <a> elements and the
+    // mobile <ol> <a> fallback.
+    const anchors = nav.querySelectorAll<HTMLAnchorElement | SVGAElement>(
+      "a[href]",
+    );
+    for (const a of anchors) {
+      const href = a.getAttribute("href");
+      if (!href || !visited.has(href)) continue;
+      a.setAttribute("data-visited", "true");
+      const current = a.getAttribute("aria-label");
+      if (current && !current.includes("(visited)")) {
+        a.setAttribute("aria-label", `${current} (visited)`);
+      }
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", hydrateConceptMap, {
+      once: true,
+    });
+  } else {
+    hydrateConceptMap();
+  }
+</script>
+
+<style>
+  /* PROG-01 visited indicator (D-34): brightness change only, no
+     tick badge / icon. Inline fill/stroke attributes on the SVG <rect>
+     outrank stylesheet rules without !important — keep these
+     declarations specific. */
+  nav[aria-label="Site concept map"] a[data-visited="true"] rect {
+    fill: rgb(var(--color-accent-muted)) !important;
+    stroke: rgb(var(--color-accent-emphasis)) !important;
+    stroke-width: 2 !important;
+  }
+  nav[aria-label="Site concept map"] a[data-visited="true"] text {
+    fill: rgb(var(--color-accent-emphasis)) !important;
+    font-weight: 600;
+  }
+  /* Mobile list fallback uses Tailwind utility classes; lift the
+     border + background to the same emphasis tier so visited rows
+     read as brighter at a glance. */
+  nav[aria-label="Site concept map"]
+    ol
+    a[data-visited="true"] {
+    border-color: rgb(var(--color-accent-emphasis));
+    background-color: rgb(var(--color-accent-muted) / 0.4);
+  }
+</style>

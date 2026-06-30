@@ -122,6 +122,27 @@ const ogTitle = pageTitle ?? title;
         </div>
       </article>
     </main>
+
+    {/* PROG-01 (D-31..D-36): wire the scroll-depth observer once per
+        essay. This single block instruments every page that uses
+        EssayLayout — the whole v3 reading path — without per-essay
+        edits. The observer just reads scroll position; it doesn't
+        animate, so prefers-reduced-motion needs no special handling. */}
+    <script>
+      import { instrumentScrollDepth } from "../lib/progress";
+      if (typeof window !== "undefined") {
+        const path = window.location.pathname;
+        if (document.readyState === "loading") {
+          document.addEventListener(
+            "DOMContentLoaded",
+            () => instrumentScrollDepth(path),
+            { once: true },
+          );
+        } else {
+          instrumentScrollDepth(path);
+        }
+      }
+    </script>
   </body>
 </html>
 
