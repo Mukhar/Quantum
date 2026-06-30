@@ -10,7 +10,7 @@
     "feedback/thanks": 1024,
     "gallery": 3072,
     "gates": 1024,
-    "grover": 2048,
+    "grover": 3072,
     "index": 1024,
     "measurement": 1024,
     "qubit": 1024,
