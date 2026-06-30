@@ -1,0 +1,62 @@
+{
+  "h2": {
+    "id": "h2",
+    "name": "H₂",
+    "formula": "H₂",
+    "description": "Dihydrogen — the canonical VQE benchmark. Two electrons in the STO-3G minimal basis map onto two qubits under Jordan–Wigner.",
+    "equilibrium_distance_angstrom": 0.74,
+    "qubits": 2,
+    "ansatz_params": { "theta1": 0.2255, "theta2": 0.2255 },
+    "ansatz_ops": [
+      [{ "kind": "rot", "axis": "Y", "qubit": 0, "theta": 0.2255 }],
+      [{ "kind": "rot", "axis": "Y", "qubit": 1, "theta": 0.2255 }],
+      [{ "kind": "cnot", "control": 0, "target": 1 }]
+    ],
+    "energy_hartree": -1.137,
+    "energy_ev": -30.9393,
+    "precomputed_note": "Precomputed VQE result at equilibrium bond distance. The distance slider is illustrative — energies are not re-computed live.",
+    "source": "Peruzzo et al., 'A variational eigenvalue solver on a photonic quantum processor,' Nature Communications 5, 4213 (2014); see also Cao et al., 'Quantum Chemistry in the Age of Quantum Computing,' Chemical Reviews 119, 10856 (2019)."
+  },
+  "hehplus": {
+    "id": "hehplus",
+    "name": "HeH⁺",
+    "formula": "HeH⁺",
+    "description": "Helium hydride cation — the oldest molecule in the universe and a small two-qubit cousin of H₂ in the STO-3G basis.",
+    "equilibrium_distance_angstrom": 0.772,
+    "qubits": 2,
+    "ansatz_params": { "theta1": 0.105, "theta2": -0.105 },
+    "ansatz_ops": [
+      [{ "kind": "rot", "axis": "Y", "qubit": 0, "theta": 0.105 }],
+      [{ "kind": "rot", "axis": "Y", "qubit": 1, "theta": -0.105 }],
+      [{ "kind": "cnot", "control": 0, "target": 1 }]
+    ],
+    "energy_hartree": -2.862,
+    "energy_ev": -77.879,
+    "precomputed_note": "Precomputed VQE result at equilibrium bond distance. The distance slider is illustrative — energies are not re-computed live.",
+    "source": "Kandala et al., 'Hardware-efficient variational quantum eigensolver for small molecules and quantum magnets,' Nature 549, 242 (2017)."
+  },
+  "lih": {
+    "id": "lih",
+    "name": "LiH",
+    "formula": "LiH",
+    "description": "Lithium hydride — a four-qubit problem in the minimal basis after the standard active-space reduction. Demonstrates that VQE scales beyond the textbook two-qubit case.",
+    "equilibrium_distance_angstrom": 1.595,
+    "qubits": 4,
+    "ansatz_params": { "theta1": 0.331, "theta2": -0.142 },
+    "ansatz_ops": [
+      [{ "kind": "rot", "axis": "Y", "qubit": 0, "theta": 0.331 }],
+      [{ "kind": "rot", "axis": "Y", "qubit": 1, "theta": -0.142 }],
+      [{ "kind": "rot", "axis": "Y", "qubit": 2, "theta": 0.218 }],
+      [{ "kind": "rot", "axis": "Y", "qubit": 3, "theta": -0.087 }],
+      [
+        { "kind": "cnot", "control": 0, "target": 1 },
+        { "kind": "cnot", "control": 2, "target": 3 }
+      ],
+      [{ "kind": "cnot", "control": 1, "target": 2 }]
+    ],
+    "energy_hartree": -7.882,
+    "energy_ev": -214.4801,
+    "precomputed_note": "Precomputed VQE result at equilibrium bond distance. The distance slider is illustrative — energies are not re-computed live.",
+    "source": "Kandala et al., 'Hardware-efficient variational quantum eigensolver for small molecules and quantum magnets,' Nature 549, 242 (2017)."
+  }
+}
