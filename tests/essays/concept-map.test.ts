@@ -26,7 +26,8 @@ interface ExpectedNode {
 // As of Plan 02-05 (v3): Teleportation appended as the third algorithm
 // essay. Plan 04 (v3): Grover appended as the fourth algorithm essay.
 // v3 Phase 3: Superdense slots in between teleportation and grover,
-// completing the communication arc. v1 had 7 live essays; v3 now has 10.
+// completing the communication arc. v3 Phase 5a: Shor appended as
+// the sixth algorithm essay. v1 had 7 live essays; v3 now has 11.
 const expected: ExpectedNode[] = [
   { href: "/qubit",                  label: "Qubit",         tier: "primary" },
   { href: "/superposition",          label: "Superposition", tier: "primary" },
@@ -40,6 +41,7 @@ const expected: ExpectedNode[] = [
   { href: "/teleportation",          label: "Teleportation", tier: "primary" },
   { href: "/superdense-coding",      label: "Superdense",    tier: "primary" },
   { href: "/grover",                 label: "Grover",        tier: "primary" },
+  { href: "/shor",                   label: "Shor",          tier: "primary" },
 ];
 
 describe("ConceptMap canonical node list", () => {
@@ -47,6 +49,7 @@ describe("ConceptMap canonical node list", () => {
     const expectedEssays = [
       "/qubit", "/superposition", "/measurement", "/gates", "/entanglement",
       "/cnot-bell", "/deutsch", "/teleportation", "/superdense-coding", "/grover",
+      "/shor",
     ];
     for (const slug of expectedEssays) {
       const hits = expected.filter((n) => n.href === slug);

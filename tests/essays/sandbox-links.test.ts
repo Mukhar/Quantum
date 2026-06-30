@@ -84,6 +84,15 @@ const STARTERS: Record<string, Circuit> = {
   // Same `buildGroverCircuit(4, 3, 1)` constant used by /grover.astro's
   // demoCircuit so they share a single source of truth.
   grover: buildGroverCircuit(4, 3, 1),
+  // v3 Phase 5a Shor starter: 2-qubit QFT-of-|00⟩ = H on both qubits.
+  // PHASE-CONTEXT D-26 explicitly bars the N=15 Shor circuit as a
+  // sandbox starter (sandbox cap is 4 qubits per REQ-13), so we ship
+  // the smallest meaningful QFT instead: H⊗H produces uniform output
+  // probabilities, which is exactly what the QFT does to |00⟩.
+  shor: {
+    qubits: 2,
+    steps: [[gateOp("H", 0), gateOp("H", 1)]],
+  },
 };
 
 const THETA_QUANTUM = (Math.PI * 2) / 1024; // 10-bit codec resolution

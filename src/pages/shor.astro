@@ -1,0 +1,244 @@
+---
+/**
+ * "Shor + post-quantum" — v3 Phase 5a essay scaffold.
+ *
+ * Phase 5a ships only the QFT half of the Shor story:
+ *
+ *   - ALG-05: input becomes spikes (QFTVisualizer over 4 qubits).
+ *   - ALG-06: a^x mod N period probe with QFT peak hints
+ *     (PeriodFinding widget, N ≤ 15).
+ *
+ * Locked decisions consumed (PHASE-CONTEXT D-24):
+ *
+ *   /shor is the canonical route. Phase 5b extends this same essay
+ *   with the full N=15 Shor circuit, RSACountdown, and PQC cards.
+ *   No /qft route is ever created.
+ *
+ * The essay is intentionally short and ends with a clearly labeled
+ * "continued in Phase 5b" stub so a reader who lands here today knows
+ * exactly what's available and what's coming. We don't pretend to
+ * factor anything in 5a.
+ *
+ * Footer-nav: prev /grover, next /sandbox. When Phase 5b lands and
+ * adds RSACountdown + PQC content, /grover's "next" stays /shor —
+ * the chain doesn't reroute, it just grows depth at /shor.
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import QFTVisualizer from "../components/QFTVisualizer.astro";
+import PeriodFinding from "../components/PeriodFinding.astro";
+---
+
+<EssayLayout
+  title="Shor + post-quantum"
+  subtitle="Grover gives a quadratic speedup on unstructured search; Shor gives an exponential speedup on factoring. The engine that powers Shor is the quantum Fourier transform — a unitary that turns periodic structure into sharp spikes. This essay teaches the QFT and the classical period-finding lesson it visualizes; Phase 5b extends it into the full N=15 Shor circuit and the post-quantum cryptography conversation."
+  description="See how the quantum Fourier transform converts periodic amplitude patterns into measurement spikes, then probe the classical multiplicative-order structure that Shor's period-finding subroutine exploits. Phase 5a covers ALG-05 (QFT visualization) and ALG-06 (period finding); Phase 5b will land the N=15 Shor circuit and the RSA / post-quantum cryptography story on this same /shor route."
+>
+  <p>
+    The <a href="/grover">previous essay</a> closed with a sharp line:
+    Grover does <em>not</em> break RSA — that's Shor. RSA's hard
+    problem is integer factoring, and unstructured search gives you
+    no leverage on factoring. Shor's algorithm goes after a different
+    structure entirely: <em>periodicity</em>. If you can find the
+    period <code>r</code> of the function
+    <code>f(x) = a<sup>x</sup> mod N</code>, classical number theory
+    gives you a non-trivial factor of <code>N</code> with constant
+    probability. The whole quantum machinery — superposition, the
+    QFT, measurement — is in service of finding that one number.
+  </p>
+
+  <p>
+    This essay teaches the QFT first and the period-finding intuition
+    second. The full N=15 Shor circuit, the RSA threat model, and the
+    NIST post-quantum primitives all land in Phase 5b on this same
+    <code>/shor</code> route. What you see today is the engine; what
+    Phase 5b adds is the car you bolt that engine into.
+  </p>
+
+  <h2>The quantum Fourier transform turns periods into spikes</h2>
+
+  <p>
+    The QFT is the quantum analog of the discrete Fourier transform.
+    It's a single unitary <code>F</code> acting on an
+    <code>n</code>-qubit register; it maps the computational basis
+    state <code>|x⟩</code> to a uniform superposition with phase
+    <code>e<sup>2πi·xk/N</sup></code> on each <code>|k⟩</code>, where
+    <code>N = 2<sup>n</sup></code>. The mechanical detail isn't the
+    lesson. The lesson is what happens to amplitudes:
+  </p>
+
+  <MathBlock tex="F\,|x\rangle \;=\; \frac{1}{\sqrt{N}} \sum_{k=0}^{N-1} e^{2\pi i\, xk / N} |k\rangle" />
+
+  <p>
+    Apply <code>F</code> to a single basis state and you get a uniform
+    probability distribution over the output — every bin has weight
+    <code>1/N</code>. Apply it to a <em>uniform</em> superposition of
+    every basis state and the output concentrates on
+    <code>|0⟩</code>. Apply it to a state that has periodic
+    structure — say, equal weight on
+    <code>{0, 4, 8, 12}</code> over a 4-qubit register — and the
+    output is no longer uniform. It's a comb: spikes at evenly
+    spaced bins, and zero in between. That's the only fact the rest
+    of Shor's algorithm needs.
+  </p>
+
+  <p>
+    The widget below runs a real 4-qubit QFT on five preset input
+    states plus a custom mode. The "period-4 comb" preset is the one
+    to dwell on: an input concentrated on every fourth basis state
+    produces an output concentrated on every fourth output bin
+    (<code>|0000⟩, |0100⟩, |1000⟩, |1100⟩</code>). The frequency 4
+    in the input shows up as a stride of <code>16/4 = 4</code> in
+    the output.
+  </p>
+
+  <QFTVisualizer
+    caption="4-qubit QFT (N = 16). Top chart is input probabilities; bottom chart is output probabilities after F. Try the period-4 comb preset to see the canonical 'spacing in = spacing out' pattern Shor relies on. Custom mode reveals a 16-amplitude editor for ad-hoc experiments."
+  />
+
+  <h2>Period finding: a^x mod N is periodic</h2>
+
+  <p>
+    Pick any <code>a</code> coprime to <code>N</code> and look at the
+    sequence <code>a<sup>0</sup>, a<sup>1</sup>, a<sup>2</sup>, …
+    (mod N)</code>. For <code>a = 7, N = 15</code> you get
+    <code>1, 7, 4, 13, 1, 7, 4, 13, …</code>: a cycle of length
+    four. That cycle length is the <strong>multiplicative
+    order</strong> of <code>a</code> modulo <code>N</code>, and it's
+    the <code>r</code> Shor's algorithm hunts.
+  </p>
+
+  <p>
+    Classically, you can compute <code>r</code> by just walking the
+    sequence — that's exactly what the widget below does. For small
+    <code>N</code> it's instant. The catch is that for
+    cryptographically interesting <code>N</code> (two large primes
+    multiplied), <code>r</code> can be astronomically large and the
+    walk is intractable. Shor's algorithm replaces the walk with a
+    quantum register: superpose every <code>x</code>, evaluate
+    <code>a<sup>x</sup> mod N</code> in superposition, then apply
+    the QFT. The output probability distribution peaks at multiples
+    of <code>Q/r</code> (where <code>Q = 2<sup>n</sup></code>) —
+    exactly the comb pattern you saw above. Measuring it gives you a
+    bin near a multiple of <code>Q/r</code>; the
+    <em>continued-fractions algorithm</em> turns that into
+    <code>r</code>; classical post-processing turns <code>r</code>
+    into a factor of <code>N</code>.
+  </p>
+
+  <p>
+    Probe the classical side directly:
+  </p>
+
+  <PeriodFinding
+    caption="Probe a^x mod N for N ≤ 15. The widget computes the multiplicative order r classically, shows the cycle, and lists where a 4-qubit QFT would peak (at j·16/r for j = 0…r−1) if you fed this function into Shor's quantum subroutine."
+  />
+
+  <h2>What's <em>not</em> in 5a (continued in Phase 5b)</h2>
+
+  <p>
+    Phase 5a stops at the engine. The pieces still to land on this
+    same <code>/shor</code> route:
+  </p>
+
+  <ul class="my-4 list-disc space-y-2 pl-6 text-ink">
+    <li>
+      <strong>The full <code>N = 15</code> Shor circuit</strong>, rendered
+      statically with a "Copy as Qiskit" button. The in-browser
+      simulator is hard-capped at 4 qubits (<a href="/gates">REQ-13</a>),
+      so the N=15 circuit needs 8+ qubits and never executes in your
+      browser — it's a "go run this on real hardware" artifact.
+    </li>
+    <li>
+      <strong>RSACountdown</strong>: a logical-qubits slider that maps
+      RSA key size against estimated qubit requirements
+      (<code>2·key_size + overhead</code>), with markers for "today",
+      current vendor roadmaps, and the rough "break RSA-2048"
+      threshold. No specific dates are asserted.
+    </li>
+    <li>
+      <strong>NIST post-quantum primitives</strong> as inline cards:
+      Kyber (KEM), Dilithium, Falcon, and SPHINCS+ (signatures) —
+      one-line purpose each, with FIPS spec links. The
+      "what should developers do?" answer.
+    </li>
+  </ul>
+
+  <p>
+    Until Phase 5b lands, the honest answer to "does this site break
+    RSA?" stays the same as the <a href="/grover">Grover</a> essay
+    closed on: no, but the math underneath the threat lives in the
+    widgets you just used.
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-ink">
+    <li>
+      In the QFTVisualizer, set the input to a single basis state
+      (any of the <code>|xxxx⟩</code> presets). What's the output
+      probability distribution? Why does the QFT of a single basis
+      state always have uniform <em>magnitude</em>? (Hint: look at
+      the formula above — the phase rotates but the magnitude
+      <code>|1/√N|</code> is constant.)
+    </li>
+    <li>
+      In the period-finding widget, set <code>N = 15, a = 4</code>.
+      Why does the sequence collapse so quickly? Where would a
+      4-qubit QFT peak if you ran this function through Shor?
+    </li>
+    <li>
+      The period-finding widget refuses <code>a</code> values that
+      aren't coprime with <code>N</code>. Why is that a precondition
+      of Shor's algorithm — what would go wrong in the quantum
+      subroutine if <code>gcd(a, N) ≠ 1</code>? (Hint: think about
+      what <code>a<sup>x</sup> mod N</code> looks like when it shares
+      a factor with <code>N</code>.)
+    </li>
+  </ol>
+
+  <MathNerds title="Why the QFT peaks at multiples of Q/r">
+    <p>
+      Let <code>r</code> be the period of
+      <code>f(x) = a<sup>x</sup> mod N</code> and let
+      <code>Q = 2<sup>n</sup></code> be the register size. Suppose
+      <code>r</code> divides <code>Q</code> evenly. Prepare the
+      quantum register in the uniform superposition over the indices
+      where <code>f</code> hits some value <code>y</code>:
+    </p>
+    <MathBlock tex="|\psi_y\rangle \;=\; \sqrt{\frac{r}{Q}}\,\sum_{j=0}^{Q/r - 1}\, |x_0 + j r\rangle" />
+    <p>
+      where <code>x_0</code> is the smallest <code>x</code> with
+      <code>f(x_0) = y</code>. Apply the QFT:
+    </p>
+    <MathBlock tex="F|\psi_y\rangle \;=\; \frac{1}{\sqrt{r}}\,\sum_{j=0}^{r-1}\, e^{2\pi i\, x_0\, j Q/(r Q)} \, |jQ/r\rangle" />
+    <p>
+      Every output amplitude away from a multiple of
+      <code>Q/r</code> cancels — a geometric series in
+      <code>e<sup>2πi/r</sup></code> sums to zero unless its phase is
+      stationary. The surviving amplitudes sit at <code>k = jQ/r</code>
+      for <code>j = 0, 1, …, r−1</code>, each with probability
+      <code>1/r</code>. That's the comb pattern the period-4 preset
+      paints in QFTVisualizer.
+    </p>
+    <p>
+      When <code>r</code> does <em>not</em> divide <code>Q</code> the
+      peaks blur into nearby bins, but they still concentrate near
+      the same <code>jQ/r</code> values; the continued-fractions
+      algorithm recovers <code>r</code> from a measured bin with
+      high probability. The peak-hint panel in PeriodFinding shows
+      the rounded predictions when divisibility fails.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="footer-nav">
+    <a href="/grover" class="hover:text-ink">← Grover</a>
+    <a href="/sandbox" class="hover:text-ink">Next: open the Sandbox →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  // No essay-specific JS — QFTVisualizer and PeriodFinding each
+  // ship their own inline hydrators.
+</script>

@@ -42,7 +42,8 @@ const CHAIN: NavSpec[] = [
   { slug: "deutsch",          prev: "/cnot-bell",         next: "/teleportation"      },
   { slug: "teleportation",    prev: "/deutsch",           next: "/superdense-coding"  },
   { slug: "superdense-coding",prev: "/teleportation",     next: "/grover"             },
-  { slug: "grover",           prev: "/superdense-coding", next: "/sandbox"            },
+  { slug: "grover",           prev: "/superdense-coding", next: "/shor"               },
+  { slug: "shor",             prev: "/grover",            next: "/sandbox"            },
 ];
 
 function readEssay(slug: string): string {

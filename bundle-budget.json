@@ -21,6 +21,7 @@
     "sandbox/challenges/ghz": 3072,
     "sandbox/challenges/plus": 3072,
     "sandbox/challenges/rotate-pi-3": 3072,
+    "shor": 3072,
     "superdense-coding": 2048,
     "superposition": 1024,
     "teleportation": 2048
