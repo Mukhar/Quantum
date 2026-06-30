@@ -40,6 +40,12 @@ const shor15 = buildShor15();
   subtitle="Grover gives a quadratic speedup on unstructured search; Shor gives an exponential speedup on factoring. The engine that powers Shor is the quantum Fourier transform — a unitary that turns periodic structure into sharp spikes. This essay teaches the QFT, probes the classical period-finding lesson it exploits, then assembles the full N=15 Shor circuit and frames the post-quantum cryptography migration it forces."
   description="See how the quantum Fourier transform converts periodic amplitude patterns into measurement spikes, probe the multiplicative-order structure Shor's period-finding subroutine exploits, then inspect the full 8-qubit N=15 Shor circuit (static, copy-as-Qiskit) and the RSA → NIST post-quantum-standard migration it threatens. Covers ALG-05/06/07 and USE-04."
 >
+  <p class="text-sm italic text-ink-subtle">
+    New to quantum computing? Start at <a href="/qubit">/qubit</a>
+    and walk forward — every concept used here (Dirac notation, the
+    Hadamard gate, the QFT) is introduced in the earlier essays.
+  </p>
+
   <p>
     The <a href="/grover">previous essay</a> closed with a sharp line:
     Grover does <em>not</em> break RSA — that's Shor. RSA's hard
@@ -67,9 +73,10 @@ const shor15 = buildShor15();
 
   <p>
     The QFT is the quantum analog of the discrete Fourier transform.
-    It's a single unitary <code>F</code> acting on an
-    <code>n</code>-qubit register; it maps the computational basis
-    state <code>|x⟩</code> to a uniform superposition with phase
+    It's a single <em>unitary</em> (a reversible quantum operation)
+    <code>F</code> acting on an <code>n</code>-qubit register; it
+    maps the computational basis state <code>|x⟩</code> to a uniform
+    superposition with phase
     <code>e<sup>2πi·xk/N</sup></code> on each <code>|k⟩</code>, where
     <code>N = 2<sup>n</sup></code>. The mechanical detail isn't the
     lesson. The lesson is what happens to amplitudes:
@@ -129,9 +136,10 @@ const shor15 = buildShor15();
     of <code>Q/r</code> (where <code>Q = 2<sup>n</sup></code>) —
     exactly the comb pattern you saw above. Measuring it gives you a
     bin near a multiple of <code>Q/r</code>; the
-    <em>continued-fractions algorithm</em> turns that into
-    <code>r</code>; classical post-processing turns <code>r</code>
-    into a factor of <code>N</code>.
+    <em>continued-fractions algorithm</em> (a classical number-theory
+    trick that reconstructs a clean fraction from a noisy decimal)
+    turns that into <code>r</code>; classical post-processing turns
+    <code>r</code> into a factor of <code>N</code>.
   </p>
 
   <p>
@@ -187,21 +195,26 @@ const shor15 = buildShor15();
       that apply
       <code>×7<sup>1</sup>, ×7<sup>2</sup>, ×7<sup>4</sup>, ×7<sup>8</sup>
       mod 15</code> to the work register, gated on the respective
-      counting qubit. Together they realize
-      <code>U<sub>f</sub>: |x⟩|y⟩ → |x⟩|y · 7<sup>x</sup> mod 15⟩</code>.
+      counting qubit. Together they multiply the work register by
+      <code>7<sup>x</sup> mod 15</code> for whatever value
+      <code>x</code> the counting register is in superposition over —
+      this is the function whose period we're trying to find.
     </li>
     <li>
-      <strong>Inverse QFT</strong>: textbook decomposition into
-      Hadamards, controlled phase rotations
-      (<code>R†<sub>π/2</sub>, R†<sub>π/4</sub>, R†<sub>π/8</sub></code>),
-      and SWAPs that reverse the register. This is the comb-builder
-      from the previous section, applied to the counting register.
+      <strong>Inverse QFT</strong>: the comb-builder from the
+      previous section, run in reverse on the counting register.
+      Under the hood it's the standard textbook decomposition —
+      Hadamards, a ladder of controlled phase shifts, and two SWAPs
+      to flip the register order — but you can read it as a single
+      block that turns periodic amplitude patterns into measurement
+      spikes.
     </li>
     <li>
       <strong>Measure</strong>: four measurements on the counting
-      register. Classical post-processing (continued fractions) maps
-      the measured integer back to a candidate period; the comments
-      in the exported Qiskit show exactly that.
+      register. Classical post-processing (the same continued-fractions
+      trick from earlier) maps the measured integer back to a
+      candidate period; the comments in the exported Qiskit show
+      exactly that.
     </li>
   </ul>
 

@@ -78,6 +78,15 @@ const PQC_CARDS: PQCCard[] = [
     NIST-finalized algorithms governments and large vendors are already deploying. Every link goes
     to the official publication — verify the standard yourself, don't take a website's word for it.
   </p>
+  <p class="text-sm text-ink-subtle">
+    Quick glossary for the cards below: a <em>KEM</em> (key-encapsulation
+    method) replaces RSA / ECDH for agreeing on a shared secret over an
+    insecure channel; a <em>signature</em> scheme replaces RSA / ECDSA
+    for proving who wrote a message. <em>Lattice-based</em> schemes rest
+    on geometric problems believed hard for quantum computers;
+    <em>hash-based</em> schemes rest only on the security of
+    cryptographic hash functions.
+  </p>
   <ul class="grid gap-3 sm:grid-cols-2" role="list">
     {
       PQC_CARDS.map((card) => (
