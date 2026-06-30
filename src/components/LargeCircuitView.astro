@@ -88,6 +88,137 @@ const registerLabels = (q: number): { label: string; color: string } => {
   return { label: `q${q}`, color: "rgb(254 215 170)" }; // orange-200 (work)
 };
 
+// Precompute the wire descriptors so the JSX loop below stays an
+// expression-body arrow (Astro's template parser is stricter than
+// vanilla JSX and fails on block-body arrows inside `{...}` slots).
+const wires = Array.from({ length: N }, (_, q) => ({
+  q,
+  ...registerLabels(q),
+}));
+
+// Flatten the swap connectors into one array. Same Astro-parser reason:
+// block-body arrows inside template `{...}` slots break the build, so
+// the heavy lifting moves into the frontmatter and the template just
+// maps over plain data.
+interface SwapConnector {
+  x: number;
+  yA: number;
+  yB: number;
+}
+const swapConnectors: SwapConnector[] = [];
+circuit.steps.forEach((step, t) => {
+  for (const op of step) {
+    if (op.kind === "swap") {
+      swapConnectors.push({ x: cx(t), yA: cy(op.qubitA), yB: cy(op.qubitB) });
+    }
+  }
+});
+
+// Flatten the per-cell rendering descriptors. One entry per drawable
+// op (swap ops are skipped — drawn via swapConnectors above).
+interface Cell {
+  /** Stable group key so the renderer can attach role/test hooks per op. */
+  kind: "h" | "cphase" | "block" | "measure";
+  /** Top-left of the cell rect. */
+  rx: number;
+  ry: number;
+  rw: number;
+  rh: number;
+  /** Text centerpoint. */
+  tx: number;
+  ty: number;
+  label: string;
+  fill: string;
+  fontSize: number;
+}
+const cells: Cell[] = [];
+circuit.steps.forEach((step, t) => {
+  const x = cx(t);
+  for (const op of step) {
+    if (op.kind === "h") {
+      const y = cy(op.qubit);
+      cells.push({
+        kind: "h",
+        rx: x - GATE_W / 2,
+        ry: y - GATE_H / 2,
+        rw: GATE_W,
+        rh: GATE_H,
+        tx: x,
+        ty: y + 4,
+        label: op.label,
+        fill: fillFor(op),
+        fontSize: 13,
+      });
+    } else if (op.kind === "cphase") {
+      const y = cy(op.target);
+      cells.push({
+        kind: "cphase",
+        rx: x - GATE_W / 2,
+        ry: y - GATE_H / 2,
+        rw: GATE_W,
+        rh: GATE_H,
+        tx: x,
+        ty: y + 4,
+        label: op.label,
+        fill: fillFor(op),
+        fontSize: 9,
+      });
+    } else if (op.kind === "block") {
+      const minQ = Math.min(...op.qubits);
+      const maxQ = Math.max(...op.qubits);
+      const yTop = cy(minQ) - ROW_H / 2 + 6;
+      const yBot = cy(maxQ) + ROW_H / 2 - 6;
+      cells.push({
+        kind: "block",
+        rx: x - GATE_W / 2,
+        ry: yTop,
+        rw: GATE_W,
+        rh: yBot - yTop,
+        tx: x,
+        ty: (yTop + yBot) / 2 + 4,
+        label: op.label,
+        fill: fillFor(op),
+        fontSize: 9,
+      });
+    } else if (op.kind === "measure") {
+      const y = cy(op.qubit);
+      cells.push({
+        kind: "measure",
+        rx: x - GATE_W / 2,
+        ry: y - GATE_H / 2,
+        rw: GATE_W,
+        rh: GATE_H,
+        tx: x,
+        ty: y + 4,
+        label: "M",
+        fill: fillFor(op),
+        fontSize: 13,
+      });
+    }
+    // swap ops are drawn separately via swapConnectors above
+  }
+});
+
+// Same trick for the controlled-phase connector lines so the JSX
+// `{...}` slot stays expression-bodied.
+interface CPhaseConnector {
+  x: number;
+  yControl: number;
+  yTarget: number;
+}
+const cphaseConnectors: CPhaseConnector[] = [];
+circuit.steps.forEach((step, t) => {
+  for (const op of step) {
+    if (op.kind === "cphase") {
+      cphaseConnectors.push({
+        x: cx(t),
+        yControl: cy(op.control),
+        yTarget: cy(op.target),
+      });
+    }
+  }
+});
+
 const a11yLabel = caption
   ? `Static Shor circuit diagram: ${caption}`
   : `Static Shor circuit diagram with ${N} qubits and ${S} steps`;
@@ -142,29 +273,26 @@ const classicalY = height - PAD / 2;
         ))}
 
         <!-- Qubit wire rows -->
-        {Array.from({ length: N }, (_, q) => {
-          const r = registerLabels(q);
-          return (
-            <g>
-              <text
-                x={LABEL_W - 8}
-                y={cy(q) + 4}
-                text-anchor="end"
-                font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
-                font-size="12"
-                fill={r.color}
-              >{r.label}</text>
-              <line
-                x1={LABEL_W}
-                y1={cy(q)}
-                x2={width - PAD}
-                y2={cy(q)}
-                stroke="rgb(71 85 105)"
-                stroke-width="1.5"
-              />
-            </g>
-          );
-        })}
+        {wires.map((w) => (
+          <g>
+            <text
+              x={LABEL_W - 8}
+              y={cy(w.q) + 4}
+              text-anchor="end"
+              font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+              font-size="12"
+              fill={w.color}
+            >{w.label}</text>
+            <line
+              x1={LABEL_W}
+              y1={cy(w.q)}
+              x2={width - PAD}
+              y2={cy(w.q)}
+              stroke="rgb(71 85 105)"
+              stroke-width="1.5"
+            />
+          </g>
+        ))}
 
         <!-- Classical wire stub (drawn as double line under counting register) -->
         <line
@@ -186,172 +314,66 @@ const classicalY = height - PAD / 2;
         >c</text>
 
         <!-- Controlled-phase connector lines (drawn behind cells) -->
-        {circuit.steps.map((step, t) =>
-          step
-            .filter((op): op is Extract<StaticCircuitOp, { kind: "cphase" }> => op.kind === "cphase")
-            .map((op) => (
-              <g>
-                <line
-                  x1={cx(t)}
-                  y1={cy(op.control)}
-                  x2={cx(t)}
-                  y2={cy(op.target)}
-                  stroke="rgb(148 163 184)"
-                  stroke-width="1.5"
-                />
-                <circle
-                  cx={cx(t)}
-                  cy={cy(op.control)}
-                  r={5}
-                  fill="rgb(226 232 240)"
-                  stroke="rgb(71 85 105)"
-                  stroke-width="1"
-                />
-              </g>
-            )),
-        )}
+        {cphaseConnectors.map((c) => (
+          <g>
+            <line
+              x1={c.x}
+              y1={c.yControl}
+              x2={c.x}
+              y2={c.yTarget}
+              stroke="rgb(148 163 184)"
+              stroke-width="1.5"
+            />
+            <circle
+              cx={c.x}
+              cy={c.yControl}
+              r={5}
+              fill="rgb(226 232 240)"
+              stroke="rgb(71 85 105)"
+              stroke-width="1"
+            />
+          </g>
+        ))}
 
         <!-- SWAP connectors (drawn as double-X marks linked by a line) -->
-        {circuit.steps.map((step, t) =>
-          step
-            .filter((op): op is Extract<StaticCircuitOp, { kind: "swap" }> => op.kind === "swap")
-            .map((op) => {
-              const x = cx(t);
-              const yA = cy(op.qubitA);
-              const yB = cy(op.qubitB);
-              return (
-                <g>
-                  <line x1={x} y1={yA} x2={x} y2={yB} stroke="rgb(148 163 184)" stroke-width="1.5" />
-                  {[yA, yB].map((y) => (
-                    <g>
-                      <line x1={x - 6} y1={y - 6} x2={x + 6} y2={y + 6} stroke="rgb(226 232 240)" stroke-width="2" />
-                      <line x1={x - 6} y1={y + 6} x2={x + 6} y2={y - 6} stroke="rgb(226 232 240)" stroke-width="2" />
-                    </g>
-                  ))}
-                </g>
-              );
-            }),
-        )}
+        {swapConnectors.map((s) => (
+          <g>
+            <line x1={s.x} y1={s.yA} x2={s.x} y2={s.yB} stroke="rgb(148 163 184)" stroke-width="1.5" />
+            <g>
+              <line x1={s.x - 6} y1={s.yA - 6} x2={s.x + 6} y2={s.yA + 6} stroke="rgb(226 232 240)" stroke-width="2" />
+              <line x1={s.x - 6} y1={s.yA + 6} x2={s.x + 6} y2={s.yA - 6} stroke="rgb(226 232 240)" stroke-width="2" />
+            </g>
+            <g>
+              <line x1={s.x - 6} y1={s.yB - 6} x2={s.x + 6} y2={s.yB + 6} stroke="rgb(226 232 240)" stroke-width="2" />
+              <line x1={s.x - 6} y1={s.yB + 6} x2={s.x + 6} y2={s.yB - 6} stroke="rgb(226 232 240)" stroke-width="2" />
+            </g>
+          </g>
+        ))}
 
         <!-- Per-cell rendering for h / cphase target / block / measure -->
-        {circuit.steps.map((step, t) =>
-          step.map((op) => {
-            const x = cx(t);
-            switch (op.kind) {
-              case "h": {
-                const y = cy(op.qubit);
-                return (
-                  <g>
-                    <rect
-                      x={x - GATE_W / 2}
-                      y={y - GATE_H / 2}
-                      width={GATE_W}
-                      height={GATE_H}
-                      rx={4}
-                      fill={fillFor(op)}
-                      stroke="rgb(148 163 184)"
-                      stroke-width="1"
-                    />
-                    <text
-                      x={x}
-                      y={y + 4}
-                      text-anchor="middle"
-                      font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
-                      font-size="13"
-                      font-weight="600"
-                      fill="rgb(241 245 249)"
-                    >{op.label}</text>
-                  </g>
-                );
-              }
-              case "cphase": {
-                const y = cy(op.target);
-                return (
-                  <g>
-                    <rect
-                      x={x - GATE_W / 2}
-                      y={y - GATE_H / 2}
-                      width={GATE_W}
-                      height={GATE_H}
-                      rx={4}
-                      fill={fillFor(op)}
-                      stroke="rgb(148 163 184)"
-                      stroke-width="1"
-                    />
-                    <text
-                      x={x}
-                      y={y + 4}
-                      text-anchor="middle"
-                      font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
-                      font-size="9"
-                      font-weight="600"
-                      fill="rgb(241 245 249)"
-                    >{op.label}</text>
-                  </g>
-                );
-              }
-              case "block": {
-                // Multi-qubit block: rectangle spanning min(qubits)..max(qubits).
-                const minQ = Math.min(...op.qubits);
-                const maxQ = Math.max(...op.qubits);
-                const yTop = cy(minQ) - ROW_H / 2 + 6;
-                const yBot = cy(maxQ) + ROW_H / 2 - 6;
-                const h = yBot - yTop;
-                return (
-                  <g>
-                    <rect
-                      x={x - GATE_W / 2}
-                      y={yTop}
-                      width={GATE_W}
-                      height={h}
-                      rx={6}
-                      fill={fillFor(op)}
-                      stroke="rgb(148 163 184)"
-                      stroke-width="1"
-                    />
-                    <text
-                      x={x}
-                      y={(yTop + yBot) / 2 + 4}
-                      text-anchor="middle"
-                      font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
-                      font-size="9"
-                      font-weight="600"
-                      fill="rgb(241 245 249)"
-                    >{op.label}</text>
-                  </g>
-                );
-              }
-              case "measure": {
-                const y = cy(op.qubit);
-                return (
-                  <g>
-                    <rect
-                      x={x - GATE_W / 2}
-                      y={y - GATE_H / 2}
-                      width={GATE_W}
-                      height={GATE_H}
-                      rx={4}
-                      fill={fillFor(op)}
-                      stroke="rgb(148 163 184)"
-                      stroke-width="1"
-                    />
-                    <text
-                      x={x}
-                      y={y + 4}
-                      text-anchor="middle"
-                      font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
-                      font-size="13"
-                      font-weight="600"
-                      fill="rgb(241 245 249)"
-                    >M</text>
-                  </g>
-                );
-              }
-              case "swap":
-                return null; // drawn above
-            }
-          }),
-        )}
+        {cells.map((c) => (
+          <g data-cell-kind={c.kind}>
+            <rect
+              x={c.rx}
+              y={c.ry}
+              width={c.rw}
+              height={c.rh}
+              rx={c.kind === "block" ? 6 : 4}
+              fill={c.fill}
+              stroke="rgb(148 163 184)"
+              stroke-width="1"
+            />
+            <text
+              x={c.tx}
+              y={c.ty}
+              text-anchor="middle"
+              font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+              font-size={c.fontSize}
+              font-weight="600"
+              fill="rgb(241 245 249)"
+            >{c.label}</text>
+          </g>
+        ))}
       </svg>
     </div>
 

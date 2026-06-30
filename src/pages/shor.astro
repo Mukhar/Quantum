@@ -1,39 +1,44 @@
 ---
 /**
- * "Shor + post-quantum" — v3 Phase 5a essay scaffold.
+ * "Shor + post-quantum" — full v3 essay (Phases 5a + 5b).
  *
- * Phase 5a ships only the QFT half of the Shor story:
+ * Phase 5a built the QFT engine (ALG-05) and the classical
+ * period-finding probe (ALG-06). Phase 5b extends this same /shor
+ * route with:
  *
- *   - ALG-05: input becomes spikes (QFTVisualizer over 4 qubits).
- *   - ALG-06: a^x mod N period probe with QFT peak hints
- *     (PeriodFinding widget, N ≤ 15).
+ *   - ALG-07: static N=15 Shor circuit + "Copy as Qiskit" CTA via
+ *     LargeCircuitView (>4-qubit static renderer, never executes in
+ *     the browser — the sandbox is hard-capped at 4 qubits per D-14).
+ *   - USE-04: RSACountdown widget mapping logical-qubit estimates
+ *     against RSA-2048/3072/4096 thresholds, plus a PQCCards grid of
+ *     the four NIST-finalized post-quantum primitives.
  *
- * Locked decisions consumed (PHASE-CONTEXT D-24):
+ * D-15..D-18, D-21..D-23, D-24, D-26 (PHASE-CONTEXT.md):
+ *   - /shor stays the only route. No /qft, no /shor-pqc.
+ *   - N=15 lives in a separate static model (src/lib/quantum/shor.ts);
+ *     it never touches MAX_QUBITS or the sandbox IR.
+ *   - Every RSA / vendor-roadmap claim links to a primary source.
+ *   - We never assert a specific calendar year RSA "breaks".
  *
- *   /shor is the canonical route. Phase 5b extends this same essay
- *   with the full N=15 Shor circuit, RSACountdown, and PQC cards.
- *   No /qft route is ever created.
- *
- * The essay is intentionally short and ends with a clearly labeled
- * "continued in Phase 5b" stub so a reader who lands here today knows
- * exactly what's available and what's coming. We don't pretend to
- * factor anything in 5a.
- *
- * Footer-nav: prev /grover, next /sandbox. When Phase 5b lands and
- * adds RSACountdown + PQC content, /grover's "next" stays /shor —
- * the chain doesn't reroute, it just grows depth at /shor.
+ * Footer-nav unchanged: prev /grover, next /sandbox.
  */
 import EssayLayout from "../layouts/EssayLayout.astro";
 import MathBlock from "../components/MathBlock.astro";
 import MathNerds from "../components/MathNerds.astro";
 import QFTVisualizer from "../components/QFTVisualizer.astro";
 import PeriodFinding from "../components/PeriodFinding.astro";
+import LargeCircuitView from "../components/LargeCircuitView.astro";
+import RSACountdown from "../components/RSACountdown.astro";
+import PQCCards from "../components/PQCCards.astro";
+import { buildShor15 } from "../lib/quantum";
+
+const shor15 = buildShor15();
 ---
 
 <EssayLayout
   title="Shor + post-quantum"
-  subtitle="Grover gives a quadratic speedup on unstructured search; Shor gives an exponential speedup on factoring. The engine that powers Shor is the quantum Fourier transform — a unitary that turns periodic structure into sharp spikes. This essay teaches the QFT and the classical period-finding lesson it visualizes; Phase 5b extends it into the full N=15 Shor circuit and the post-quantum cryptography conversation."
-  description="See how the quantum Fourier transform converts periodic amplitude patterns into measurement spikes, then probe the classical multiplicative-order structure that Shor's period-finding subroutine exploits. Phase 5a covers ALG-05 (QFT visualization) and ALG-06 (period finding); Phase 5b will land the N=15 Shor circuit and the RSA / post-quantum cryptography story on this same /shor route."
+  subtitle="Grover gives a quadratic speedup on unstructured search; Shor gives an exponential speedup on factoring. The engine that powers Shor is the quantum Fourier transform — a unitary that turns periodic structure into sharp spikes. This essay teaches the QFT, probes the classical period-finding lesson it exploits, then assembles the full N=15 Shor circuit and frames the post-quantum cryptography migration it forces."
+  description="See how the quantum Fourier transform converts periodic amplitude patterns into measurement spikes, probe the multiplicative-order structure Shor's period-finding subroutine exploits, then inspect the full 8-qubit N=15 Shor circuit (static, copy-as-Qiskit) and the RSA → NIST post-quantum-standard migration it threatens. Covers ALG-05/06/07 and USE-04."
 >
   <p>
     The <a href="/grover">previous essay</a> closed with a sharp line:
@@ -49,11 +54,13 @@ import PeriodFinding from "../components/PeriodFinding.astro";
   </p>
 
   <p>
-    This essay teaches the QFT first and the period-finding intuition
-    second. The full N=15 Shor circuit, the RSA threat model, and the
-    NIST post-quantum primitives all land in Phase 5b on this same
-    <code>/shor</code> route. What you see today is the engine; what
-    Phase 5b adds is the car you bolt that engine into.
+    This essay teaches the QFT first, the period-finding intuition
+    second, then assembles them into the full <code>N = 15</code>
+    Shor circuit and frames the post-quantum cryptography migration
+    it forces. The QFT is the engine; period finding is the
+    problem the engine solves; RSA is what shipping that engine at
+    scale threatens; NIST's four standardized post-quantum
+    primitives are what the migration is migrating to.
   </p>
 
   <h2>The quantum Fourier transform turns periods into spikes</h2>
@@ -135,41 +142,133 @@ import PeriodFinding from "../components/PeriodFinding.astro";
     caption="Probe a^x mod N for N ≤ 15. The widget computes the multiplicative order r classically, shows the cycle, and lists where a 4-qubit QFT would peak (at j·16/r for j = 0…r−1) if you fed this function into Shor's quantum subroutine."
   />
 
-  <h2>What's <em>not</em> in 5a (continued in Phase 5b)</h2>
+  <h2>The full N = 15 Shor circuit</h2>
 
   <p>
-    Phase 5a stops at the engine. The pieces still to land on this
-    same <code>/shor</code> route:
+    Putting both halves together — a register that holds every
+    <code>x</code> in superposition while a second register computes
+    <code>a<sup>x</sup> mod N</code>, followed by an inverse QFT on
+    the first register — gives you the textbook Shor circuit. The
+    smallest non-trivial instance is <code>N = 15</code> with
+    <code>a = 7</code>: a 4-qubit counting register, a 4-qubit work
+    register, controlled modular-exponentiation blocks, an inverse
+    QFT on the counting register, and four measurements that yield a
+    bin near a multiple of <code>16/r</code> with <code>r = 4</code>.
+  </p>
+
+  <p>
+    Eight qubits is twice the sandbox cap. The simulator on this site
+    is hard-capped at 4 qubits — extending it for N=15 would force a
+    weaker UX everywhere and still wouldn't approach
+    cryptographically interesting <code>N</code>. So the N=15 circuit
+    here is a <strong>static artifact</strong>, not a runnable
+    sandbox fragment. You built the engine in the QFT and
+    period-finding widgets above; the diagram below is the engine
+    bolted into the full car. Copy it as Qiskit and run it on real
+    hardware to see it actually factor 15.
+  </p>
+
+  <LargeCircuitView circuit={shor15} />
+
+  <p>
+    The four logical blocks read left-to-right:
   </p>
 
   <ul class="my-4 list-disc space-y-2 pl-6 text-ink">
     <li>
-      <strong>The full <code>N = 15</code> Shor circuit</strong>, rendered
-      statically with a "Copy as Qiskit" button. The in-browser
-      simulator is hard-capped at 4 qubits (<a href="/gates">REQ-13</a>),
-      so the N=15 circuit needs 8+ qubits and never executes in your
-      browser — it's a "go run this on real hardware" artifact.
+      <strong>Init</strong>: Hadamards on the counting register
+      <code>q0..q3</code> put it into the uniform superposition over
+      <code>x = 0..15</code>. The work register stays in
+      <code>|0001⟩</code> (representing the integer 1, so the modular
+      exponentiation starts from <code>7<sup>0</sup> mod 15 = 1</code>).
     </li>
     <li>
-      <strong>RSACountdown</strong>: a logical-qubits slider that maps
-      RSA key size against estimated qubit requirements
-      (<code>2·key_size + overhead</code>), with markers for "today",
-      current vendor roadmaps, and the rough "break RSA-2048"
-      threshold. No specific dates are asserted.
+      <strong>Modular exponentiation</strong>: four controlled blocks
+      that apply
+      <code>×7<sup>1</sup>, ×7<sup>2</sup>, ×7<sup>4</sup>, ×7<sup>8</sup>
+      mod 15</code> to the work register, gated on the respective
+      counting qubit. Together they realize
+      <code>U<sub>f</sub>: |x⟩|y⟩ → |x⟩|y · 7<sup>x</sup> mod 15⟩</code>.
     </li>
     <li>
-      <strong>NIST post-quantum primitives</strong> as inline cards:
-      Kyber (KEM), Dilithium, Falcon, and SPHINCS+ (signatures) —
-      one-line purpose each, with FIPS spec links. The
-      "what should developers do?" answer.
+      <strong>Inverse QFT</strong>: textbook decomposition into
+      Hadamards, controlled phase rotations
+      (<code>R†<sub>π/2</sub>, R†<sub>π/4</sub>, R†<sub>π/8</sub></code>),
+      and SWAPs that reverse the register. This is the comb-builder
+      from the previous section, applied to the counting register.
+    </li>
+    <li>
+      <strong>Measure</strong>: four measurements on the counting
+      register. Classical post-processing (continued fractions) maps
+      the measured integer back to a candidate period; the comments
+      in the exported Qiskit show exactly that.
     </li>
   </ul>
 
   <p>
-    Until Phase 5b lands, the honest answer to "does this site break
-    RSA?" stays the same as the <a href="/grover">Grover</a> essay
-    closed on: no, but the math underneath the threat lives in the
-    widgets you just used.
+    Why "Copy as Qiskit"? Because the honest deliverable here is
+    portability, not in-browser execution. The exported Python uses
+    Qiskit's <code>QFT(4).inverse()</code> for the IQFT and a
+    documented stub for <code>c_amod15</code> — the only piece you
+    need to fill in before running it on
+    <code>AerSimulator</code> or real IBM hardware.
+  </p>
+
+  <h2>What that engine threatens: RSA</h2>
+
+  <p>
+    Shor's algorithm factors integers in polynomial time on a
+    quantum computer. RSA's security rests on the assumption that
+    factoring is hard. Stitch those two facts together and you get
+    the post-quantum cryptography conversation: <em>given enough
+    fault-tolerant logical qubits</em>, today's RSA keys are
+    breakable. The widget below frames how big "enough" is.
+  </p>
+
+  <RSACountdown />
+
+  <p>
+    Two things to take away from playing with that slider:
+  </p>
+
+  <ul class="my-4 list-disc space-y-2 pl-6 text-ink">
+    <li>
+      The textbook estimate <code>2·k + overhead</code> is for
+      <strong>logical</strong> qubits — error-corrected qubits whose
+      effective error rate is low enough to run a full Shor
+      circuit. The <em>physical</em>-qubit cost under surface-code
+      error correction is one to two orders of magnitude larger
+      (see Gidney &amp; Ekerå 2021 linked under the widget).
+    </li>
+    <li>
+      The gap between "today" and "break RSA-2048" is enormous.
+      That gap is the entire reason the post-quantum
+      standardization work happened on a multi-year timeline — not
+      because anyone is breaking RSA tomorrow, but because the
+      migration itself takes years.
+    </li>
+  </ul>
+
+  <h2>What developers should do today: NIST's four PQC standards</h2>
+
+  <p>
+    NIST finalized the first three post-quantum standards in 2024
+    (FIPS 203, 204, 205) and is moving on a fourth (FN-DSA / Falcon)
+    as a draft. The cards below summarize each one with a link to
+    the official publication — don't take any website's word for it,
+    read the standard yourself.
+  </p>
+
+  <PQCCards />
+
+  <p>
+    The practical answer to "does this site break RSA?" is the same
+    as in the <a href="/grover">Grover</a> essay: no. The accurate
+    answer is more interesting — the math underneath the threat
+    lives in the widgets you just used, the migration window is
+    measured in years of engineering effort, and the four
+    algorithms above are what the migration is migrating
+    <em>to</em>.
   </p>
 
   <h2>Self-test</h2>
