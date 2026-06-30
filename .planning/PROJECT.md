@@ -1,6 +1,6 @@
 # Project: Quantum
 
-*Last updated: 2026-06-29 — v2.0 code-complete (deploy + Apps Script provisioning pending). v3.0 milestone started.*
+*Last updated: 2026-06-30 after v3.0 milestone — v3.0 feature-complete (deploy carry-over pending alongside v1 + v2 deploy queue). Next milestone TBD.*
 
 ## What This Is
 
@@ -29,36 +29,48 @@ We insist on both.
 
 ---
 
-## Current Milestone: v3.0 — Algorithms × Use Cases
+## Current State
 
-**Goal:** Pair the canonical quantum algorithm canon with the
-practical use case each algorithm unlocks. Every v3 essay teaches
-the algorithm AND the use case in the same scroll, with widgets
-driving both halves. Closes the v1+v2 reader's last open question:
-*"Where does this actually bite reality?"*
+**v3.0 — Algorithms × Use Cases — shipped feature-complete
+2026-06-30.** 5 algorithm essays (Teleportation, Superdense,
+Grover, Shor, VQE) interleaved with the practical use case each
+unlocks; Qiskit text export ships on every `CircuitView` and on the
+sandbox toolbar; localStorage-only progress indicator on the concept
+map. 658 tests across 44 vitest files, 24 pages building cleanly,
+all routes within `bundle-budget.json` ceilings.
 
-**Target features:**
+v3.0 closes the v1+v2 reader's last open question: *"Where does
+this actually bite reality?"* Every essay teaches the algorithm AND
+the use case in the same scroll, with widgets driving both halves.
 
-1. **Foundation infra** — Qiskit text export from the sandbox
-   toolbar AND every essay's `CircuitView`; bundle-size CI gate.
-2. **Teleportation + Quantum Networks** (flagship essay; validates
-   the algorithm-plus-use-case format end-to-end).
-3. **Superdense + Bandwidth/Holevo** (completes the communication arc).
-4. **Grover + Search Reality Check** (amplitude amplification + the
-   honest √N reality of what Grover does and doesn't break).
-5. **Shor + QFT + Post-Quantum Crypto Threat** (densest essay; QFT
-   taught inline as Shor's engine; Qiskit export bridges to real
-   hardware for the full N=15 factoring).
-6. **VQE + Quantum Chemistry** (variational/hybrid — the near-term
-   industrial story) + concept-map progress indicator + v3 launch.
+**Operational carry-over (parallel ops tasks, not phase work):**
 
-**Source of truth for design:** `docs/plans/2026-06-29-v3-design.md`
+- v1 deploy + post-launch feedback round
+- v2 deploy (Apps Script provisioning, Lighthouse, smoke test)
+- v3 deploy (Cloudflare Pages, formal Lighthouse audit per
+  `.planning/phases/06-vqe/LIGHTHOUSE-PLAN.md`, launch-day 9-step
+  smoke test, announce per `V3-LAUNCH-ANNOUNCEMENT.md`)
+- Live VoiceOver/NVDA pass on v3 widgets
+- Real-device mobile check of `LargeCircuitView` horizontal-scroll
+
+## Next Milestone Goals
+
+Not yet scoped. Run `/gsd-new-milestone` to start the next cycle
+(requirements → research → roadmap). Candidate themes captured in
+`.planning/milestones/v3.0-REQUIREMENTS.md` → "Future Requirements":
+Qiskit reverse-import, cross-device gallery sync, HHL / QAOA /
+error-correction essays, quantum-sensing essays, pick-a-path
+reading order, KaTeX self-host, 8-qubit simulator extension.
+
+**Source of truth for v3 design:** `docs/plans/2026-06-29-v3-design.md`
 (brainstormed and ratified 2026-06-29).
 
-**Phases:** see `.planning/ROADMAP.md`. Phase numbering reset to 1
-for v3 (matching v2's pattern). v1 + v2 history live in
-`.planning/MILESTONES.md`; archived phase artifacts under
-`.planning/phases/_archive-v1/` and `_archive-v2/`.
+**Per-phase artifacts:** `.planning/phases/0X-*` (will move to
+`.planning/phases/_archive-v3/` at next milestone start).
+**Archived milestone roadmap + requirements:**
+`.planning/milestones/v3.0-ROADMAP.md`,
+`.planning/milestones/v3.0-REQUIREMENTS.md`.
+**Project history:** `.planning/MILESTONES.md`.
 
 ---
 
@@ -104,28 +116,32 @@ for v3 (matching v2's pattern). v1 + v2 history live in
 - [done] THEME-01..04 — Class-based dark mode, FOUC-free, user override, AA contrast in both themes — v2 Phase 1
 - [done] FB-01..05 — `/feedback` + Apps Script + honeypot + mailto fallback + setup doc — v2 Phase 2
 - [done] GAL-01..09 — IndexedDB-backed circuit gallery, schema v1, export/import, in-memory fallback — v2 Phase 3
-- [done] OPS-01..03 — v2 Lighthouse audit plan, dark-mode visual QA, v2 announcement draft — v2 Phase 4
+- [done] v2 OPS-01..03 — v2 Lighthouse audit plan, dark-mode visual QA, v2 announcement draft — v2 Phase 4
 - [deferred] THEME-05 — Playwright visual regression deferred to v2.1 (see `_archive-v2/04-launch-polish/VISUAL-REGRESSION-DEFERRED.md`)
 
-### Active (v3.0 scope)
+### Validated (shipped & proven in v3.0)
 
-See `.planning/REQUIREMENTS.md` for the full v3 requirement list with
-REQ-IDs `ALG-*`, `USE-*`, `QSK-*`, `PROG-*`, `OPS-*`. Summary by category:
+- [done] QSK-01..03 — Qiskit text export from sandbox toolbar + every essay `CircuitView`; drift-proof golden gate-coverage test — v3 Phase 1
+- [done] v3 OPS-04 — Per-route bundle-size CI gate (`scripts/check-bundle-budget.mjs` + `bundle-budget.json`) — v3 Phase 1
+- [done] ALG-01..02, USE-01 — `/teleportation` essay with `ProtocolStepper`, mixed-state `MultiBlochPanel`, 3-node `QuantumNetwork` — v3 Phase 2
+- [done] ALG-03, USE-02 — `/superdense-coding` essay with `EncodingTable` and `HolevoBound` — v3 Phase 3
+- [done] ALG-04, USE-03 — `/grover` essay with oracle + diffusion simulator path, `AmplitudeBars` iterator, `SearchComparison` — v3 Phase 4
+- [done] ALG-05..06 — `/shor` QFT half: 4-qubit `QFTVisualizer` + `PeriodFinding` for `N ≤ 15` — v3 Phase 5a
+- [done] ALG-07, USE-04 — `/shor` extended with static N=15 `LargeCircuitView` + prominent Qiskit CTA, `RSACountdown`, NIST `PQCCards` — v3 Phase 5b
+- [done] ALG-08..09, USE-05 — `/vqe` with vanilla-TS `gradientDescent` optimizer, `EnergyLandscape` SSR heatmap (drag + auto-descend), `MoleculeGallery` (H₂/LiH/HeH⁺) — v3 Phase 6
+- [done] PROG-01 — Concept-map per-essay visited flag via `localStorage["quantum/visited"]`; scroll-past-50% threshold; **no analytics** — v3 Phase 6 (count adjusted from 10 → 12 essays; route-keyed so contract preserved)
+- [done] v3 OPS-02 — `V3-LAUNCH-ANNOUNCEMENT.md` draft committed — v3 Phase 6
+- [done] v3 OPS-03 — Concept-map layout audit: **FLAT** layout ships (14 nodes in four rows; track-grouping not needed) — v3 Phase 6
+- [deferred] v3 OPS-01 — Formal Lighthouse mobile a11y ≥ 95 audit on all 24 routes in both themes is a launch-day manual gate per `.planning/phases/06-vqe/LIGHTHOUSE-PLAN.md`; structural a11y shipped on every route — v3 Phase 6
 
-- **Algorithms** (`ALG-01..09`) — Teleportation, Superdense, Grover,
-  QFT, period-finding, Shor (static walkthrough), VQE (with classical
-  optimizer), EnergyLandscape; plus the rule that `MultiBlochPanel`
-  honestly renders mixed states via existing `reducedDensity.ts`.
-- **Use cases** (`USE-01..05`) — Quantum networks (Teleportation),
-  Holevo bandwidth bound (Superdense), classical-vs-quantum search
-  comparison (Grover), RSACountdown + NIST PQC (Shor), Molecule
-  gallery (VQE).
-- **Qiskit export** (`QSK-01..03`) — Sandbox toolbar button +
-  per-essay `CircuitView` button + drift-proof gate coverage.
-- **Progress** (`PROG-01`) — Concept-map per-essay visited flag,
-  `localStorage`-only, no analytics.
-- **Launch ops** (`OPS-01..04`) — v3 Lighthouse audit, v3 announcement,
-  concept-map layout audit, per-route bundle-size CI gate.
+Full v3 requirement archive (with traceability table and notes on
+changed requirements) lives in
+`.planning/milestones/v3.0-REQUIREMENTS.md`.
+
+### Active
+
+No active milestone. Run `/gsd-new-milestone` to scope the next
+cycle (requirements → research → roadmap).
 
 ### Out of Scope (v3 — still v4+ territory)
 
@@ -147,13 +163,21 @@ REQ-IDs `ALG-*`, `USE-*`, `QSK-*`, `PROG-*`, `OPS-*`. Summary by category:
 
 ## Context
 
-- v1.0 shipped 2026-06-26: 7 essays, sandbox, canvas, tones, challenges,
-  concept-map homepage, SEO infra, 146 vitest tests passing, 16 pages
-  building clean. See `.planning/MILESTONES.md` for the full v1 record.
-- v1 deploy is a parallel ops task (Cloudflare Pages recommended);
-  checklist lives in
-  `.planning/phases/_archive-v1/05-algorithms/LAUNCH-ANNOUNCEMENT.md`.
-- v2 brainstorm captured in `docs/plans/2026-06-26-v2-design.md`.
+- v1.0 shipped 2026-06-26: 7 essays, sandbox, canvas, tones,
+  challenges, concept-map homepage, SEO infra. 146 vitest tests,
+  16 pages. See `.planning/MILESTONES.md` for the full v1 record.
+- v2.0 code-complete 2026-06-28: three-state theme toggle,
+  `/feedback` (Apps Script), IndexedDB circuit gallery. 247 tests,
+  19 pages, +44 KB site bundle.
+- v3.0 feature-complete 2026-06-30: 5 algorithm essays
+  (Teleportation, Superdense, Grover, Shor, VQE) + Qiskit export
+  everywhere + localStorage-only progress indicator. 658 tests, 24
+  pages, 7 phases, 38 plans, 65 commits over 2 days.
+- All three milestones share a deploy carry-over queue. v1 + v2 + v3
+  deploys all run on the same Cloudflare-Pages-recommended track and
+  are tracked under their respective archive folders.
+- v2 brainstorm: `docs/plans/2026-06-26-v2-design.md`.
+  v3 brainstorm: `docs/plans/2026-06-29-v3-design.md`.
 - Existing landscape unchanged: IBM/Qiskit (too math-heavy), pop-sci
   (too shallow), 3B1B (beautiful but passive), Distill.pub (great
   format but no quantum content). Site sits at the 3B1B × Distill
@@ -161,10 +185,12 @@ REQ-IDs `ALG-*`, `USE-*`, `QSK-*`, `PROG-*`, `OPS-*`. Summary by category:
 
 ## Constraints
 
-- **Tech stack** — Astro + Tailwind + Vitest. v2 adds `idb-keyval`
-  (~600 B gzipped) and Playwright (devDep only, for visual regression).
-  No new runtime framework deps; theme system is pure Tailwind + a
-  ~20-line inline `<head>` script.
+- **Tech stack** — Astro + Tailwind + Vitest. v2 added `idb-keyval`
+  (~600 B gzipped) and Playwright (devDep only). **v3 added zero
+  new runtime dependencies** — VQE optimizer, Qiskit exporter,
+  PROG-01 storage, and every widget are all vanilla TypeScript.
+  Theme system remains pure Tailwind + a ~20-line inline `<head>`
+  script.
 - **Performance** — LCP budget unchanged: 2s on 4G for essays, 3s for
   sandbox. Gallery code lazy-loaded from `/sandbox` and `/gallery`
   only — must not bloat essay bundles.
@@ -206,15 +232,17 @@ REQ-IDs `ALG-*`, `USE-*`, `QSK-*`, `PROG-*`, `OPS-*`. Summary by category:
 | **v2: Theme stored in `localStorage` (not cookie)** | Static site, no server reads it; survives offline | [good] shipped v2 Phase 1 |
 | **v2: Honeypot for spam (not reCAPTCHA)** | Zero JS deps, accessible, sufficient for low-volume site | [good] shipped v2 Phase 2 |
 | **v2: Defer cloud sync to v3** | Honors no-backend v2 constraint; schema is sync-ready when we want it | [done] re-deferred to v4 at v3 entry |
-| **v3: Interleaved essays (algorithm + use case)** | Deepens v1's "why should I care" opener into real content; one essay = one complete payoff | [pending] proven across v3 phases 2-6 |
-| **v3: Keep simulator at 4 qubits** | Qiskit export handles the only algorithm that exceeds it (Shor); every other v3 essay fits | [pending] proven in v3 Phase 5 |
-| **v3: Qiskit export as Shor's pedagogical bridge** | Stronger framing than watered-down in-browser Shor: "you've learned the parts; now run the real thing" | [pending] proven in v3 Phase 5 |
-| **v3: One essay per phase, foundation-first** | v1 lesson: ship one essay end-to-end first. v3 essays are denser than v1's, so one-per-phase rhythm fits | [pending] proven across v3 |
-| **v3: Flagship = Teleportation (Phase 2)** | Extends v1's entanglement story most directly → lowest pedagogical risk for format validation | [pending] proven in v3 Phase 2 |
-| **v3: `MultiBlochPanel` renders mixed states inside the sphere** | Truthful visualization; sphere only honestly shows pure single-qubit states | [pending] proven in v3 Phase 2 |
-| **v3: VQE classical optimizer in vanilla TS** | Same inspectability bar as the simulator; ~50-100 LOC | [pending] proven in v3 Phase 6 |
-| **v3: Qiskit export ships everywhere, not just on Shor** | Strengthens "now go do this for real" theme across all essays; sibling to v1's "remix in sandbox" CTA | [pending] proven in v3 Phase 1 |
-| **v3: Progress indicator is localStorage-only (not tracking)** | Honors "no analytics. ever." with a one-line PROJECT clarification | [pending] proven in v3 Phase 6 |
+| **v3: Interleaved essays (algorithm + use case)** | Deepens v1's "why should I care" opener into real content; one essay = one complete payoff | [good] proven across v3 phases 2-6 |
+| **v3: Keep simulator at 4 qubits** | Qiskit export handles the only algorithm that exceeds it (Shor); every other v3 essay fits | [good] proven in v3 Phase 5b — simulator.ts/circuit.ts unchanged across the full milestone |
+| **v3: Qiskit export as Shor's pedagogical bridge** | Stronger framing than watered-down in-browser Shor: "you've learned the parts; now run the real thing" | [good] proven in v3 Phase 5b with `LargeCircuitView` + Shor-specific CTA |
+| **v3: One essay per phase, foundation-first** | v1 lesson: ship one essay end-to-end first. v3 essays are denser than v1's, so one-per-phase rhythm fits | [good] proven across v3 (with Phase 5 split into 5a + 5b for reviewable plans) |
+| **v3: Flagship = Teleportation (Phase 2)** | Extends v1's entanglement story most directly → lowest pedagogical risk for format validation | [good] proven in v3 Phase 2; format scaled cleanly to phases 3-6 |
+| **v3: `MultiBlochPanel` renders mixed states inside the sphere** | Truthful visualization; sphere only honestly shows pure single-qubit states | [good] proven in v3 Phase 2 |
+| **v3: VQE classical optimizer in vanilla TS** | Same inspectability bar as the simulator; ~50-100 LOC | [good] proven in v3 Phase 6 — `gradientDescent` + `h2Energy` converge to within 1e-3 of true minimum |
+| **v3: Qiskit export ships everywhere, not just on Shor** | Strengthens "now go do this for real" theme across all essays; sibling to v1's "remix in sandbox" CTA | [good] proven in v3 Phase 1 — drift-proof QSK-03 golden test guards every gate |
+| **v3: Progress indicator is localStorage-only (not tracking)** | Honors "no analytics. ever." with a one-line PROJECT clarification | [good] proven in v3 Phase 6 — PROG-01 storage failure-tolerant, zero network beacons |
+| **v3: Same-commit mirror discipline (D-45)** | Routes + nav-graph + concept-map + sandbox-links + bundle-budget + sitemap all update together | [good] held across all 7 v3 phases; mirror tests catch drift cheaply |
+| **v3: Concept-map FLAT layout ships** | OPS-03 layout audit verdict: 14 nodes in four rows reads cleanly — track-grouping not needed | [good] re-evaluate only on user-reported clutter |
 
 ---
 

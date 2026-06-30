@@ -1,178 +1,161 @@
 # State
 
-*Last updated: 2026-06-30 — v3.0 Phase 6 closed out;
-v3.0 — Algorithms × Use Cases — is feature-complete.*
+*Last updated: 2026-06-30 — v3.0 milestone shipped and archived.
+No active milestone; ready for `/gsd-new-milestone` to scope the
+next cycle.*
 
 ## Project Reference
 
-See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
-`.planning/ROADMAP.md`, `.planning/MILESTONES.md`.
+See: `.planning/PROJECT.md`, `.planning/MILESTONES.md`,
+`.planning/ROADMAP.md` (currently empty post-v3).
+Milestone archives: `.planning/milestones/v3.0-ROADMAP.md`,
+`.planning/milestones/v3.0-REQUIREMENTS.md`.
 
 - **Core value:** Earn dev trust with real, inspectable math — then
   unlock creativity by letting readers actually play.
-- **Current milestone:** **v3.0 — Algorithms × Use Cases.** Pair the
-  canonical quantum algorithm canon with the practical use case each
-  one unlocks. Five interleaved essays + Qiskit-export bridge to real
-  hardware. **Feature-complete 2026-06-30; deploy carry-over only.**
-- **v1.0 status:** **Code-complete, deploy pending.** All 5 v1 phases
-  shipped (146 tests, 16 pages). Deploy is a parallel ops task.
-- **v2.0 status:** **Code-complete, deploy pending.** All 4 v2 phases
-  shipped (247 tests, 19 pages, +44 KB site bundle). Pending: Apps
-  Script provisioning, Lighthouse run, launch smoke test, ship.
-- **v3.0 status:** **Feature-complete (Phases 1–6 all complete).**
-  Foundation infra, Teleportation flagship, Superdense + Holevo, Grover
-  + Search reality, Shor's QFT + period-finding half (5a), the full
-  N=15 Shor circuit + RSACountdown + NIST PQC cards (5b), and the VQE
-  + chemistry + PROG-01 + v3 launch close-out (6) all shipped with
-  SUMMARY + VERIFICATION written. 658 tests, 24 pages, all routes
-  within bundle ceilings. Next: deploy (parallel ops task).
+- **Last shipped milestone:** **v3.0 — Algorithms × Use Cases**
+  (feature-complete 2026-06-30). 5 algorithm essays interleaved
+  with the use case each unlocks; Qiskit export ships everywhere;
+  localStorage-only progress indicator. 658 tests, 24 pages.
+- **v1.0 status:** Code-complete, deploy pending. 146 tests, 16
+  pages. Carry-over operational task.
+- **v2.0 status:** Code-complete, deploy pending. 247 tests, 19
+  pages. Carry-over operational task.
+- **v3.0 status:** Feature-complete, deploy pending. 658 tests, 24
+  pages. Carry-over operational task — shares same Cloudflare
+  Pages flow as v1/v2.
 
 ## Current Position
 
 | | |
 |---|---|
-| Phase | 6 (VQE + Chemistry + v3 launch) — ✅ Complete |
-| Plan | All 8 plans (06-01..06-08) shipped + SUMMARY + VERIFICATION written |
-| Status | v3.0 feature-complete; only operational (deploy) carry-over remains |
-| Last activity | 2026-06-30 — Phase 6 close-out artifacts written (06-SUMMARY.md + 06-08-SUMMARY.md + 06-VERIFICATION.md + V3-LAUNCH-ANNOUNCEMENT.md + bundle-budget recompute + state/roadmap update) |
+| Active milestone | — (none) |
+| Active phase    | — (none) |
+| Last activity   | 2026-06-30 — v3.0 milestone archived (`.planning/milestones/v3.0-*.md`, ROADMAP collapsed, PROJECT.md evolved, REQUIREMENTS.md archived, MILESTONES.md updated, git tag `v3.0`) |
+| Next action     | `/gsd-new-milestone` to scope next cycle, OR run the v1/v2/v3 deploy carry-over checklist below |
 
 ## Where we are
 
-### v3.0 — current (feature-complete)
+### v3.0 — shipped (archived 2026-06-30)
 
-Phase numbering reset to 1 for v3 (matching v2's pattern).
+All 7 phases done; 658 tests / 24 pages / zero new runtime deps.
+Full per-phase breakdown lives in
+[`.planning/milestones/v3.0-ROADMAP.md`](milestones/v3.0-ROADMAP.md).
 
-- [x] **Phase 1** — Foundation: Qiskit text export (sandbox + every
-  essay `CircuitView`) + bundle-size CI gate. *Done 2026-06-29.*
-- [x] **Phase 2** — Teleportation + Quantum Networks (FLAGSHIP).
-  *Done 2026-06-29 (UAT 13/14 pass + cosmetic fix landed).*
-- [x] **Phase 3** — Superdense coding + Bandwidth / Holevo bound.
-  *Done 2026-06-30 (414 tests, /superdense-coding 1.2/2.0 KB,
-  03-SUMMARY.md + 03-VERIFICATION.md).*
-- [x] **Phase 4** — Grover + Search reality check.
-  *Done 2026-06-30 (414 tests, /grover 1.9/3.0 KB,
-  04-SUMMARY.md + 04-VERIFICATION.md).*
-- [x] **Phase 5a** — Shor: QFT + period-finding.
-  *Done 2026-06-30 (483 tests, /shor 2.5/3.0 KB,
-  05a-SUMMARY.md + 05a-VERIFICATION.md).*
-- [x] **Phase 5b** — Shor: N=15 circuit + RSACountdown + Post-quantum crypto threat.
-  *Done 2026-06-30 (548 tests, /shor 3.2/4.0 KB,
-  05b-SUMMARY.md + 05b-VERIFICATION.md).*
-- [x] **Phase 6** — VQE + Quantum chemistry + progress indicator + v3 launch.
-  *Done 2026-06-30 (658 tests, 24 pages, /vqe 2.3/3.0 KB,
-  06-SUMMARY.md + 06-08-SUMMARY.md + 06-VERIFICATION.md +
-  V3-LAUNCH-ANNOUNCEMENT.md + BUNDLE-AUDIT.md + LIGHTHOUSE-PLAN.md).*
-
-### v3.0 — operational launch tasks carrying over
-
-1. Deploy v3.0 build (`SITE_URL=<URL> npx astro build && deploy ./dist`).
-2. Run formal Lighthouse mobile a11y ≥ 95 audit per
-   `.planning/phases/06-vqe/LIGHTHOUSE-PLAN.md` across all 24 routes
-   in both `prefers-color-scheme: light` and dark.
-3. Run launch-day 9-step smoke test per
-   `.planning/phases/06-vqe/V3-LAUNCH-ANNOUNCEMENT.md`.
-4. Live screen-reader pass (VoiceOver / NVDA) on the v3 widgets
-   (carries from 5b's deferred list).
-5. Real-device mobile check of `LargeCircuitView` horizontal-scroll
-   behaviour (carries from 5b).
-6. Replace `<URL>` and `<REPO>` placeholders in V3-LAUNCH-ANNOUNCEMENT.md.
-7. Announce (HN / tweet / r/QuantumComputing / r/programming variants
-   ready in V3-LAUNCH-ANNOUNCEMENT.md).
-
-These operational tasks do NOT block further phase work; v3.0 itself
-is feature-complete on `main`.
-
-### v1.0 — archived
-
-All 5 phases done. Artifacts under `.planning/phases/_archive-v1/`.
-
-### v2.0 — archived
+### v2.0 — code-complete (archived)
 
 All 4 phases done. Artifacts under `.planning/phases/_archive-v2/`.
 
-## Parallel ops tasks (not phase work)
+### v1.0 — shipped (archived)
+
+All 5 phases done. Artifacts under `.planning/phases/_archive-v1/`.
+
+## Parallel ops tasks (carry-over, not phase work)
+
+All three deploys (v1, v2, v3) share the same Cloudflare Pages
+recommended flow:
+
+```bash
+SITE_URL=https://your-url npx astro build
+npx wrangler pages deploy ./dist --project-name quantum
+```
 
 ### v1 deploy
 
-When ready (does not block v3):
-
-1. **Pick a deploy host.** Cloudflare Pages recommended (free, global
-   edge, zero config for static Astro output):
-   ```bash
-   npx wrangler pages deploy ./dist --project-name quantum
-   ```
-2. **Build + deploy:** `SITE_URL=https://your-url npx astro build`.
-3. **Generate a PNG og-image** from `public/og/quantum.svg`.
-4. **Replace `<URL>` and `<REPO>` placeholders** in the v1 launch
-   announcement template.
-5. **Formal Lighthouse pass** against every route.
+1. Pick a deploy host (Cloudflare Pages recommended).
+2. Build + deploy.
+3. Generate a PNG og-image from `public/og/quantum.svg`.
+4. Replace `<URL>` and `<REPO>` placeholders in the v1 launch
+   announcement: `.planning/phases/_archive-v1/05-algorithms/LAUNCH-ANNOUNCEMENT.md`.
+5. Formal Lighthouse pass against every route.
 
 ### v2 deploy
 
-1. Provision Apps Script (see `docs/apps-script.md`).
+1. Provision Apps Script per `docs/apps-script.md`.
 2. Set `PUBLIC_FEEDBACK_URL`.
-3. Lighthouse run; launch announcement.
+3. Lighthouse run.
+4. Launch announcement per
+   `.planning/phases/_archive-v2/04-launch-polish/LAUNCH-ANNOUNCEMENT.md`.
 
-## Active architectural decisions carrying into v3
+### v3 deploy
 
-The decisions below survived v1 + v2 and are locked into the PROJECT.md
-key-decisions table. No re-litigation needed at planning time:
+1. Replace `<URL>` and `<REPO>` placeholders in
+   `.planning/phases/06-vqe/V3-LAUNCH-ANNOUNCEMENT.md`.
+2. Deploy build.
+3. Formal Lighthouse mobile a11y ≥ 95 across all 24 routes in
+   both `prefers-color-scheme: light` and dark per
+   `.planning/phases/06-vqe/LIGHTHOUSE-PLAN.md`.
+4. Run launch-day 9-step smoke test per V3-LAUNCH-ANNOUNCEMENT.md.
+5. Live screen-reader pass (VoiceOver / NVDA) on `EnergyLandscape`,
+   `MoleculeGallery`, `LargeCircuitView`, `RSACountdown`, PROG-01
+   announcements.
+6. Real-device mobile check of `LargeCircuitView`
+   horizontal-scroll behaviour.
+7. Announce (HN / tweet / r/QuantumComputing / r/programming
+   variants ready in V3-LAUNCH-ANNOUNCEMENT.md).
 
-1. **Reactivity = vanilla TS + in-repo `signal<T>`.**
+## Active architectural decisions carried from v1 → v2 → v3
+
+The decisions below survived v1, v2, and v3 and are locked into
+the PROJECT.md key-decisions table. No re-litigation when scoping
+the next milestone:
+
+1. **Reactivity = vanilla TS + in-repo `signal<T>`** (no React /
+   Preact runtime cost).
 2. **Sandbox visualization re-use pattern:** when an essay needs
    sandbox-renderer math, extract a slim component (`MiniBloch`,
-   `CircuitView`); do NOT import sandbox hydrators coupled to the
-   singleton sandbox store. v3 essay widgets follow this rule.
-3. **Build-time circuit encoding for deep links:** `SandboxLink` and
-   `CircuitView` encode `Circuit` literals at Astro frontmatter time.
-   All v3 essays + the Qiskit-export feature reuse this codec.
+   `CircuitView`, `MultiBlochPanel`); do NOT import sandbox
+   hydrators coupled to the singleton sandbox store.
+3. **Build-time circuit encoding for deep links:** `SandboxLink`
+   and `CircuitView` encode `Circuit` literals at Astro frontmatter
+   time. Qiskit-export reuses this codec.
 4. **Cross-essay nav in essay frontmatter,** asserted by
-   `tests/essays/nav-graph.test.ts`. v3 essays extending the nav chain
-   must touch the test mirror in the same commit.
-5. **Test mirrors of source canonical lists** (concept-map nodes, nav
-   chain, sandbox-link starters). v3 adds 5 new essays + new sandbox
-   starters; touch mirrors in the same commit.
-6. **No analytics. Ever.** Re-ratified at v3 entry. v3 progress
-   indicator uses `localStorage` visited flags only.
-7. **Simulator stays at 4 qubits.** Hard cap (REQ-13) carries.
-8. **Qiskit export is the bridge** for circuits that exceed 4 qubits
-   (Shor on N=15) or that readers want to run on real hardware.
+   `tests/essays/nav-graph.test.ts`. Any new essay must touch the
+   test mirror in the same commit.
+5. **Test mirrors of source canonical lists** (concept-map nodes,
+   nav chain, sandbox-link starters, bundle-budget, sitemap). Touch
+   mirrors in the same commit when routes change.
+6. **No analytics. Ever.** Re-ratified at v2 and v3 entry.
+7. **Simulator stays at 4 qubits.** Hard cap (REQ-13) survived all
+   three milestones.
+8. **Qiskit export is the bridge** for circuits that exceed 4
+   qubits (Shor on N=15) or that readers want to run on real
+   hardware.
 
-## v3 open questions (resolve during plan-phase)
+## Accumulated context (carries across milestones)
 
-From `docs/plans/2026-06-29-v3-design.md` §8:
+- Archive layouts: `.planning/phases/_archive-v1/{02,03,04,05}-*`,
+  `.planning/phases/_archive-v2/{01,02,03,04}-*`. v3 per-phase
+  artifacts still under `.planning/phases/0X-*` (will move to
+  `_archive-v3/` at next milestone start).
+- v1+v2+v3 SUMMARY files are the best reference for "how a phase
+  looked when it shipped" — same template applies.
+- KaTeX still loaded via `cdn.jsdelivr.net` (deferred from v2 and
+  v3). Track as a nice-to-have if it shows up in OPS-04 bundle
+  audit.
+- Playwright visual regression (THEME-05) still deferred from v2;
+  not blocking.
+- Bundle ceiling convention: `Math.ceil((actual_gzip * 1.2) /
+  1024) * 1024`. Recompute every phase that touches a route.
 
-1. **Teleportation visual** — Bloch swap animation polish (Phase 2).
-2. **Concept-map redesign** — track grouping if 10 essays clutters
-   the current layout (Phase 6 audit).
-3. **Holevo widget design** — slider mapping (`n_bits` vs `n_qubits`)
-   to be finalized in Phase 3.
-4. **QFT visualization** — frequency-domain rendering style; settle
-   in Phase 5.
-5. **Energy landscape interactive** — auto-descend vs. drag-the-ball
-   UX; decide in Phase 6 plan.
+## Deferred Items
 
-## Open risks for v3
+Items acknowledged and deferred at v3.0 milestone close on
+2026-06-30:
 
-- **Phase 5 density resolved by split** — original Shor + QFT + PQC work is
-  now planned as 5a (QFT + period-finding) and 5b (N=15 Shor + RSA/PQC).
-- **Qiskit export drift** — golden tests per gate (QSK-03) are the
-  mitigation; gate set evolves over the milestone.
-- **Bundle bloat from 5 new essays + widgets** — bundle CI gate
-  (OPS-04) is the mitigation; per-route budget enforced.
-- **MultiBlochPanel mixed-state rendering** — sphere only honestly
-  represents pure states; design doc §3.3 mandates the panel show
-  vectors inside the sphere when ρ is mixed. Easy to get wrong.
-- **VQE optimizer correctness in vanilla TS** — gradient descent on a
-  toy energy surface; must be ~50-100 LOC and unit-tested.
-
-## Accumulated context (carries across phases)
-
-- v1 archive layout: `.planning/phases/_archive-v1/{02,03,04,05}-*`.
-- v2 archive layout: `.planning/phases/_archive-v2/{01,02,03,04}-*`.
-- v1+v2 SUMMARY files are the best reference for "how a phase looked
-  when it shipped" — same template applies to v3 SUMMARY files.
-- KaTeX still loaded via `cdn.jsdelivr.net`; not retired in v2. Track
-  as a v3 nice-to-have if it shows up in OPS-04 bundle audit.
-- v2 deferred Playwright visual regression (THEME-05); same deferral
-  applies to v3 unless explicitly re-scoped.
+| Category | Item | Status |
+|----------|------|--------|
+| ops      | Formal Lighthouse mobile a11y ≥ 95 audit on all 24 v3 routes in both themes | DEFERRED to launch-day per `.planning/phases/06-vqe/LIGHTHOUSE-PLAN.md` |
+| ops      | Live VoiceOver/NVDA pass on EnergyLandscape, MoleculeGallery, LargeCircuitView, RSACountdown, PROG-01 announcements | DEFERRED to launch-day |
+| ops      | Real-device mobile check of LargeCircuitView horizontal-scroll | DEFERRED to launch-day |
+| ops      | v1 deploy + post-launch feedback round | OPEN — carry-over from v1.0 |
+| ops      | v2 deploy (Apps Script + Lighthouse + announcement) | OPEN — carry-over from v2.0 |
+| ops      | v3 deploy (Cloudflare Pages + Lighthouse + smoke test + announce) | OPEN — newly carried from v3.0 |
+| feature  | KaTeX self-host | DEFERRED to v4 |
+| feature  | Playwright visual-regression harness (THEME-05) | DEFERRED from v2 |
+| feature  | Sandbox import of Qiskit text (reverse direction) | DEFERRED to v4+ |
+| feature  | 8-qubit simulator extension | DEFERRED — Qiskit export covers the only algorithm needing it |
+| feature  | Cross-device gallery sync (sync layer) | DEFERRED to v4 |
+| feature  | HHL / QPCA / QAOA / error-correction essays | DEFERRED to v4+ |
+| feature  | Quantum-sensing / metrology essays | DEFERRED to v4+ |
+| feature  | Pick-a-path reading order, in-essay quizzes | DEFERRED to v4+ |
