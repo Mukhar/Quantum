@@ -1,7 +1,7 @@
 # State
 
-*Last updated: 2026-06-30 — v3.0 Phase 3 + Phase 4 closed out;
-5a/5b/6 continue autonomously.*
+*Last updated: 2026-06-30 — v3.0 Phase 5a closed out;
+5b/6 continue autonomously.*
 
 ## Project Reference
 
@@ -19,20 +19,21 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 - **v2.0 status:** **Code-complete, deploy pending.** All 4 v2 phases
   shipped (247 tests, 19 pages, +44 KB site bundle). Pending: Apps
   Script provisioning, Lighthouse run, launch smoke test, ship.
-- **v3.0 status:** **Phases 1–4 complete.** Foundation infra,
-  Teleportation flagship, Superdense + Holevo, and Grover + Search
-  reality all shipped with SUMMARY + VERIFICATION written. 414 tests,
-  22 pages, all routes within bundle ceilings. Next: Phase 5a (Shor —
-  QFT + period-finding).
+- **v3.0 status:** **Phases 1–5a complete.** Foundation infra,
+  Teleportation flagship, Superdense + Holevo, Grover + Search
+  reality, and Shor's QFT + period-finding half all shipped with
+  SUMMARY + VERIFICATION written. 483 tests, 23 pages, all routes
+  within bundle ceilings. Next: Phase 5b (Shor — N=15 circuit +
+  RSACountdown + Post-quantum crypto cards).
 
 ## Current Position
 
 | | |
 |---|---|
-| Phase | 5a (Shor — QFT + period-finding) — planned, ready to execute |
-| Plan | PLAN.md exists at .planning/phases/05a-shor-qft-period-finding/PLAN.md |
-| Status | Phases 1–4 closed out — next: gsd-execute-phase 5a |
-| Last activity | 2026-06-30 — Phase 3 + Phase 4 close-out artifacts written (SUMMARY + VERIFICATION + state/roadmap) |
+| Phase | 5b (Shor — N=15 circuit + RSACountdown + PQC) — planned, ready to execute |
+| Plan | PLAN.md expected at .planning/phases/05b-shor-rsa-pqc/PLAN.md (not yet created) |
+| Status | Phase 5a closed out — next: gsd-plan-phase 5b, then gsd-execute-phase 5b |
+| Last activity | 2026-06-30 — Phase 5a close-out artifacts written (05a-SUMMARY.md + 05a-VERIFICATION.md + state/roadmap update) |
 
 ## Where we are
 
@@ -50,7 +51,9 @@ Phase numbering reset to 1 for v3 (matching v2's pattern).
 - [x] **Phase 4** — Grover + Search reality check.
   *Done 2026-06-30 (414 tests, /grover 1.9/3.0 KB,
   04-SUMMARY.md + 04-VERIFICATION.md).*
-- [ ] **Phase 5a** — Shor: QFT + period-finding. *Planned 2026-06-30; split from original dense P5.*
+- [x] **Phase 5a** — Shor: QFT + period-finding.
+  *Done 2026-06-30 (483 tests, /shor 2.5/3.0 KB,
+  05a-SUMMARY.md + 05a-VERIFICATION.md).*
 - [ ] **Phase 5b** — Shor: N=15 circuit + RSACountdown + Post-quantum crypto threat. *Planned 2026-06-30; depends on 5a.*
 - [ ] **Phase 6** — VQE + Quantum chemistry + progress indicator + v3 launch.
 
