@@ -451,6 +451,18 @@ const tickPx = (t: number) => PAD + (t / (2 * Math.PI)) * PLOT;
       readout.textContent =
         `θ₁ = ${fmt(t1)}, θ₂ = ${fmt(t2)}, ` +
         `energy = ${fmt(energy)} Hₐ, Δmin = ${fmt(delta)} Hₐ`;
+
+      // Notify essay-local listeners (e.g. /vqe's slim ansatz
+      // readout — D-19) of the current (θ₁, θ₂). Bubbles so the
+      // essay can attach the listener at `document` instead of
+      // walking down to this widget. Keeps CircuitView static —
+      // /vqe wires its own VQE-local mirror in `vqe.astro`.
+      el.dispatchEvent(
+        new CustomEvent("vqe:thetachange", {
+          detail: { theta1: t1, theta2: t2 },
+          bubbles: true,
+        }),
+      );
     };
 
     thetas.subscribe(render);

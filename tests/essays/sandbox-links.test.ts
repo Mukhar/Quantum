@@ -31,6 +31,7 @@ import {
   teleportationCircuit,
   superdenseCircuit,
   buildGroverCircuit,
+  DEFAULT_INITIAL_THETAS,
   type Circuit,
   type Op,
 } from "../../src/lib/quantum";
@@ -92,6 +93,19 @@ const STARTERS: Record<string, Circuit> = {
   shor: {
     qubits: 2,
     steps: [[gateOp("H", 0), gateOp("H", 1)]],
+  },
+  // v3 Phase 6 (Plan 06-05) VQE starter: the same 2-parameter
+  // Ry(θ₁) ⊗ Ry(θ₂) → CNOT(0,1) ansatz the /vqe essay's static
+  // CircuitView snapshots, seeded at DEFAULT_INITIAL_THETAS so the
+  // sandbox, the essay snapshot, and the EnergyLandscape's default
+  // marker share a single source of truth.
+  vqe: {
+    qubits: 2,
+    steps: [
+      [rotOp("Y", 0, DEFAULT_INITIAL_THETAS[0])],
+      [rotOp("Y", 1, DEFAULT_INITIAL_THETAS[1])],
+      [cnotOp(0, 1)],
+    ],
   },
 };
 

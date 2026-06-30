@@ -24,6 +24,7 @@
     "shor": 4096,
     "superdense-coding": 2048,
     "superposition": 1024,
-    "teleportation": 2048
+    "teleportation": 2048,
+    "vqe": 4096
   }
 }

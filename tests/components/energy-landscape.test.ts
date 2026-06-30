@@ -99,4 +99,13 @@ describe("EnergyLandscape — widget contract", () => {
     expect(SOURCE).toContain("bg-surface-elevated");
     expect(SOURCE).toContain("rounded-lg");
   });
+
+  it("dispatches a `vqe:thetachange` CustomEvent on theta updates so essay-local readouts can mirror state (D-19, Plan 06-05)", () => {
+    // Pinned by Plan 06-05: the /vqe essay's slim ansatz-readout
+    // listens for this event at `document` so EnergyLandscape stays
+    // self-contained and CircuitView is never overloaded.
+    expect(SOURCE).toMatch(/vqe:thetachange/);
+    expect(SOURCE).toMatch(/new\s+CustomEvent/);
+    expect(SOURCE).toMatch(/bubbles:\s*true/);
+  });
 });

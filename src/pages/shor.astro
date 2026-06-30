@@ -20,7 +20,9 @@
  *   - Every RSA / vendor-roadmap claim links to a primary source.
  *   - We never assert a specific calendar year RSA "breaks".
  *
- * Footer-nav unchanged: prev /grover, next /sandbox.
+ * Footer-nav: prev /grover, next /vqe (Phase 6 Plan 06-05 rewired the
+ * next link from /sandbox to /vqe so /shor → /vqe → /sandbox is the
+ * final reading-path tail).
  */
 import EssayLayout from "../layouts/EssayLayout.astro";
 import MathBlock from "../components/MathBlock.astro";
@@ -346,7 +348,7 @@ const shor15 = buildShor15();
 
   <Fragment slot="footer-nav">
     <a href="/grover" class="hover:text-ink">← Grover</a>
-    <a href="/sandbox" class="hover:text-ink">Next: open the Sandbox →</a>
+    <a href="/vqe" class="hover:text-ink">Next: VQE →</a>
   </Fragment>
 </EssayLayout>
 

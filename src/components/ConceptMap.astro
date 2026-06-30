@@ -51,6 +51,9 @@ const NODE_R = 10;
 // fourth row below grover so the existing 5-wide row geometry doesn't
 // have to compress. The reading-path edge goes grover -> shor straight
 // down.
+// v3 Phase 6 (Plan 06-05) adds VQE as the seventh algorithm essay on
+// the same fourth row, immediately right of /shor. Reading-path edge
+// goes shor -> vqe horizontally. Flat layout (D-37).
 const nodes: Node[] = [
   { href: "/qubit",          label: "Qubit",          cx: 100,  cy: 60,  tier: "primary" },
   { href: "/superposition",  label: "Superposition",  cx: 290,  cy: 60,  tier: "primary" },
@@ -65,11 +68,12 @@ const nodes: Node[] = [
   { href: "/superdense-coding", label: "Superdense",  cx: 290,  cy: 310, tier: "primary" },
   { href: "/grover",         label: "Grover",         cx: 480,  cy: 310, tier: "primary" },
   { href: "/shor",           label: "Shor",           cx: 480,  cy: 430, tier: "primary" },
+  { href: "/vqe",            label: "VQE",            cx: 670,  cy: 430, tier: "primary" },
 ];
 
 // Directed edges: from-node index -> to-node index. Indices match `nodes`.
-// Reading-path edges (0..4 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12), plus utility
-// entry/exit (qubit/deutsch -> sandbox, qubit/deutsch -> challenges).
+// Reading-path edges (0..4 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13), plus
+// utility entry/exit (qubit/deutsch -> sandbox, qubit/deutsch -> challenges).
 const edges: Array<{ from: number; to: number; dim?: boolean }> = [
   { from: 0, to: 1 },
   { from: 1, to: 2 },
@@ -81,6 +85,7 @@ const edges: Array<{ from: number; to: number; dim?: boolean }> = [
   { from: 9, to: 10 },
   { from: 10, to: 11 },
   { from: 11, to: 12 },
+  { from: 12, to: 13 },
   { from: 0, to: 5 },
   { from: 8, to: 5 },
   { from: 0, to: 6 },
@@ -121,7 +126,7 @@ function edgePath(a: Node, b: Node): string {
   <!-- Desktop / tablet SVG map -->
   <svg
     role="img"
-    aria-label="Visual map of the Quantum site: 11 essays in reading order (5 foundations + 6 algorithm), with sandbox and challenges as utility entry points"
+    aria-label="Visual map of the Quantum site: 12 essays in reading order (5 foundations + 7 algorithm), with sandbox and challenges as utility entry points"
     viewBox="0 0 1000 460"
     class="hidden sm:block w-full max-w-[1100px] mx-auto h-auto"
   >

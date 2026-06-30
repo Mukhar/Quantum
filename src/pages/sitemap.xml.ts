@@ -39,6 +39,7 @@ const ROUTES: SitemapEntry[] = [
   { path: "/superdense-coding",           priority: 0.9  },
   { path: "/grover",                      priority: 0.9  },
   { path: "/shor",                        priority: 0.9  },
+  { path: "/vqe",                         priority: 0.9  },
   { path: "/sandbox",                     priority: 0.85 },
   { path: "/sandbox/challenges",          priority: 0.8  },
   { path: "/sandbox/challenges/flip",     priority: 0.6  },

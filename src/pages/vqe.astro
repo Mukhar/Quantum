@@ -1,0 +1,379 @@
+---
+/**
+ * "VQE — the variational hybrid loop" — Phase 6 closing essay.
+ *
+ * This is the final essay in the v3 reading path. It composes the
+ * Phase 6 building blocks into one two-half essay:
+ *
+ *   - Algorithm half (ALG-08):
+ *     1. Hook — the quantum computer tries a wavefunction; the
+ *        classical computer turns the knobs (D-29).
+ *     2. Static `CircuitView` of the 2-parameter
+ *        `Ry(θ₁) ⊗ Ry(θ₂) → CNOT(0,1)` ansatz, built at
+ *        frontmatter time from `DEFAULT_INITIAL_THETAS` so the
+ *        snapshot matches the EnergyLandscape's default marker
+ *        position (D-18). The existing baked "Copy as Qiskit"
+ *        button on CircuitView gives the reader a portable
+ *        starting point.
+ *     3. Slim VQE-local `<p data-role="ansatz-readout">` mirror
+ *        that listens for the `vqe:thetachange` CustomEvent
+ *        dispatched by EnergyLandscape's hydrator and updates the
+ *        live `(θ₁, θ₂)` text as the reader drags / Auto-descends
+ *        the marker (D-19). No global CircuitView mutation.
+ *     4. `<EnergyLandscape />` embed.
+ *     5. Hand-off paragraph — energy minimization is the
+ *        conceptual bridge (D-29).
+ *
+ *   - Use-case half (USE-05):
+ *     1. Near-term industrial framing with explicit reality check
+ *        and primary-source citations (D-27, D-30). Every
+ *        quantitative or roadmap claim links to its source.
+ *     2. `<MoleculeGallery />` embed.
+ *     3. Reality check paragraph — what VQE on near-term hardware
+ *        can and cannot do today (D-30).
+ *     4. Qiskit CTA — the gallery's Copy buttons let you go run a
+ *        real ansatz in Qiskit.
+ *
+ *   - Self-test + `MathNerds` appendix covering the expectation-
+ *     value energy functional, the central finite-difference
+ *     gradient, and the GD-with-momentum update rule.
+ *
+ *   - Footer-nav: prev /shor, next /sandbox.
+ *
+ * Convention: qubit register is `|q1 q0⟩` (Qiskit / LSB-first).
+ * The ansatz Circuit literal here, the sandbox starter in
+ * `tests/essays/sandbox-links.test.ts`, and the H₂ entry in
+ * `src/data/molecules.json` all share the same op shape so the
+ * static snapshot, the live landscape, the gallery, and the
+ * sandbox round-trip a single source of truth.
+ *
+ * D-18, D-19, D-27..D-30, D-43, D-44, D-45.
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import CircuitView from "../components/CircuitView.astro";
+import EnergyLandscape from "../components/EnergyLandscape.astro";
+import MoleculeGallery from "../components/MoleculeGallery.astro";
+import {
+  DEFAULT_INITIAL_THETAS,
+  rotOp,
+  cnotOp,
+  type Circuit,
+} from "../lib/quantum";
+
+const [theta1Seed, theta2Seed] = DEFAULT_INITIAL_THETAS;
+
+// Same op shape as `src/data/molecules.json` H₂ entry and the
+// `vqe` sandbox starter so the static snapshot, the gallery card,
+// and the sandbox-link round-trip one canonical ansatz.
+const ansatzCircuit: Circuit = {
+  qubits: 2,
+  steps: [
+    [rotOp("Y", 0, theta1Seed)],
+    [rotOp("Y", 1, theta2Seed)],
+    [cnotOp(0, 1)],
+  ],
+};
+
+const fmt = (n: number) => n.toFixed(3);
+---
+
+<EssayLayout
+  title="VQE — the variational hybrid loop"
+  subtitle="Shor needs a fault-tolerant machine that doesn't exist yet. The variational quantum eigensolver — VQE — is the credible near-term direction: a small parameterised circuit on the quantum side, a classical optimizer on the other, and the two passing energy back and forth until the parameters settle into a minimum. Same loop drives small-molecule chemistry, materials, and the rest of the variational/hybrid family."
+  description="Walk through the VQE hybrid loop: a 2-parameter Ry⊗Ry→CNOT ansatz, an H₂ energy landscape you can drag and auto-descend, and a gallery of pre-baked VQE results for H₂, HeH⁺, and LiH. Honest scope — small benchmark molecules on noisy near-term hardware, with classical baselines like HF / CCSD still hard competition. Sourced. Covers ALG-08 and USE-05."
+>
+  <p>
+    The <a href="/shor">previous essay</a> ended with a hard
+    boundary: Shor is exponentially fast on a quantum computer, and
+    that quantum computer doesn't exist yet at any cryptographically
+    relevant scale. The fault-tolerant logical-qubit counts the RSA
+    widget surveyed are years to decades away under every published
+    roadmap. So what runs on the noisy 50–500-qubit machines we
+    actually have today?
+  </p>
+
+  <p>
+    The honest answer is "variational" / "hybrid" algorithms — a
+    family whose flagship is <strong>VQE</strong>, the variational
+    quantum eigensolver. VQE doesn't need a fault-tolerant machine.
+    It runs a small parameterised circuit on the quantum side,
+    measures an expected energy, hands that scalar to a classical
+    optimizer, and lets the optimizer turn the circuit's parameters
+    until the energy stops going down. Small benchmark molecules
+    fit. Real industrial chemistry is active research. Classical
+    baselines like Hartree–Fock (HF) and coupled cluster (CCSD)
+    remain hard competition. The story this essay tells is the loop
+    and the framing — neither one tries to claim quantum has
+    already won.
+  </p>
+
+  <h2>The hook: the quantum computer tries a wavefunction; the classical computer turns the knobs</h2>
+
+  <p data-step="0">
+    The conceptual loop is two parts:
+  </p>
+
+  <ol class="my-4 list-decimal space-y-2 pl-6 text-ink">
+    <li>
+      A <em>parameterised quantum circuit</em> takes a list of real
+      knobs <code>θ = (θ₁, θ₂, …)</code> and prepares a candidate
+      wavefunction <code>|ψ(θ)⟩</code>. Run it on real hardware (or
+      a simulator), measure the energy
+      <code>E(θ) = ⟨ψ(θ)| Ĥ |ψ(θ)⟩</code> for the problem
+      Hamiltonian <code>Ĥ</code> you care about.
+    </li>
+    <li>
+      A <em>classical optimizer</em> reads <code>E(θ)</code> and
+      proposes a better <code>θ</code>. Gradient descent works if
+      the surface is smooth enough; for noisy hardware people use
+      gradient-free methods (COBYLA, SPSA) too. Either way the
+      classical side never touches the qubits — it just turns the
+      knobs and asks for another energy.
+    </li>
+  </ol>
+
+  <p>
+    The two halves of this essay walk the loop. The algorithm half
+    builds the smallest non-trivial VQE setup: a 2-parameter ansatz
+    and a documented 2D energy surface that's actually H₂ in a
+    minimal basis. The use-case half points the same loop at a
+    gallery of pre-baked molecule results and frames where this
+    matters and where it still doesn't.
+  </p>
+
+  <h2>The parameterised ansatz</h2>
+
+  <p data-step="1">
+    The "ansatz" is the parameterised circuit family the optimizer
+    is allowed to search inside. For the canonical 2-qubit H₂ demo,
+    the simplest hardware-efficient ansatz is one
+    <code>Ry</code> rotation per qubit followed by a single
+    <code>CNOT</code> to entangle them. Two real parameters
+    <code>(θ₁, θ₂)</code> in, one entangled 2-qubit state out:
+  </p>
+
+  <CircuitView
+    circuit={ansatzCircuit}
+    caption={`Hardware-efficient 2-qubit VQE ansatz: Ry(θ₁) on q₀, Ry(θ₁ → θ₂) on q₁, then CNOT(q₀ → q₁). Shown at the default seed (θ₁ = ${fmt(theta1Seed)}, θ₂ = ${fmt(theta2Seed)}); Copy as Qiskit emits Python you can paste straight into a notebook.`}
+  />
+
+  <p data-step="2">
+    The Copy-as-Qiskit button bakes the ansatz into a portable
+    Qiskit snippet — same ansatz as the H₂ card in the gallery
+    below, same starter as the <code>vqe</code> sandbox link.
+    That's the artifact you'd plug into a real
+    <code>VQE</code> driver to estimate ground-state energies for
+    a Hamiltonian <em>you</em> supply.
+  </p>
+
+  <h2>The energy landscape</h2>
+
+  <p data-step="3">
+    For our pedagogical H₂ surface the energy depends only on
+    <code>(θ₁, θ₂)</code>, so the whole optimization problem fits
+    on a 2D map. The widget below renders that surface as a 50×50
+    heatmap with contour bands; drag the marker (or press
+    <strong>Auto-descend</strong>) to walk gradient descent
+    downhill from any starting point you pick. <strong>Reseed</strong>
+    cycles through six deterministic starts so you can feel that
+    every seed in the basin lands on the same minimum at
+    <code>(π, π)</code>.
+  </p>
+
+  <p
+    data-role="ansatz-readout"
+    aria-live="polite"
+    class="my-3 rounded-md border border-line bg-surface-elevated/40 px-4 py-2 font-mono text-sm text-ink-emphasis tabular-nums"
+  >
+    Live ansatz parameters: θ₁ = <span data-field="theta1">{fmt(theta1Seed)}</span>, θ₂ = <span data-field="theta2">{fmt(theta2Seed)}</span>
+  </p>
+
+  <EnergyLandscape
+    caption="H₂ energy surface E(θ₁, θ₂) over [0, 2π]². Cool indigo cells are low energy (the basin); warm amber is high. The cross-hair marks the documented minimum at (π, π). Drag the marker or press Auto-descend to walk the same gradient-descent trajectory the tests pin to within 1e-3 of the true minimum."
+  />
+
+  <p data-step="4">
+    That is the conceptual bridge to the second half of the essay:
+    <em>energy minimization is the loop</em>. The optimizer doesn't
+    know about chemistry, basis sets, or qubits — it just sees a
+    scalar function <code>E(θ)</code> and walks downhill. Whatever
+    chemistry (or materials, or combinatorial-optimization)
+    problem you encode in the Hamiltonian, the same loop runs.
+  </p>
+
+  <h2>What this loop is for: small-molecule chemistry</h2>
+
+  <p data-step="5">
+    The flagship near-term application is quantum chemistry — and
+    specifically the ground-state energy of small molecules. The
+    earliest VQE paper estimated the ground state of HeH⁺ on a
+    six-photon photonic device
+    (<a href="https://doi.org/10.1038/ncomms5213" rel="noopener external">Peruzzo et al.,
+    <em>Nature Communications</em> 5, 4213 (2014)</a>). IBM's
+    hardware-efficient ansatz extension covered H₂, LiH, and BeH₂
+    on superconducting hardware
+    (<a href="https://doi.org/10.1038/nature23879" rel="noopener external">Kandala et al.,
+    <em>Nature</em> 549, 242 (2017)</a>). The current state of the
+    field and the open scaling questions are surveyed by
+    <a href="https://doi.org/10.1021/acs.chemrev.8b00803" rel="noopener external">Cao et al.,
+    <em>Chemical Reviews</em> 119, 10856 (2019)</a>.
+  </p>
+
+  <p>
+    The gallery below pre-bakes converged VQE results for three
+    small molecules at equilibrium bond distance. Each card shows
+    the ansatz parameters the classical optimizer settled on, the
+    converged energy in both Hartree and electron-volts, and a
+    Copy-as-Qiskit button against the data-derived ansatz circuit
+    — same engine you just felt in the landscape, pointed at three
+    different Hamiltonians.
+  </p>
+
+  <MoleculeGallery
+    caption="Pre-baked VQE results for H₂, HeH⁺, and LiH at equilibrium bond distance. The bond-distance slider on each card is illustrative — energies are not re-computed live (D-25). Sources are cited inline on every card."
+  />
+
+  <p data-step="6">
+    What this loop is <em>not</em>, today: a drop-in replacement
+    for classical quantum-chemistry pipelines. The molecules in
+    the gallery are textbook benchmarks. Real industrial systems
+    have hundreds of correlated electrons; even with active-space
+    reductions, the qubit and gate counts are well past what
+    near-term hardware can run to chemical accuracy. Classical
+    baselines like Hartree–Fock and coupled-cluster (especially
+    CCSD(T) — the "gold standard" for small molecules) remain
+    hard competition; demonstrating quantum advantage on a real
+    chemistry workload is active research, not a settled result.
+    Noise and barren-plateau training pathologies are the two
+    open problems papers keep returning to.
+  </p>
+
+  <p>
+    What variational/hybrid methods <em>do</em> give you, today,
+    is a credible near-term direction. You've built the loop in
+    the browser — the same loop people are running on superconducting
+    and trapped-ion hardware right now. The gallery's Copy buttons
+    let you go from this page straight to a Qiskit notebook and
+    run a real ansatz against the H₂ Hamiltonian. From there,
+    swapping in your own Hamiltonian is one more step.
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-ink">
+    <li>
+      In the EnergyLandscape widget, press <strong>Reseed</strong>
+      until you land on a seed in the upper-left of the surface
+      (e.g. small <code>θ₁</code> and small <code>θ₂</code>). Press
+      <strong>Auto-descend</strong>. The trajectory still ends at
+      <code>(π, π)</code>. Why is the minimum at <em>that</em>
+      point and not somewhere else? (Hint: open the math appendix
+      and look at the form of <code>h2Energy(θ₁, θ₂)</code> — it's
+      a separable sum of two cosines.)
+    </li>
+    <li>
+      The gallery's bond-distance slider is disabled. If you were
+      actually allowed to drag it for the H₂ card, which step of
+      the VQE loop would have to re-run for the energy readout to
+      stay honest? (Answer: the Hamiltonian itself changes with
+      bond distance — re-encoding <code>Ĥ</code> and re-running
+      the entire variational loop is what an interactive slider
+      would have to do. Pre-baking only the equilibrium result is
+      why the slider is illustrative.)
+    </li>
+  </ol>
+
+  <MathNerds title="The energy functional, the gradient, and the update rule">
+    <p>
+      VQE is variational because it minimizes an expectation
+      value. For a problem Hamiltonian <code>Ĥ</code> and a
+      parameterised state <code>|ψ(θ)⟩</code>, the cost is the
+      expected energy:
+    </p>
+    <MathBlock tex="E(\theta) \;=\; \langle \psi(\theta) \,|\, \hat H \,|\, \psi(\theta) \rangle" />
+    <p>
+      The Rayleigh–Ritz variational principle says
+      <code>E(θ) ≥ E₀</code> for all <code>θ</code>, with
+      equality only when <code>|ψ(θ)⟩</code> is the true ground
+      state. Minimizing <code>E(θ)</code> over the ansatz family
+      is therefore a principled lower bound on the true ground
+      energy — never below it, never <em>about</em> something
+      else.
+    </p>
+    <p>
+      The optimizer needs a gradient, and on noisy hardware the
+      easiest gradient is the central finite difference (FD). For
+      each parameter <code>θᵢ</code>, perturb up and down by a
+      small <code>ε</code> and take the central difference:
+    </p>
+    <MathBlock tex="\frac{\partial E}{\partial \theta_i} \;\approx\; \frac{E(\theta + \varepsilon\, e_i) \,-\, E(\theta - \varepsilon\, e_i)}{2\varepsilon}" />
+    <p>
+      One pair of energy evaluations per parameter. (Real VQE
+      implementations often use the parameter-shift rule with
+      <code>ε = π/2</code> instead, which gives exact gradients
+      on standard rotation gates and avoids the finite-difference
+      bias — same shape, different shift.)
+    </p>
+    <p>
+      With a gradient in hand, the optimizer used by this essay's
+      Auto-descend is plain gradient descent with momentum:
+    </p>
+    <MathBlock tex="v_{k+1} \;=\; \mu\, v_k \,-\, \eta\, \nabla E(\theta_k); \qquad \theta_{k+1} \;=\; \theta_k \,+\, v_{k+1}" />
+    <p>
+      where <code>η</code> is the learning rate and
+      <code>μ ∈ [0, 1)</code> is the momentum coefficient. The
+      exact <code>(η, μ)</code> and convergence tolerance the
+      site ships are pinned in
+      <code>src/lib/quantum/vqe.ts</code> and verified by
+      <code>tests/quantum/vqe.test.ts</code> against the true
+      minimum to <code>1e-3</code>. The Auto-descend animation
+      replays the same trajectory those tests certify.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="footer-nav">
+    <a href="/shor" class="hover:text-ink">← Shor + post-quantum</a>
+    <a href="/sandbox" class="hover:text-ink">Next: open the Sandbox →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  import { attachScrolly } from "../lib/scrolly";
+  import { mountAnnotations } from "../lib/annotations";
+
+  const root = document.querySelector("article");
+  if (root) {
+    attachScrolly(root, {
+      stepSelector: "[data-step]",
+      onStep: (i) => console.debug(`[scrolly] step ${i}`),
+    });
+  }
+
+  const ann = mountAnnotations();
+  document.getElementById("reset-annotations")?.addEventListener("click", () => {
+    ann.reset();
+  });
+
+  // VQE-local live readout (D-19). Listens for the
+  // `vqe:thetachange` CustomEvent dispatched by
+  // `EnergyLandscape`'s hydrator and mirrors the current
+  // (θ₁, θ₂) into the slim `<p data-role="ansatz-readout">`
+  // block above the landscape. Stays VQE-local so we don't
+  // overload CircuitView with animated labels.
+  const readout = document.querySelector<HTMLElement>(
+    '[data-role="ansatz-readout"]',
+  );
+  if (readout) {
+    const t1Field = readout.querySelector<HTMLElement>('[data-field="theta1"]');
+    const t2Field = readout.querySelector<HTMLElement>('[data-field="theta2"]');
+    document.addEventListener("vqe:thetachange", (ev: Event) => {
+      const detail = (ev as CustomEvent<{ theta1: number; theta2: number }>)
+        .detail;
+      if (!detail) return;
+      if (t1Field) t1Field.textContent = detail.theta1.toFixed(3);
+      if (t2Field) t2Field.textContent = detail.theta2.toFixed(3);
+    });
+  }
+</script>
