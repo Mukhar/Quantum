@@ -87,3 +87,16 @@ export {
   buildGroverCircuit,
 } from "./grover";
 export type { GroverRunOptions, GroverSnapshot } from "./grover";
+
+export {
+  qftState,
+  inverseQftState,
+  normalizeState,
+  probabilitiesFromState,
+  stateFromBasisIndices,
+  modPow,
+  gcd,
+  findMultiplicativePeriod,
+  periodPeakHints,
+} from "./qft";
+export type { PeriodResult } from "./qft";
