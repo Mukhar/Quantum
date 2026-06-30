@@ -1,7 +1,7 @@
 # State
 
-*Last updated: 2026-06-30 — v3.0 Phase 5b closed out;
-Phase 6 next.*
+*Last updated: 2026-06-30 — v3.0 Phase 6 closed out;
+v3.0 — Algorithms × Use Cases — is feature-complete.*
 
 ## Project Reference
 
@@ -13,32 +13,32 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 - **Current milestone:** **v3.0 — Algorithms × Use Cases.** Pair the
   canonical quantum algorithm canon with the practical use case each
   one unlocks. Five interleaved essays + Qiskit-export bridge to real
-  hardware.
+  hardware. **Feature-complete 2026-06-30; deploy carry-over only.**
 - **v1.0 status:** **Code-complete, deploy pending.** All 5 v1 phases
   shipped (146 tests, 16 pages). Deploy is a parallel ops task.
 - **v2.0 status:** **Code-complete, deploy pending.** All 4 v2 phases
   shipped (247 tests, 19 pages, +44 KB site bundle). Pending: Apps
   Script provisioning, Lighthouse run, launch smoke test, ship.
-- **v3.0 status:** **Phases 1–5b complete.** Foundation infra,
-  Teleportation flagship, Superdense + Holevo, Grover + Search
-  reality, Shor's QFT + period-finding half (5a), and the full
-  N=15 Shor circuit + RSACountdown + NIST PQC cards (5b) all
-  shipped with SUMMARY + VERIFICATION written. 548 tests, 23 pages,
-  all routes within bundle ceilings. Next: Phase 6 (VQE + Quantum
-  chemistry + progress indicator + v3 launch).
+- **v3.0 status:** **Feature-complete (Phases 1–6 all complete).**
+  Foundation infra, Teleportation flagship, Superdense + Holevo, Grover
+  + Search reality, Shor's QFT + period-finding half (5a), the full
+  N=15 Shor circuit + RSACountdown + NIST PQC cards (5b), and the VQE
+  + chemistry + PROG-01 + v3 launch close-out (6) all shipped with
+  SUMMARY + VERIFICATION written. 658 tests, 24 pages, all routes
+  within bundle ceilings. Next: deploy (parallel ops task).
 
 ## Current Position
 
 | | |
 |---|---|
-| Phase | 6 (VQE + Quantum chemistry + progress indicator + v3 launch) — not yet planned |
-| Plan | PLAN.md expected at .planning/phases/06-vqe-launch/PLAN.md (not yet created) |
-| Status | Phase 5b closed out — next: gsd-discuss-phase 6 → gsd-plan-phase 6 → gsd-execute-phase 6 |
-| Last activity | 2026-06-30 — Phase 5b close-out artifacts written (05b-SUMMARY.md + 05b-VERIFICATION.md + state/roadmap update) |
+| Phase | 6 (VQE + Chemistry + v3 launch) — ✅ Complete |
+| Plan | All 8 plans (06-01..06-08) shipped + SUMMARY + VERIFICATION written |
+| Status | v3.0 feature-complete; only operational (deploy) carry-over remains |
+| Last activity | 2026-06-30 — Phase 6 close-out artifacts written (06-SUMMARY.md + 06-08-SUMMARY.md + 06-VERIFICATION.md + V3-LAUNCH-ANNOUNCEMENT.md + bundle-budget recompute + state/roadmap update) |
 
 ## Where we are
 
-### v3.0 — current (in progress)
+### v3.0 — current (feature-complete)
 
 Phase numbering reset to 1 for v3 (matching v2's pattern).
 
@@ -58,17 +58,29 @@ Phase numbering reset to 1 for v3 (matching v2's pattern).
 - [x] **Phase 5b** — Shor: N=15 circuit + RSACountdown + Post-quantum crypto threat.
   *Done 2026-06-30 (548 tests, /shor 3.2/4.0 KB,
   05b-SUMMARY.md + 05b-VERIFICATION.md).*
-- [ ] **Phase 6** — VQE + Quantum chemistry + progress indicator + v3 launch.
+- [x] **Phase 6** — VQE + Quantum chemistry + progress indicator + v3 launch.
+  *Done 2026-06-30 (658 tests, 24 pages, /vqe 2.3/3.0 KB,
+  06-SUMMARY.md + 06-08-SUMMARY.md + 06-VERIFICATION.md +
+  V3-LAUNCH-ANNOUNCEMENT.md + BUNDLE-AUDIT.md + LIGHTHOUSE-PLAN.md).*
 
-### v2.0 — code-complete (operational launch tasks carrying over)
+### v3.0 — operational launch tasks carrying over
 
-1. Provision Apps Script web app + set `PUBLIC_FEEDBACK_URL` env.
-2. Run manual Lighthouse audit per `_archive-v2/04-launch-polish/LIGHTHOUSE-PLAN.md`.
-3. Run launch-day smoke test per `_archive-v2/04-launch-polish/LAUNCH-ANNOUNCEMENT.md` steps 1-11.
-4. Push, deploy, announce.
-5. v1 deploy carryover (if not yet shipped).
+1. Deploy v3.0 build (`SITE_URL=<URL> npx astro build && deploy ./dist`).
+2. Run formal Lighthouse mobile a11y ≥ 95 audit per
+   `.planning/phases/06-vqe/LIGHTHOUSE-PLAN.md` across all 24 routes
+   in both `prefers-color-scheme: light` and dark.
+3. Run launch-day 9-step smoke test per
+   `.planning/phases/06-vqe/V3-LAUNCH-ANNOUNCEMENT.md`.
+4. Live screen-reader pass (VoiceOver / NVDA) on the v3 widgets
+   (carries from 5b's deferred list).
+5. Real-device mobile check of `LargeCircuitView` horizontal-scroll
+   behaviour (carries from 5b).
+6. Replace `<URL>` and `<REPO>` placeholders in V3-LAUNCH-ANNOUNCEMENT.md.
+7. Announce (HN / tweet / r/QuantumComputing / r/programming variants
+   ready in V3-LAUNCH-ANNOUNCEMENT.md).
 
-These operational tasks do NOT block v3 phase work.
+These operational tasks do NOT block further phase work; v3.0 itself
+is feature-complete on `main`.
 
 ### v1.0 — archived
 

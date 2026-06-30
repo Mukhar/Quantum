@@ -35,7 +35,7 @@ v1+v2 historical context lives in `.planning/MILESTONES.md`.
 - [x] **Phase 4: Grover + Search reality** — `/grover` essay with oracle/diffusion, `AmplitudeBars` iterator, and `SearchComparison` widget ✅
 - [x] **Phase 5a: Shor — QFT + period-finding** — `/shor` essay scaffold with `QFTVisualizer` and `PeriodFinding` widgets ✅
 - [x] **Phase 5b: Shor — N=15 circuit + RSACountdown + PQC** — extend `/shor` with static full-N=15 Shor circuit, prominent Qiskit export, and RSA/PQC threat section (depends_on = 5a)
-- [ ] **Phase 6: VQE + Chemistry + v3 launch** — `/vqe` essay with vanilla-TS optimizer + `EnergyLandscape` + `MoleculeGallery`, concept-map progress indicator, OPS audit, v3 announcement
+- [x] **Phase 6: VQE + Chemistry + v3 launch** — `/vqe` essay with vanilla-TS optimizer + `EnergyLandscape` + `MoleculeGallery`, concept-map progress indicator, OPS audit, v3 announcement ✅
 
 ## Phase Details
 
@@ -233,7 +233,7 @@ on all 5 essays existing.
 | 4. Grover + Search reality                    | 0/TBD | Discuss     | — |
 | 5a. Shor — QFT + period-finding              | 0/5   | Planned     | — |
 | 5b. Shor — N=15 + RSACountdown + PQC          | 5/5   | ✅ Complete | 2026-06-30 |
-| 6. VQE + Chemistry + v3 launch                | 0/TBD | Not started | — |
+| 6. VQE + Chemistry + v3 launch                | 8/8   | ✅ Complete | 2026-06-30 |
 
 **Parallel ops tasks (not phase work):**
 - v1 deploy + post-launch feedback round (tracked under
