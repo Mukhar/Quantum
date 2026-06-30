@@ -31,8 +31,8 @@ v1+v2 historical context lives in `.planning/MILESTONES.md`.
 
 - [x] **Phase 1: Foundation — Qiskit export + bundle CI** — Sandbox toolbar export, per-essay `CircuitView` export, gate-coverage golden tests, per-route bundle-size CI gate ✅
 - [x] **Phase 2: Teleportation + Quantum networks (FLAGSHIP)** — `/teleportation` essay with `ProtocolStepper`, mixed-state `MultiBlochPanel`, and `QuantumNetwork` interactive ✅
-- [ ] **Phase 3: Superdense + Holevo bound** — `/superdense-coding` essay with `EncodingTable` and `HolevoBound` widgets
-- [ ] **Phase 4: Grover + Search reality** — `/grover` essay with oracle/diffusion, `AmplitudeBars` iterator, and `SearchComparison` widget
+- [~] **Phase 3: Superdense + Holevo bound** — `/superdense-coding` essay with `EncodingTable` and `HolevoBound` widgets *(implementation complete; SUMMARY/VERIFICATION pending)*
+- [x] **Phase 4: Grover + Search reality** — `/grover` essay with oracle/diffusion, `AmplitudeBars` iterator, and `SearchComparison` widget ✅
 - [ ] **Phase 5a: Shor — QFT + period-finding** — `/shor` essay scaffold with `QFT` visualizer and `PeriodFinding` demo (depends_on = P1, P4)
 - [ ] **Phase 5b: Shor — N=15 circuit + RSACountdown + PQC** — extend `/shor` with static full-N=15 Shor circuit, prominent Qiskit export, and RSA/PQC threat section (depends_on = 5a)
 - [ ] **Phase 6: VQE + Chemistry + v3 launch** — `/vqe` essay with vanilla-TS optimizer + `EnergyLandscape` + `MoleculeGallery`, concept-map progress indicator, OPS audit, v3 announcement

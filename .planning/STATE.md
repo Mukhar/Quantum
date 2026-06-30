@@ -1,7 +1,8 @@
 # State
 
-*Last updated: 2026-06-30 — v3.0 Phase 5 split planned during autonomous run.
-Phase 1 + Phase 2 verified complete; Phases 3–6 continue autonomously.*
+*Last updated: 2026-06-30 — v3.0 Phase 3 + Phase 4 implementation
+complete; Phase 4 close-out artifacts written; Phases 3 close-out + 5a/5b/6
+continue.*
 
 ## Project Reference
 
@@ -19,18 +20,20 @@ See: `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`,
 - **v2.0 status:** **Code-complete, deploy pending.** All 4 v2 phases
   shipped (247 tests, 19 pages, +44 KB site bundle). Pending: Apps
   Script provisioning, Lighthouse run, launch smoke test, ship.
-- **v3.0 status:** **Phase 1 + Phase 2 complete.** Foundation infra +
-  Teleportation flagship shipped. 324 tests, 20 pages, all routes
-  within bundle ceilings. Autonomous run in progress through Phase 6.
+- **v3.0 status:** **Phases 1–4 implementation complete.** Foundation
+  infra, Teleportation flagship, Superdense + Holevo, and Grover +
+  Search reality all shipped. 414 tests, 22 pages, all routes within
+  bundle ceilings. Phase 4 close-out artifacts written 2026-06-30;
+  Phase 3 close-out + 5a/5b/6 continue.
 
 ## Current Position
 
 | | |
 |---|---|
-| Phase | 3 (Superdense + Holevo bound) — discuss in progress |
-| Plan | — |
-| Status | Autonomous run — P5 split into planned 5a/5b; P3/P4/P6 continue |
-| Last activity | 2026-06-30 — Phase 5 split planned into 5a (QFT/period-finding) and 5b (Shor N=15/RSA/PQC) |
+| Phase | 4 (Grover + Search reality) — closed out |
+| Plan | 04-01..04-05 all landed; 04-SUMMARY.md + 04-VERIFICATION.md written |
+| Status | Phase 4 complete — next: Phase 3 close-out (artifacts) then Phase 5a |
+| Last activity | 2026-06-30 — Phase 4 close-out: 414 tests green, /grover 1.9/3.0 KB, summary + verification written |
 
 ## Where we are
 
@@ -42,8 +45,12 @@ Phase numbering reset to 1 for v3 (matching v2's pattern).
   essay `CircuitView`) + bundle-size CI gate. *Done 2026-06-29.*
 - [x] **Phase 2** — Teleportation + Quantum Networks (FLAGSHIP).
   *Done 2026-06-29 (UAT 13/14 pass + cosmetic fix landed).*
-- [ ] **Phase 3** — Superdense coding + Bandwidth / Holevo bound.
-- [ ] **Phase 4** — Grover + Search reality check.
+- [~] **Phase 3** — Superdense coding + Bandwidth / Holevo bound.
+  *Implementation complete 2026-06-30 (commits 071fea0, 2dc9083,
+  5c01bc7, 8c088fb); SUMMARY/VERIFICATION pending.*
+- [x] **Phase 4** — Grover + Search reality check.
+  *Done 2026-06-30 (414 tests, /grover 1.9/3.0 KB,
+  04-SUMMARY.md + 04-VERIFICATION.md).*
 - [ ] **Phase 5a** — Shor: QFT + period-finding. *Planned 2026-06-30; split from original dense P5.*
 - [ ] **Phase 5b** — Shor: N=15 circuit + RSACountdown + Post-quantum crypto threat. *Planned 2026-06-30; depends on 5a.*
 - [ ] **Phase 6** — VQE + Quantum chemistry + progress indicator + v3 launch.
