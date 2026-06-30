@@ -122,7 +122,7 @@ reader understands superdense ≠ free bandwidth.
      same commit as essay frontmatter changes
   4. Lighthouse mobile a11y ≥ 95 in both themes
 
-**Plans:** TBD (created by `/gsd-plan-phase 3`)
+**Plans:** `.planning/phases/03-superdense/PLAN.md`
 
 ### Phase 4: Grover + Search reality
 
@@ -229,7 +229,7 @@ on all 5 essays existing.
 |-------|----------------|-------------|------------|
 | 1. Foundation — Qiskit export + bundle CI     | 4/4   | ✅ Complete | 2026-06-29 |
 | 2. Teleportation + Quantum networks (FLAGSHIP)| 6/6   | ✅ Complete | 2026-06-29 |
-| 3. Superdense + Holevo bound                  | 0/TBD | Discuss     | — |
+| 3. Superdense + Holevo bound                  | 0/5   | Planned     | — |
 | 4. Grover + Search reality                    | 0/TBD | Discuss     | — |
 | 5a. Shor — QFT + period-finding              | 0/5   | Planned     | — |
 | 5b. Shor — N=15 + RSACountdown + PQC          | 0/5   | Planned     | — |

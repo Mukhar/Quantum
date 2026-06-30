@@ -165,8 +165,8 @@ Captured here so they're not re-discovered:
 | ALG-01  | 2 — Teleportation + Quantum networks     | 02-01, 02-02, 02-05 | TBD |
 | ALG-02  | 2 — Teleportation + Quantum networks     | 02-01, 02-03, 02-05 | TBD |
 | USE-01  | 2 — Teleportation + Quantum networks     | 02-04, 02-05        | TBD |
-| ALG-03  | 3 — Superdense + Holevo                  | TBD     | TBD |
-| USE-02  | 3 — Superdense + Holevo                  | TBD     | TBD |
+| ALG-03  | 3 — Superdense + Holevo                  | 03-01, 03-02, 03-04 | TBD |
+| USE-02  | 3 — Superdense + Holevo                  | 03-03, 03-04        | TBD |
 | ALG-04  | 4 — Grover + Search reality              | TBD     | TBD |
 | USE-03  | 4 — Grover + Search reality              | TBD     | TBD |
 | ALG-05  | 5 — Shor + QFT + PQC                     | TBD     | TBD |
