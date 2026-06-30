@@ -39,10 +39,11 @@ const NODE_R = 10;
 
 // Top row: 5 foundations essays (qubit -> entanglement).
 // Middle row: sandbox + challenges utility nodes.
-// Bottom row: 3 algorithm essays (cnot-bell -> deutsch -> teleportation).
+// Bottom row: 4 algorithm essays (cnot-bell -> deutsch -> teleportation -> grover).
 // Plan 02-05 adds Teleportation; its reading-path edge wraps from
 // deutsch (rightmost row-3 node) back left to teleportation (leftmost),
-// signalling the start of the applications track.
+// signalling the start of the applications track. Plan 04 (Grover)
+// extends the applications track rightward after teleportation.
 const nodes: Node[] = [
   { href: "/qubit",          label: "Qubit",          cx: 100,  cy: 60,  tier: "primary" },
   { href: "/superposition",  label: "Superposition",  cx: 290,  cy: 60,  tier: "primary" },
@@ -54,10 +55,11 @@ const nodes: Node[] = [
   { href: "/cnot-bell",      label: "CNOT + Bell",    cx: 670,  cy: 310, tier: "primary" },
   { href: "/deutsch",        label: "Deutsch",        cx: 860,  cy: 310, tier: "primary" },
   { href: "/teleportation",  label: "Teleportation",  cx: 100,  cy: 310, tier: "primary" },
+  { href: "/grover",         label: "Grover",         cx: 290,  cy: 310, tier: "primary" },
 ];
 
 // Directed edges: from-node index -> to-node index. Indices match `nodes`.
-// Reading-path edges (0..4 -> 7 -> 8 -> 9), plus utility entry/exit
+// Reading-path edges (0..4 -> 7 -> 8 -> 9 -> 10), plus utility entry/exit
 // (qubit/deutsch -> sandbox, qubit/deutsch -> challenges).
 const edges: Array<{ from: number; to: number; dim?: boolean }> = [
   { from: 0, to: 1 },
@@ -67,6 +69,7 @@ const edges: Array<{ from: number; to: number; dim?: boolean }> = [
   { from: 4, to: 7 },
   { from: 7, to: 8 },
   { from: 8, to: 9 },
+  { from: 9, to: 10 },
   { from: 0, to: 5 },
   { from: 8, to: 5 },
   { from: 0, to: 6 },

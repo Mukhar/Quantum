@@ -29,13 +29,14 @@ import {
   rotOp,
   measureOp,
   teleportationCircuit,
+  buildGroverCircuit,
   type Circuit,
   type Op,
 } from "../../src/lib/quantum";
 
 // Mirrors of every essay's `STARTER` (or `bellStarter`/`DEUTSCH_F2_CIRCUIT`)
 // constant. Keep in sync with src/pages/{superposition,measurement,gates,
-// entanglement,cnot-bell,deutsch,teleportation}.astro
+// entanglement,cnot-bell,deutsch,teleportation,grover}.astro
 const STARTERS: Record<string, Circuit> = {
   superposition: {
     qubits: 1,
@@ -74,6 +75,10 @@ const STARTERS: Record<string, Circuit> = {
   // deferred-measurement circuit propagates here automatically — the
   // essay and this mirror share one source of truth.
   teleportation: teleportationCircuit(),
+  // Plan 04 Grover starter: 2-qubit, marked |11⟩, one iteration.
+  // Same `buildGroverCircuit(4, 3, 1)` constant used by /grover.astro's
+  // demoCircuit so they share a single source of truth.
+  grover: buildGroverCircuit(4, 3, 1),
 };
 
 const THETA_QUANTUM = (Math.PI * 2) / 1024; // 10-bit codec resolution

@@ -1,0 +1,366 @@
+---
+/**
+ * "Grover + Search reality" — v3 Phase 4 essay.
+ *
+ * Two halves:
+ *   1. Algorithm (ALG-04): real simulator-backed amplitude amplification
+ *      over 4 qubits = 16 candidates. Uniform superposition, phase
+ *      oracle on the marked state, diffusion as inversion about the
+ *      mean. AmplitudeBars shows signed amplitudes with the marked
+ *      state going negative after the oracle, then concentrating
+ *      after diffusion.
+ *   2. Use-case reality (USE-03): SearchComparison plots classical
+ *      `N/2` average probes against Grover's `⌊π/4·√N⌋`. The widget
+ *      is formula-only beyond `N = 16` (the simulator cap).
+ *
+ * Locked sentence on RSA: "No — Grover does not break RSA. That is
+ *   Shor; see the next essay." — keeps the next-essay handoff clean.
+ *
+ * Footer-nav at Phase 4 execution time: `teleportation → grover →
+ *   sandbox`. If Phase 3 (`superdense-coding`) lands after this commit,
+ *   that essay's commit will weave itself in front of grover and
+ *   adjust the chain.
+ */
+import EssayLayout from "../layouts/EssayLayout.astro";
+import MathBlock from "../components/MathBlock.astro";
+import MathNerds from "../components/MathNerds.astro";
+import CircuitView from "../components/CircuitView.astro";
+import SandboxLink from "../components/SandboxLink.astro";
+import AmplitudeBars from "../components/AmplitudeBars.astro";
+import SearchComparison from "../components/SearchComparison.astro";
+import {
+  buildGroverCircuit,
+  optimalGroverIterations,
+  runGrover,
+  type GroverSnapshot,
+} from "../lib/quantum";
+
+const QUBITS = 4;
+const N = 1 << QUBITS;
+const DEFAULT_MARKED = 0b1011; // |1011⟩ — a non-zero pattern, easy to spot
+const K_OPT = optimalGroverIterations(N);
+
+// Precompute a snapshot sequence per marked basis state so the widget
+// can swap sequences client-side without importing the simulator. We
+// give 3 extra iterations beyond optimal so the reader can overshoot
+// and watch P(marked) drop again — the textbook over-rotation.
+const snapshotsByMarked: Record<number, GroverSnapshot[]> = Object.fromEntries(
+  Array.from({ length: N }, (_, marked) => [
+    marked,
+    runGrover({ qubits: QUBITS, markedIndex: marked, iterations: K_OPT + 3 }),
+  ]),
+);
+
+// Compact 2-qubit Grover circuit (N=4, marked=|11⟩, one iteration).
+// Same circuit object feeds CircuitView's "Copy as Qiskit" and the
+// sandbox starter so the page and its mirror in sandbox-links.test.ts
+// share one source of truth.
+const demoCircuit = buildGroverCircuit(4, 3, 1);
+---
+
+<EssayLayout
+  title="Grover + Search reality"
+  subtitle="Amplitude amplification finds a marked needle in N candidates in roughly √N steps. Quadratic — not magic. The classical baseline is N/2 average probes; Grover bends that curve, but it does not flatten it."
+  description="Watch a 4-qubit Grover search amplify a marked basis state through oracle phase flips and diffusion. Then compare iteration counts against classical linear scan from N=16 up to N=1024 — same algorithm family that gives a √N speedup against AES-256 brute force, and that does NOT break RSA."
+>
+  <p>
+    Suppose you have a black-box function <code>f(x)</code> that
+    returns <code>1</code> on exactly one input out of <code>N</code>
+    and <code>0</code> on everything else. The only test available is
+    to try an input and ask. A classical search has to keep guessing
+    — on average it takes <code>N/2</code> calls, and worst case
+    <code>N − 1</code>. A textbook example: brute-forcing a
+    fixed-length password against a hash, where every guess costs one
+    hash evaluation and the only signal is "match" or "no match".
+  </p>
+
+  <p>
+    Grover's algorithm cuts that to roughly <code>√N</code> calls. For
+    a 4-qubit register (<code>N = 16</code>) it takes
+    <strong>3</strong> oracle calls and finds the answer with
+    probability ≈ 0.96. That sounds magical, and the rest of this
+    essay is the careful look that says: it isn't, and it doesn't do
+    what the breathless press releases imply. There is no hidden
+    "lookup table in superposition." There's a real linear algebra
+    trick that nudges amplitudes around, and a real ceiling on what
+    those amplitudes can do.
+  </p>
+
+  <h2>Uniform superposition</h2>
+
+  <p>
+    Start in the all-zero state and apply Hadamard to every qubit.
+    The resulting state has every basis index with the same
+    amplitude — <code>1/√N</code> — which is also why each
+    measurement probability is <code>1/N</code>. The bar chart below
+    shows the signed amplitudes (not probabilities); at iteration 0
+    every bar is the same positive height.
+  </p>
+
+  <MathBlock tex="|s\rangle \;=\; H^{\otimes n} |0\rangle^{\otimes n} \;=\; \frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} |x\rangle" />
+
+  <h2>Oracle: a phase flip on the marked state</h2>
+
+  <p>
+    The oracle is a unitary <code>O<sub>f</sub></code> that maps
+    <code>|x⟩ ↦ (−1)<sup>f(x)</sup>|x⟩</code>. For a single marked
+    state <code>x*</code> this is the same as flipping the sign of
+    one amplitude and leaving the rest alone. After one oracle call
+    the marked bar drops below the zero axis; every other bar is
+    unchanged.
+  </p>
+
+  <p>
+    The simulator under this page does exactly that — a real sign
+    flip on the marked amplitude, no fake animation, no new gate
+    invented to make the visual prettier. Open the widget below,
+    pick a marked state in the dropdown, and press <em>Next</em>
+    once. Watch the marked bar swing negative while every other bar
+    stays put.
+  </p>
+
+  <h2>Diffusion: inversion about the mean</h2>
+
+  <p>
+    On its own the oracle does nothing visible — squaring the
+    amplitudes gives the same probabilities back, because
+    <code>(−1/√N)² = 1/N</code>. The sign flip becomes useful only
+    when the next operator pivots every amplitude around their
+    mean: <code>a<sub>i</sub> ↦ 2 · mean(a) − a<sub>i</sub></code>.
+    That's called the diffusion operator, sometimes the
+    <strong>Grover operator</strong> <code>D = 2|s⟩⟨s| − I</code>.
+    The geometric picture: reflect every amplitude across the
+    average. The marked amplitude was sitting <em>well below</em>
+    the average (it's the only negative one), so reflecting it
+    sends it <em>well above</em> — the rest barely move.
+  </p>
+
+  <AmplitudeBars
+    snapshotsByMarked={snapshotsByMarked}
+    markedIndex={DEFAULT_MARKED}
+    qubits={QUBITS}
+    caption="4-qubit Grover (N = 16). Bars are signed amplitudes — positive above the axis, negative below. Marked state is highlighted. Press Next to apply oracle + diffusion; k_opt is the textbook optimal iteration count."
+  />
+
+  <p>
+    Try this: from iteration 0, press <em>Next</em> three times.
+    That's <code>k<sub>opt</sub> = ⌊π/4·√16⌋ = 3</code>, the
+    textbook stopping point. The marked bar should be visibly the
+    tallest, with probability around <code>0.96</code> in the
+    aria-live readout. Press <em>Next</em> a few more times and
+    watch the marked probability <em>drop</em> — Grover is a
+    rotation in a 2D subspace, and you can over-rotate past the
+    target. The optimal count is not "more is better"; it's a hard
+    sweet spot.
+  </p>
+
+  <h2>The circuit, and Qiskit on real hardware</h2>
+
+  <p>
+    The simulator under the widget runs oracle and diffusion as
+    direct state-vector operations — the cleanest possible reading
+    of the algorithm at our 4-qubit cap. For the
+    <em>circuit-level</em> story (gates on wires) we drop down to
+    <code>N = 4</code> (2 qubits) where the oracle is just
+    <code>CZ(q<sub>0</sub>, q<sub>1</sub>)</code> and the diffusion
+    is <code>H<sup>⊗2</sup> · X<sup>⊗2</sup> · CZ · X<sup>⊗2</sup> · H<sup>⊗2</sup></code>.
+    One iteration is enough — for <code>N = 4</code>, Grover finds
+    the marked state with probability <em>exactly</em> 1.
+  </p>
+
+  <CircuitView
+    circuit={demoCircuit}
+    caption="A compact 2-qubit Grover circuit for marked = |11⟩. CZ is decomposed as H · CNOT · H on the target so the simulator's gate set covers it. The 'Copy as Qiskit' button gives you the same circuit ready to run on hardware."
+  />
+
+  <p class="my-6">
+    <SandboxLink circuit={demoCircuit} label="Remix this Grover starter in the sandbox →" />
+  </p>
+
+  <p>
+    The 4-qubit AmplitudeBars use direct state-vector
+    oracle/diffusion because the in-browser simulator caps at 4
+    qubits and a full multi-controlled oracle decomposition gets
+    noisy fast. The Qiskit-export button is the path for running
+    decomposed Grover on real hardware. Take the 2-qubit circuit,
+    paste it into a notebook, and scale it up.
+  </p>
+
+  <h2>How big is the speedup, actually?</h2>
+
+  <p>
+    Classical unstructured search costs <code>N/2</code> on average,
+    <code>N − 1</code> worst case. Grover costs
+    <code>⌊π/4·√N⌋</code>. The widget below maps that side by side
+    over sizes the reader can hold in their head:
+  </p>
+
+  <SearchComparison
+    caption="Drag the slider through seven search-space sizes. Beyond N = 16 the numbers come from the formulas — the in-browser simulator is hard-capped at 4 qubits, so 'simulate 1024 candidates' would be a lie."
+  />
+
+  <p>
+    <code>N = 16</code> goes from 8 average probes to 3 iterations,
+    which is a real speedup but not a jaw-dropper. The gap widens
+    as <code>N</code> grows: at <code>N = 1024</code> it's 512 vs
+    25, more than 20× — and at AES-256 sizes
+    (<code>N = 2<sup>256</sup></code>) the square-root drops the
+    workload from 2<sup>256</sup> down to 2<sup>128</sup>. That
+    last figure is the source of the "Grover halves the effective
+    key length" rule of thumb in post-quantum cryptography: a
+    Grover-armed adversary cuts your symmetric security exponent
+    in half, so you double the key length to stay even.
+  </p>
+
+  <h2>What Grover does <em>not</em> do</h2>
+
+  <p>
+    The press-release version of Grover often sounds like
+    "computer can check every database row at once," and that's
+    misleading. Two clarifications:
+  </p>
+
+  <ul class="my-4 list-disc space-y-2 pl-6 text-ink">
+    <li>
+      <strong>You still pay for the oracle.</strong> The
+      <code>√N</code> count is in oracle <em>calls</em> — but
+      whatever your oracle does to compute <code>f(x)</code> still
+      runs. If checking one candidate requires hashing a 16-byte
+      input, Grover does <code>√N</code> hashes, not zero. The
+      speedup is in the count of calls, not in the cost per call.
+    </li>
+    <li>
+      <strong>It is not a database lookup.</strong> A real database
+      has structure — indices, B-trees, hash maps — and classical
+      lookup in <code>O(1)</code> or <code>O(log N)</code> already
+      beats Grover. Grover wins only when the search space is
+      genuinely unstructured: you have to ask the oracle, and the
+      oracle is the only signal.
+    </li>
+  </ul>
+
+  <p>
+    The cleanest way to remember the line:
+  </p>
+
+  <div class="my-6 overflow-x-auto rounded-lg border border-line">
+    <table class="w-full text-sm">
+      <thead class="bg-surface-sunken/60">
+        <tr>
+          <th class="px-4 py-2 text-left font-medium text-ink-emphasis">Grover changes</th>
+          <th class="px-4 py-2 text-left font-medium text-ink-emphasis">Grover does not change</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line">
+        <tr>
+          <td class="px-4 py-2 align-top">
+            Oracle-call count: <code>N/2 → √N</code> (quadratic).
+          </td>
+          <td class="px-4 py-2 align-top">
+            Per-call cost: whatever <code>f(x)</code> requires.
+          </td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2 align-top">
+            Symmetric-key brute-force exponent (halves it).
+          </td>
+          <td class="px-4 py-2 align-top">
+            Sorted-index lookup; classical wins in <code>O(log N)</code>.
+          </td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2 align-top">
+            Practical upper bound for unstructured brute force.
+          </td>
+          <td class="px-4 py-2 align-top">
+            Public-key factoring (RSA): that's <em>Shor</em>, not Grover.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    <strong>No — Grover does not break RSA. That is Shor; see the
+    next essay.</strong> RSA's hard problem is integer factoring,
+    not unstructured search. Shor's algorithm uses the quantum
+    Fourier transform and period finding to give an
+    <em>exponential</em> (not just quadratic) speedup on factoring;
+    Grover gives you nothing on that problem. Doubling your RSA
+    modulus does not save you from Shor the way doubling AES-256
+    saves you from Grover. That's why post-quantum cryptography
+    standards (lattice schemes, hash-based signatures, code-based
+    KEMs) target the Shor threat, while AES-256 stays AES-256 with
+    a halved effective security margin.
+  </p>
+
+  <h2>Self-test</h2>
+
+  <ol class="my-6 list-decimal space-y-3 pl-6 text-ink">
+    <li>
+      In the AmplitudeBars widget, overshoot <code>k<sub>opt</sub></code>
+      by typing a larger number into the iterations override. What
+      happens to <code>P(marked)</code> at iteration 6? At
+      iteration 8? Why is the curve not monotone? (Hint: Grover is
+      a rotation by a fixed angle in the 2D subspace spanned by
+      <code>|s⟩</code> and <code>|x*⟩</code>; you can rotate past
+      the target.)
+    </li>
+    <li>
+      AES-128 has a 128-bit key and brute-force complexity
+      2<sup>128</sup>. A Grover-armed adversary spends roughly
+      2<sup>64</sup> oracle calls. Why does NIST currently
+      recommend AES-256 (effective 2<sup>128</sup> against Grover)
+      for traffic that must remain secret 50 years from now? What
+      changes if you're protecting <em>RSA-encrypted</em>
+      ciphertext instead, where Shor — not Grover — is the threat?
+    </li>
+  </ol>
+
+  <MathNerds title="The Grover operator as a rotation in a 2-D subspace">
+    <p>
+      Let <code>|x*⟩</code> be the marked basis state and
+      <code>|u⟩</code> the equal superposition of the <em>other</em>
+      <code>N − 1</code> states. Every state Grover ever produces
+      lives in the 2D real subspace
+      <code>span&#123;|u⟩, |x*⟩&#125;</code>. The starting uniform
+      superposition <code>|s⟩</code> sits in that span:
+    </p>
+    <MathBlock tex="|s\rangle \;=\; \sin\theta\, |x^*\rangle + \cos\theta\, |u\rangle, \quad \sin\theta = \frac{1}{\sqrt{N}}" />
+    <p>
+      The oracle <code>O<sub>f</sub> = I − 2|x*⟩⟨x*|</code> is a
+      reflection across <code>|u⟩</code>. The diffusion
+      <code>D = 2|s⟩⟨s| − I</code> is a reflection across
+      <code>|s⟩</code>. Two reflections in a plane compose to a
+      rotation by <code>2θ</code>:
+    </p>
+    <MathBlock tex="(D\, O_f)^k\, |s\rangle \;=\; \sin\bigl((2k + 1)\theta\bigr) |x^*\rangle + \cos\bigl((2k+1)\theta\bigr) |u\rangle" />
+    <p>
+      Maximize <code>P(x*) = sin²((2k+1)θ)</code> by solving
+      <code>(2k+1)θ ≈ π/2</code>, giving
+      <code>k<sub>opt</sub> ≈ π/(4θ) − 1/2 ≈ (π/4)·√N</code> for
+      small <code>θ</code>. That's the formula in the widget.
+      Overshoot past <code>k<sub>opt</sub></code> and you rotate
+      past <code>|x*⟩</code>; under-shoot and you stop short.
+    </p>
+    <p>
+      In the simulator we run all <code>N</code> amplitudes
+      explicitly — no exploiting the 2D structure — because at
+      <code>N ≤ 16</code> there is no compute advantage in being
+      clever, and the explicit amplitudes are what the
+      AmplitudeBars chart paints. The 4-qubit cap is the same one
+      the rest of the site enforces (REQ-13); Qiskit-export is
+      the bridge for circuits that exceed it.
+    </p>
+  </MathNerds>
+
+  <Fragment slot="footer-nav">
+    <a href="/teleportation" class="hover:text-ink">← Teleportation</a>
+    <a href="/sandbox" class="hover:text-ink">Next: open the Sandbox →</a>
+  </Fragment>
+</EssayLayout>
+
+<script>
+  // No essay-specific JS — AmplitudeBars, SearchComparison,
+  // CircuitView, and SandboxLink each ship their own hydrators.
+</script>
