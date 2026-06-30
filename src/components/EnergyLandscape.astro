@@ -1,0 +1,609 @@
+---
+/**
+ * EnergyLandscape — 2D heatmap of H₂'s analytic energy surface
+ * `E(θ₁, θ₂)` (`src/lib/quantum/vqe.ts → h2Energy`). The reader drags
+ * a marker (or presses Auto-descend) to feel the basin geometry the
+ * VQE optimizer climbs down. Locks D-10..D-17 from PHASE-CONTEXT.
+ *
+ * Design notes:
+ *   - Pure SSR for the heatmap (50×50 = 2 500 `<rect>` cells), so no
+ *     dense surface ever re-renders client-side (D-13). The client
+ *     only redraws a marker + reads off `interpolateSurface`.
+ *   - 2-stop brand-aligned gradient computed at SSR per cell (D-14).
+ *     We pick stops that read on both light and dark backgrounds —
+ *     indigo-500 → amber-500. Each cell's fill is paired with the
+ *     plain-language readout below so meaning never relies on hue
+ *     alone (D-15).
+ *   - Contour overlay is the "per-cell threshold" approach the plan
+ *     allows in lieu of full marching-squares: every cell is bucketed
+ *     into one of 8 levels at SSR, and any cell-edge where the bucket
+ *     changes versus its right or bottom neighbour gets a thin
+ *     `<line>` segment. Result is crisp isoband boundaries that read
+ *     in both themes without a heavyweight algorithm.
+ *   - Marker is a focusable `<circle role="slider">`. Drag, keyboard
+ *     nudging, Home-to-minimum, `prefers-reduced-motion`, and an
+ *     `aria-busy` Auto-descend cycle all live in the inline script.
+ *   - The Auto-descend animation runs the *exact* `gradientDescent`
+ *     trajectory `tests/quantum/vqe.test.ts` validates (D-11) by
+ *     importing the helper into the bundled client script. No
+ *     re-implementation of the optimizer.
+ */
+import {
+  DEFAULT_INITIAL_THETAS,
+  H2_TRUE_MINIMUM,
+  RESEED_SEEDS,
+  h2Energy,
+  sampleSurface,
+} from "../lib/quantum";
+
+interface Props {
+  caption?: string;
+}
+
+const { caption } = Astro.props as Props;
+
+/* ---------- SSR: bake the surface ---------- */
+
+const GRID = 50;
+const RANGE: [number, number] = [0, 2 * Math.PI];
+const surface = sampleSurface(h2Energy, GRID, RANGE);
+const { values, min: surfaceMin, max: surfaceMax } = surface;
+const span = surfaceMax - surfaceMin || 1;
+
+// Heatmap dimensions: 500×500 viewBox with a 25 px gutter for axis
+// labels. 50 cells × 9 px = 450 px plot area; leaves a 25 px ring.
+const VB = 500;
+const PAD = 25;
+const PLOT = VB - PAD * 2; // 450
+const CELL = PLOT / GRID; // 9
+
+// 2-stop gradient. Stops chosen to read on both light (`#f8fafc`) and
+// dark (`#020617`) page backgrounds and to remain distinct in
+// monochrome (luminance differs by ~0.25). Pair with text (D-15).
+const COLOR_LOW: [number, number, number] = [99, 102, 241]; // indigo-500
+const COLOR_HIGH: [number, number, number] = [245, 158, 11]; // amber-500
+
+const mix = (
+  t: number,
+  a: [number, number, number],
+  b: [number, number, number],
+): string => {
+  const r = Math.round(a[0] + (b[0] - a[0]) * t);
+  const g = Math.round(a[1] + (b[1] - a[1]) * t);
+  const bl = Math.round(a[2] + (b[2] - a[2]) * t);
+  return `rgb(${r} ${g} ${bl})`;
+};
+
+// 8 evenly-spaced bands between min and max (D-15: helps readers see
+// basins and downhill direction).
+const BAND_COUNT = 8;
+const bucketOf = (v: number): number => {
+  const t = (v - surfaceMin) / span;
+  return Math.min(BAND_COUNT - 1, Math.floor(t * BAND_COUNT));
+};
+
+interface Cell {
+  x: number;
+  y: number;
+  fill: string;
+}
+const cells: Cell[] = [];
+for (let j = 0; j < GRID; j++) {
+  for (let i = 0; i < GRID; i++) {
+    const v = values[j * GRID + i];
+    const t = (v - surfaceMin) / span;
+    cells.push({
+      x: PAD + i * CELL,
+      y: PAD + j * CELL,
+      fill: mix(t, COLOR_LOW, COLOR_HIGH),
+    });
+  }
+}
+
+// Contour edges: for each cell, compare its bucket to its right and
+// bottom neighbours; if different, emit a `<line>` on that shared
+// edge. Roughly equivalent to a marching-squares isoband boundary
+// for our purposes, and trivially correct.
+interface Edge {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+const edges: Edge[] = [];
+for (let j = 0; j < GRID; j++) {
+  for (let i = 0; i < GRID; i++) {
+    const b = bucketOf(values[j * GRID + i]);
+    if (i + 1 < GRID) {
+      const br = bucketOf(values[j * GRID + (i + 1)]);
+      if (b !== br) {
+        const x = PAD + (i + 1) * CELL;
+        edges.push({ x1: x, y1: PAD + j * CELL, x2: x, y2: PAD + (j + 1) * CELL });
+      }
+    }
+    if (j + 1 < GRID) {
+      const bb = bucketOf(values[(j + 1) * GRID + i]);
+      if (b !== bb) {
+        const y = PAD + (j + 1) * CELL;
+        edges.push({ x1: PAD + i * CELL, y1: y, x2: PAD + (i + 1) * CELL, y2: y });
+      }
+    }
+  }
+}
+
+/* ---------- SSR: initial marker state ---------- */
+
+const [theta1Init, theta2Init] = DEFAULT_INITIAL_THETAS;
+const energyInit = h2Energy(theta1Init, theta2Init);
+const deltaMinInit = energyInit - H2_TRUE_MINIMUM.energy;
+const markerCxInit = PAD + (theta1Init / (2 * Math.PI)) * PLOT;
+const markerCyInit = PAD + (theta2Init / (2 * Math.PI)) * PLOT;
+
+const fmt = (n: number) => n.toFixed(3);
+const initialReadout =
+  `θ₁ = ${fmt(theta1Init)}, θ₂ = ${fmt(theta2Init)}, ` +
+  `energy = ${fmt(energyInit)} Hₐ, Δmin = ${fmt(deltaMinInit)} Hₐ`;
+
+// Inlined for the client: only the Float64 values + grid/range need to
+// travel. Stops & buckets are SSR-only concerns (the client never
+// re-paints the heatmap). The surface blob is also what
+// `interpolateSurface` works against client-side.
+const surfaceBlob = JSON.stringify({
+  values: Array.from(values),
+  grid: GRID,
+  range: RANGE,
+  min: surfaceMin,
+  max: surfaceMax,
+});
+const seedsBlob = JSON.stringify(RESEED_SEEDS.map((s) => [s[0], s[1]]));
+const minimumBlob = JSON.stringify({
+  theta1: H2_TRUE_MINIMUM.theta1,
+  theta2: H2_TRUE_MINIMUM.theta2,
+  energy: H2_TRUE_MINIMUM.energy,
+});
+const defaultsBlob = JSON.stringify([DEFAULT_INITIAL_THETAS[0], DEFAULT_INITIAL_THETAS[1]]);
+
+// Axis tick positions for θ ∈ {0, π/2, π, 3π/2, 2π}.
+const TICKS = [
+  { t: 0, label: "0" },
+  { t: Math.PI / 2, label: "π/2" },
+  { t: Math.PI, label: "π" },
+  { t: (3 * Math.PI) / 2, label: "3π/2" },
+  { t: 2 * Math.PI, label: "2π" },
+];
+const tickPx = (t: number) => PAD + (t / (2 * Math.PI)) * PLOT;
+---
+
+<figure
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5 space-y-3"
+  data-widget="energy-landscape"
+  data-grid={GRID}
+  data-pad={PAD}
+  data-plot={PLOT}
+  data-surface={surfaceBlob}
+  data-seeds={seedsBlob}
+  data-minimum={minimumBlob}
+  data-defaults={defaultsBlob}
+>
+  {caption && (
+    <figcaption class="text-sm text-ink-subtle">{caption}</figcaption>
+  )}
+
+  <div class="grid gap-4 md:grid-cols-[1fr_auto] md:items-start">
+    <div class="relative">
+      <svg
+        class="w-full h-auto select-none touch-none"
+        viewBox={`0 0 ${VB} ${VB}`}
+        role="img"
+        aria-label="Energy surface of H₂ as a function of two ansatz angles θ₁ and θ₂"
+        data-role="plot"
+      >
+        {/* Heatmap cells */}
+        <g data-role="cells" shape-rendering="crispEdges">
+          {cells.map((c) => (
+            <rect
+              x={c.x}
+              y={c.y}
+              width={CELL}
+              height={CELL}
+              fill={c.fill}
+            />
+          ))}
+        </g>
+
+        {/* Contour overlay */}
+        <g
+          data-role="contours"
+          stroke="rgb(var(--color-ink) / 0.45)"
+          stroke-width="0.6"
+          shape-rendering="crispEdges"
+        >
+          {edges.map((e) => (
+            <line x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} />
+          ))}
+        </g>
+
+        {/* Plot border */}
+        <rect
+          x={PAD}
+          y={PAD}
+          width={PLOT}
+          height={PLOT}
+          fill="none"
+          stroke="rgb(var(--color-line-strong))"
+          stroke-width="1"
+        />
+
+        {/* Axis ticks + labels */}
+        <g
+          font-family="ui-monospace, monospace"
+          font-size="10"
+          fill="rgb(var(--color-ink-subtle))"
+        >
+          {TICKS.map((tk) => (
+            <text x={tickPx(tk.t)} y={VB - 6} text-anchor="middle">{tk.label}</text>
+          ))}
+          {TICKS.map((tk) => (
+            <text x={6} y={tickPx(tk.t) + 3}>{tk.label}</text>
+          ))}
+        </g>
+
+        {/* Axis names */}
+        <text
+          x={VB / 2}
+          y={VB - 18}
+          text-anchor="middle"
+          font-family="ui-monospace, monospace"
+          font-size="11"
+          fill="rgb(var(--color-ink-muted))"
+        >θ₁</text>
+        <text
+          x={14}
+          y={VB / 2}
+          text-anchor="middle"
+          transform={`rotate(-90 14 ${VB / 2})`}
+          font-family="ui-monospace, monospace"
+          font-size="11"
+          fill="rgb(var(--color-ink-muted))"
+        >θ₂</text>
+
+        {/* True minimum cross-hair */}
+        <g
+          data-role="minimum-marker"
+          stroke="rgb(var(--color-ink) / 0.55)"
+          stroke-width="1"
+          fill="none"
+        >
+          <circle
+            cx={PAD + (H2_TRUE_MINIMUM.theta1 / (2 * Math.PI)) * PLOT}
+            cy={PAD + (H2_TRUE_MINIMUM.theta2 / (2 * Math.PI)) * PLOT}
+            r="4"
+          />
+          <line
+            x1={PAD + (H2_TRUE_MINIMUM.theta1 / (2 * Math.PI)) * PLOT - 7}
+            y1={PAD + (H2_TRUE_MINIMUM.theta2 / (2 * Math.PI)) * PLOT}
+            x2={PAD + (H2_TRUE_MINIMUM.theta1 / (2 * Math.PI)) * PLOT + 7}
+            y2={PAD + (H2_TRUE_MINIMUM.theta2 / (2 * Math.PI)) * PLOT}
+          />
+          <line
+            x1={PAD + (H2_TRUE_MINIMUM.theta1 / (2 * Math.PI)) * PLOT}
+            y1={PAD + (H2_TRUE_MINIMUM.theta2 / (2 * Math.PI)) * PLOT - 7}
+            x2={PAD + (H2_TRUE_MINIMUM.theta1 / (2 * Math.PI)) * PLOT}
+            y2={PAD + (H2_TRUE_MINIMUM.theta2 / (2 * Math.PI)) * PLOT + 7}
+          />
+        </g>
+
+        {/* Draggable marker (focusable). The halo `<circle>` is shown
+            only when focused so the keyboard target is unmistakable. */}
+        <circle
+          data-role="marker-halo"
+          cx={markerCxInit}
+          cy={markerCyInit}
+          r="11"
+          fill="rgb(var(--color-accent) / 0.25)"
+          stroke="none"
+          style="opacity: 0;"
+          pointer-events="none"
+        />
+        <circle
+          data-role="marker"
+          cx={markerCxInit}
+          cy={markerCyInit}
+          r="7"
+          fill="rgb(var(--color-surface-elevated))"
+          stroke="rgb(var(--color-accent))"
+          stroke-width="2.5"
+          tabindex="0"
+          role="slider"
+          aria-orientation="other"
+          aria-valuemin="0"
+          aria-valuemax="6.283185307179586"
+          aria-valuenow={theta1Init}
+          aria-label="Drag or use arrow keys to change θ₁ and θ₂; press Home to jump to the documented minimum"
+          style="cursor: grab; outline: none;"
+        />
+      </svg>
+    </div>
+
+    <div class="space-y-3 md:max-w-[14rem]">
+      <div class="space-y-1.5">
+        <button
+          type="button"
+          data-action="auto-descend"
+          class="w-full rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-sm font-mono text-accent-emphasis hover:bg-accent/20 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent transition-colors"
+          aria-label="Animate the gradient-descent optimizer from the current marker position"
+        >
+          Auto-descend ▶
+        </button>
+        <button
+          type="button"
+          data-action="reseed"
+          class="w-full rounded-md border border-line-strong bg-surface-sunken/60 px-3 py-1.5 text-sm text-ink-muted hover:bg-line-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent transition-colors"
+          aria-label="Cycle to the next preset starting position"
+        >
+          Reseed ↻
+        </button>
+      </div>
+
+      <p
+        data-role="readout"
+        aria-live="polite"
+        class="font-mono text-xs leading-relaxed text-ink-emphasis tabular-nums break-words"
+      >
+        {initialReadout}
+      </p>
+
+      <p class="text-[11px] text-ink-subtle leading-snug">
+        Cool indigo = low energy (basin); warm amber = high energy.
+        Cross-hair marks the documented minimum at (π, π).
+      </p>
+    </div>
+  </div>
+</figure>
+
+<script>
+  import {
+    gradientDescent,
+    h2Energy,
+    interpolateSurface,
+    type OptimizerStep,
+    type SampledSurface,
+  } from "../lib/quantum/vqe";
+  import { signal } from "../lib/sandbox/signal";
+
+  const TWO_PI = 2 * Math.PI;
+  const NUDGE = TWO_PI / 100;
+  const FRAME_MS = 60;
+
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function clamp(v: number, lo: number, hi: number): number {
+    return v < lo ? lo : v > hi ? hi : v;
+  }
+
+  function fmt(n: number): string {
+    return n.toFixed(3);
+  }
+
+  function mount(el: HTMLElement) {
+    const grid = Number(el.dataset.grid ?? "50");
+    const pad = Number(el.dataset.pad ?? "25");
+    const plot = Number(el.dataset.plot ?? "450");
+
+    let surface: SampledSurface;
+    let seeds: Array<[number, number]>;
+    let minimum: { theta1: number; theta2: number; energy: number };
+    let defaults: [number, number];
+    try {
+      const raw = JSON.parse(el.dataset.surface ?? "null");
+      surface = {
+        values: new Float64Array(raw.values),
+        grid: raw.grid,
+        range: raw.range,
+        min: raw.min,
+        max: raw.max,
+      };
+      seeds = JSON.parse(el.dataset.seeds ?? "[]");
+      minimum = JSON.parse(el.dataset.minimum ?? "{}");
+      defaults = JSON.parse(el.dataset.defaults ?? "[0,0]");
+    } catch {
+      console.warn("EnergyLandscape: could not parse data attributes", el);
+      return;
+    }
+    if (grid !== surface.grid) return;
+
+    const svg = el.querySelector<SVGSVGElement>('[data-role="plot"]')!;
+    const marker = el.querySelector<SVGCircleElement>('[data-role="marker"]')!;
+    const halo = el.querySelector<SVGCircleElement>('[data-role="marker-halo"]')!;
+    const readout = el.querySelector<HTMLElement>('[data-role="readout"]')!;
+    const descendBtn = el.querySelector<HTMLButtonElement>(
+      '[data-action="auto-descend"]',
+    )!;
+    const reseedBtn = el.querySelector<HTMLButtonElement>(
+      '[data-action="reseed"]',
+    )!;
+
+    // Reactive state. `signal<T>` keeps the marker + readout + ARIA
+    // attributes in sync from one mutation point.
+    const thetas = signal<[number, number]>([defaults[0], defaults[1]]);
+    let seedCursor = 0;
+    let animationToken = 0;
+
+    const pixelOf = (t: number) => pad + (t / TWO_PI) * plot;
+
+    const render = () => {
+      const [t1, t2] = thetas.value;
+      const cx = pixelOf(t1);
+      const cy = pixelOf(t2);
+      marker.setAttribute("cx", String(cx));
+      marker.setAttribute("cy", String(cy));
+      halo.setAttribute("cx", String(cx));
+      halo.setAttribute("cy", String(cy));
+      marker.setAttribute("aria-valuenow", String(t1));
+
+      // Energy via interpolation against the SSR-baked surface; matches
+      // h2Energy(t1, t2) to ~1e-3 thanks to bilinear smoothing.
+      const energy = interpolateSurface(surface, t1, t2);
+      const delta = energy - minimum.energy;
+      readout.textContent =
+        `θ₁ = ${fmt(t1)}, θ₂ = ${fmt(t2)}, ` +
+        `energy = ${fmt(energy)} Hₐ, Δmin = ${fmt(delta)} Hₐ`;
+    };
+
+    thetas.subscribe(render);
+
+    /* ---------- Pointer drag ---------- */
+
+    const setFromPointer = (event: PointerEvent) => {
+      const rect = svg.getBoundingClientRect();
+      // viewBox is 500×500; map clientX/Y back through the rendered size.
+      const vbX = ((event.clientX - rect.left) / rect.width) * 500;
+      const vbY = ((event.clientY - rect.top) / rect.height) * 500;
+      const t1 = clamp(((vbX - pad) / plot) * TWO_PI, 0, TWO_PI);
+      const t2 = clamp(((vbY - pad) / plot) * TWO_PI, 0, TWO_PI);
+      thetas.set([t1, t2]);
+    };
+
+    let dragging = false;
+    svg.addEventListener("pointerdown", (event) => {
+      // Ignore right-click / middle-click.
+      if (event.button !== 0) return;
+      dragging = true;
+      try {
+        svg.setPointerCapture(event.pointerId);
+      } catch {
+        /* setPointerCapture can throw on some Safari versions; safe to ignore */
+      }
+      marker.style.cursor = "grabbing";
+      cancelAnimation();
+      setFromPointer(event);
+      event.preventDefault();
+    });
+    svg.addEventListener("pointermove", (event) => {
+      if (!dragging) return;
+      setFromPointer(event);
+    });
+    const endDrag = (event: PointerEvent) => {
+      if (!dragging) return;
+      dragging = false;
+      marker.style.cursor = "grab";
+      try {
+        svg.releasePointerCapture(event.pointerId);
+      } catch {
+        /* ignore */
+      }
+    };
+    svg.addEventListener("pointerup", endDrag);
+    svg.addEventListener("pointercancel", endDrag);
+
+    /* ---------- Keyboard nudging (D-16) ---------- */
+
+    marker.addEventListener("keydown", (event) => {
+      const [t1, t2] = thetas.value;
+      switch (event.key) {
+        case "ArrowLeft":
+          thetas.set([clamp(t1 - NUDGE, 0, TWO_PI), t2]);
+          cancelAnimation();
+          event.preventDefault();
+          break;
+        case "ArrowRight":
+          thetas.set([clamp(t1 + NUDGE, 0, TWO_PI), t2]);
+          cancelAnimation();
+          event.preventDefault();
+          break;
+        case "ArrowUp":
+          thetas.set([t1, clamp(t2 - NUDGE, 0, TWO_PI)]);
+          cancelAnimation();
+          event.preventDefault();
+          break;
+        case "ArrowDown":
+          thetas.set([t1, clamp(t2 + NUDGE, 0, TWO_PI)]);
+          cancelAnimation();
+          event.preventDefault();
+          break;
+        case "Home":
+          thetas.set([minimum.theta1, minimum.theta2]);
+          cancelAnimation();
+          event.preventDefault();
+          break;
+      }
+    });
+
+    // Focus halo (visible focus indicator — D-16).
+    marker.addEventListener("focus", () => {
+      halo.style.opacity = "1";
+    });
+    marker.addEventListener("blur", () => {
+      halo.style.opacity = "0";
+    });
+
+    /* ---------- Auto-descend (D-11) ---------- */
+
+    const timers: number[] = [];
+    function cancelAnimation() {
+      animationToken += 1;
+      for (const id of timers) window.clearTimeout(id);
+      timers.length = 0;
+      descendBtn.removeAttribute("aria-busy");
+      descendBtn.disabled = false;
+    }
+
+    descendBtn.addEventListener("click", () => {
+      cancelAnimation();
+      const [t1, t2] = thetas.value;
+      const trajectory: OptimizerStep[] = gradientDescent({
+        f: (p) => h2Energy(p[0], p[1]),
+        initial: [t1, t2],
+      });
+      if (trajectory.length === 0) return;
+      const final = trajectory[trajectory.length - 1];
+
+      if (reduceMotion) {
+        // Snap straight to the converged frame; no intermediate paint.
+        thetas.set([final.params[0], final.params[1]]);
+        return;
+      }
+
+      descendBtn.setAttribute("aria-busy", "true");
+      descendBtn.disabled = true;
+      const token = ++animationToken;
+
+      // Frame 0 is the starting state we're already on; schedule
+      // 1..n-1 on a fixed 60 ms cadence, then clear aria-busy.
+      for (let k = 1; k < trajectory.length; k++) {
+        const step = trajectory[k];
+        const id = window.setTimeout(() => {
+          if (token !== animationToken) return;
+          thetas.set([step.params[0], step.params[1]]);
+          if (k === trajectory.length - 1) {
+            descendBtn.removeAttribute("aria-busy");
+            descendBtn.disabled = false;
+          }
+        }, k * FRAME_MS);
+        timers.push(id);
+      }
+    });
+
+    /* ---------- Reseed (D-05) ---------- */
+
+    reseedBtn.addEventListener("click", () => {
+      cancelAnimation();
+      if (seeds.length === 0) return;
+      seedCursor = (seedCursor + 1) % seeds.length;
+      const next = seeds[seedCursor];
+      thetas.set([next[0], next[1]]);
+    });
+
+    // Initial paint syncs readout text to the SSR initial values via
+    // the interpolated energy (so a tiny SSR/runtime drift never lies
+    // to screen-readers).
+    render();
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="energy-landscape"]')
+    .forEach(mount);
+</script>

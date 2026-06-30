@@ -1,0 +1,153 @@
+---
+/**
+ * MoleculeGallery — USE-05 use-case-half widget for `/vqe`.
+ *
+ * SSR card grid of the three pre-baked molecules in
+ * `src/data/molecules.json` (H₂, HeH⁺, LiH). Each card shows:
+ *   - Display name + chemical formula.
+ *   - Equilibrium bond distance (Å), with a deliberately `disabled`
+ *     range slider so the data look interactive without implying live
+ *     ab initio recomputation (D-25).
+ *   - Saved ansatz parameters (θ₁, θ₂) in monospace.
+ *   - Converged energy in both Hartree and eV (D-26).
+ *   - Embedded static `<CircuitView showRemixLink={false}>` of the
+ *     ansatz — the existing baked `data-qiskit` + event-delegated
+ *     `copy-qiskit` hydrator on `CircuitView` provides the per-card
+ *     Copy-as-Qiskit button at zero JS cost to this gallery (D-18).
+ *   - Visible "precomputed VQE result" note + text source citation.
+ *
+ * Locks D-18, D-21, D-22..D-26.
+ *
+ * Why no per-card hydrator: `CircuitView` already bakes the Qiskit
+ * snippet into a `data-qiskit` attr on a button with
+ * `data-action="copy-qiskit"`, and a single page-level event-
+ * delegated click handler handles every CircuitView on the route.
+ * This gallery ships zero client JS.
+ *
+ * Why `validateCircuit` at frontmatter time: a bad data edit to
+ * `molecules.json` should fail `npm run build` loudly rather than
+ * ship a broken Qiskit copy button (D-21 safety net).
+ */
+import CircuitView from "./CircuitView.astro";
+import {
+  MOLECULES,
+  MOLECULE_IDS,
+  type Molecule,
+} from "../data/molecules";
+import {
+  validateCircuit,
+  type Circuit,
+  type Op,
+} from "../lib/quantum";
+
+interface Props {
+  /** Optional figure-level caption. Renders inside an `sr-only`
+   *  figcaption so screen readers get the context even when the
+   *  grid's visible heading lives on a parent essay section. */
+  caption?: string;
+  class?: string;
+}
+
+const {
+  caption = "Pre-baked VQE results for H₂, HeH⁺, and LiH.",
+  class: extraClass = "",
+} = Astro.props as Props;
+
+interface Card {
+  m: Molecule;
+  circuit: Circuit;
+  /** Slider bounds, ±50% of equilibrium — purely cosmetic (D-25). */
+  distMin: string;
+  distMax: string;
+}
+
+// Build cards at frontmatter time. `validateCircuit` throws on any
+// data-shape failure so `molecules.json` cannot drift away from the
+// `Circuit` contract without failing the build (D-21).
+const cards: Card[] = MOLECULE_IDS.map((id) => {
+  const m = MOLECULES[id];
+  const circuit: Circuit = {
+    qubits: m.qubits,
+    steps: m.ansatz_ops as Op[][],
+  };
+  validateCircuit(circuit);
+  return {
+    m,
+    circuit,
+    distMin: (m.equilibrium_distance_angstrom * 0.5).toFixed(2),
+    distMax: (m.equilibrium_distance_angstrom * 1.5).toFixed(2),
+  };
+});
+---
+
+<figure
+  class:list={["not-prose my-6 space-y-3", extraClass]}
+  data-widget="molecule-gallery"
+  aria-label={caption}
+>
+  <figcaption class="sr-only">{caption}</figcaption>
+  <ul role="list" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    {cards.map(({ m, circuit, distMin, distMax }) => (
+      <li
+        data-role="card"
+        data-molecule-id={m.id}
+        class="flex flex-col rounded-lg border border-line bg-surface-elevated/40 p-4 space-y-3"
+      >
+        <header class="space-y-1">
+          <h3 class="font-semibold text-ink">
+            {m.name}
+            <span class="ml-2 font-mono text-sm text-ink-subtle">{m.formula}</span>
+          </h3>
+          <p class="text-sm text-ink-subtle">{m.description}</p>
+        </header>
+
+        <label class="block text-xs text-ink-subtle">
+          Bond distance
+          <input
+            type="range"
+            disabled
+            value={m.equilibrium_distance_angstrom}
+            min={distMin}
+            max={distMax}
+            step="0.01"
+            class="mt-1 w-full opacity-60"
+            aria-describedby={`${m.id}-distance-note`}
+          />
+          <span id={`${m.id}-distance-note`} class="block text-xs text-ink-subtle">
+            <span class="font-mono text-ink">{m.equilibrium_distance_angstrom} Å</span>
+            {" "}(equilibrium · slider is illustrative)
+          </span>
+        </label>
+
+        <p class="font-mono text-xs text-ink" data-role="ansatz-params">
+          θ₁ = {m.ansatz_params.theta1.toFixed(4)}, θ₂ = {m.ansatz_params.theta2.toFixed(4)}
+        </p>
+
+        <dl class="text-sm">
+          <dt class="text-ink-subtle">Energy</dt>
+          <dd class="font-mono text-ink" data-role="energy">
+            {m.energy_hartree.toFixed(4)} Hₐ
+            <span class="text-ink-subtle">
+              ({m.energy_ev.toFixed(2)} eV)
+            </span>
+          </dd>
+        </dl>
+
+        <div class="mt-auto">
+          <CircuitView
+            circuit={circuit}
+            caption={`Ansatz for ${m.formula} (${m.qubits}-qubit)`}
+            showRemixLink={false}
+          />
+        </div>
+
+        <p class="text-xs text-ink-subtle" data-role="precomputed-note">
+          {m.precomputed_note}
+        </p>
+        <p class="text-xs text-ink-subtle" data-role="source">
+          Source: {m.source}
+        </p>
+      </li>
+    ))}
+  </ul>
+</figure>
