@@ -56,6 +56,22 @@ export {
 } from "./teleportation";
 export type { ProtocolStep, TeleportationOpts } from "./teleportation";
 
+export {
+  encodingOps,
+  superdenseCircuit,
+  superdenseSteps,
+  decodeSuperdense,
+  allSuperdenseCases,
+  SUPERDENSE_MESSAGES,
+  BELL_STATE_LABEL,
+  ENCODING_GATE_LABEL,
+} from "./superdense";
+export type {
+  SuperdenseBits,
+  SuperdenseDecodeResult,
+  SuperdenseCircuitOpts,
+} from "./superdense";
+
 export { replayProtocol } from "./protocolStepper";
 
 export { endpointsEntangled } from "./network";
