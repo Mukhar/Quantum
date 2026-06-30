@@ -1,0 +1,398 @@
+---
+/**
+ * QFTVisualizer — 4-qubit Quantum Fourier Transform spike viewer.
+ *
+ * Phase 5a Plan 05-02 widget. ALG-05 asks for a visualizer that shows
+ * "periodic structure becomes spikes": pick an input state, watch the
+ * 16-bin probability distribution before and after QFT. The visual
+ * language deliberately mirrors `ProbabilityBars.astro` — same SVG
+ * shell, same readout posture, same theme classes — so readers
+ * arriving from /grover and /superdense-coding don't need to learn a
+ * new chart on a dense essay.
+ *
+ * Why precompute the full preset → (input, output) map at frontmatter
+ * time instead of running the simulator client-side: every named
+ * preset is deterministic, so the page bakes the input + output
+ * probability arrays into `data-presets` and the client swaps which
+ * snapshot to render on dropdown change. The Custom path runs a tiny
+ * inline DFT on the 16 weights the reader types; that math is small
+ * enough to copy into the script rather than pulling the full module
+ * into the client bundle.
+ */
+import {
+  basisLabels,
+  qftState,
+  probabilitiesFromState,
+  stateFromBasisIndices,
+} from "../lib/quantum/qft";
+
+interface Props {
+  caption?: string;
+}
+
+const { caption } = Astro.props as Props;
+
+const QUBITS = 4;
+const N = 1 << QUBITS;
+const LABELS = basisLabels(QUBITS);
+
+interface Preset {
+  id: string;
+  label: string;
+  indices: number[];
+  hint: string;
+}
+
+const PRESETS: Preset[] = [
+  {
+    id: "ket-0000",
+    label: "|0000⟩",
+    indices: [0],
+    hint: "A single basis state. QFT spreads it into a uniform superposition — every output bin has the same probability.",
+  },
+  {
+    id: "ket-0001",
+    label: "|0001⟩",
+    indices: [1],
+    hint: "Same uniform output magnitude as |0000⟩, but each bin carries a different phase. Squaring still gives uniform probabilities.",
+  },
+  {
+    id: "ket-0011",
+    label: "|0011⟩",
+    indices: [3],
+    hint: "Another single basis state — any |x⟩ produces a uniform output magnitude. The information lives in phases the bar chart cannot show.",
+  },
+  {
+    id: "ket-0101",
+    label: "|0101⟩",
+    indices: [5],
+    hint: "Single basis input; the magnitude story remains uniform. The phase pattern is what Shor's algorithm actually measures via interference.",
+  },
+  {
+    id: "period-4",
+    label: "Period-4 comb",
+    indices: [0, 4, 8, 12],
+    hint: "Uniform superposition over every 4th index. The QFT concentrates probability on 4 evenly spaced output spikes — the canonical 'period 4 ↔ spikes 4 apart' pattern at the heart of Shor.",
+  },
+];
+
+interface PresetSnapshot {
+  input: number[];
+  output: number[];
+}
+
+const presetData: Record<string, PresetSnapshot> = {};
+const presetHints: Record<string, string> = {};
+const presetLabels: Record<string, string> = {};
+for (const p of PRESETS) {
+  const state = stateFromBasisIndices(p.indices, QUBITS);
+  const out = qftState(state, QUBITS);
+  presetData[p.id] = {
+    input: probabilitiesFromState(state),
+    output: probabilitiesFromState(out),
+  };
+  presetHints[p.id] = p.hint;
+  presetLabels[p.id] = p.label;
+}
+
+const initialPreset = PRESETS[0];
+const initialSnap = presetData[initialPreset.id];
+// Strongest output bin for the SSR readout — matches the first client
+// paint so there is no flash of "Custom: …" before hydration.
+let initialPeakIdx = 0;
+for (let i = 1; i < initialSnap.output.length; i++) {
+  if (initialSnap.output[i] > initialSnap.output[initialPeakIdx]) {
+    initialPeakIdx = i;
+  }
+}
+const initialIsUniform = initialSnap.output.every(
+  (p) => Math.abs(p - 1 / N) < 1e-6,
+);
+const initialReadout = initialIsUniform
+  ? `${initialPreset.label}: output is uniform — every bin has P = ${(1 / N).toFixed(3)}.`
+  : `${initialPreset.label}: strongest output bin = ${LABELS[initialPeakIdx]} at P = ${initialSnap.output[initialPeakIdx].toFixed(3)}.`;
+---
+
+<figure
+  class="my-6 rounded-lg border border-line bg-surface-elevated/40 p-5 space-y-4"
+  data-widget="qft-visualizer"
+  data-qubits={QUBITS}
+  data-presets={JSON.stringify(presetData)}
+  data-hints={JSON.stringify(presetHints)}
+  data-labels={JSON.stringify(LABELS)}
+  data-preset-labels={JSON.stringify(presetLabels)}
+  tabindex="0"
+>
+  {caption && (
+    <figcaption class="text-sm text-ink-subtle">{caption}</figcaption>
+  )}
+
+  <div class="flex flex-wrap items-center gap-3 text-sm">
+    <label class="flex items-center gap-2">
+      <span class="text-ink-muted">Input state</span>
+      <select
+        data-action="preset"
+        class="rounded-md border border-line-strong bg-surface-sunken/60 px-2 py-1 font-mono text-xs text-ink-emphasis focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        aria-label="Input state preset"
+      >
+        {PRESETS.map((p) => (
+          <option value={p.id} selected={p.id === initialPreset.id}>{p.label}</option>
+        ))}
+        <option value="custom">Custom…</option>
+      </select>
+    </label>
+    <p data-role="preset-hint" class="text-xs text-ink-subtle">
+      {initialPreset.hint}
+    </p>
+  </div>
+
+  <div data-role="custom-editor" hidden class="space-y-2 rounded-md border border-line bg-surface-sunken/40 p-3">
+    <p class="text-xs text-ink-muted">
+      Type a real weight for each basis state. Values are normalized
+      before the QFT runs, so any non-zero pattern works. Leave the
+      rest at 0 to focus on a specific structure.
+    </p>
+    <div class="grid grid-cols-4 gap-2 sm:grid-cols-8">
+      {LABELS.map((label, idx) => (
+        <label class="flex flex-col gap-1">
+          <span class="font-mono text-[10px] text-ink-subtle">{label}</span>
+          <input
+            type="number"
+            data-action="custom-amp"
+            data-idx={idx}
+            step="0.1"
+            value={idx === 0 ? "1" : "0"}
+            class="rounded border border-line bg-surface-elevated/60 px-1 py-0.5 font-mono text-xs text-ink tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            aria-label={`Amplitude weight for ${label}`}
+          />
+        </label>
+      ))}
+    </div>
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <div>
+      <p class="mb-1 text-xs uppercase tracking-widest text-ink-subtle">Input probabilities</p>
+      <svg
+        class="w-full h-40 text-accent"
+        viewBox="0 0 480 160"
+        role="img"
+        aria-label="Input probability bars (16 basis states)"
+        data-role="chart-input"
+      ></svg>
+    </div>
+    <div>
+      <p class="mb-1 text-xs uppercase tracking-widest text-ink-subtle">After QFT</p>
+      <svg
+        class="w-full h-40 text-positive"
+        viewBox="0 0 480 160"
+        role="img"
+        aria-label="Probability bars after the Quantum Fourier Transform"
+        data-role="chart-output"
+      ></svg>
+    </div>
+  </div>
+
+  <p
+    class="text-xs text-ink-subtle"
+    data-role="readout"
+    aria-live="polite"
+  >
+    {initialReadout}
+  </p>
+</figure>
+
+<script>
+  interface PresetSnapshot {
+    input: number[];
+    output: number[];
+  }
+
+  const VIEWBOX_W = 480;
+  const VIEWBOX_H = 160;
+  const PADDING_X = 20;
+  const PADDING_Y_TOP = 8;
+  const PADDING_Y_BOT = 22;
+  const ZERO_Y = VIEWBOX_H - PADDING_Y_BOT;
+  const MAX_BAR_H = ZERO_Y - PADDING_Y_TOP;
+
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function mount(el: HTMLElement) {
+    const qubits = Number(el.dataset.qubits ?? "4");
+    const N = 1 << qubits;
+
+    let presets: Record<string, PresetSnapshot>;
+    let hints: Record<string, string>;
+    let labels: string[];
+    let presetLabels: Record<string, string>;
+    try {
+      presets = JSON.parse(el.dataset.presets ?? "{}");
+      hints = JSON.parse(el.dataset.hints ?? "{}");
+      labels = JSON.parse(el.dataset.labels ?? "[]");
+      presetLabels = JSON.parse(el.dataset.presetLabels ?? "{}");
+    } catch {
+      console.warn("QFTVisualizer: could not parse data attributes", el);
+      return;
+    }
+    if (labels.length !== N) return;
+
+    const select = el.querySelector<HTMLSelectElement>('[data-action="preset"]')!;
+    const hintEl = el.querySelector<HTMLElement>('[data-role="preset-hint"]')!;
+    const editor = el.querySelector<HTMLElement>('[data-role="custom-editor"]')!;
+    const customInputs = Array.from(
+      el.querySelectorAll<HTMLInputElement>('[data-action="custom-amp"]'),
+    );
+    const inputChart = el.querySelector<SVGSVGElement>('[data-role="chart-input"]')!;
+    const outputChart = el.querySelector<SVGSVGElement>('[data-role="chart-output"]')!;
+    const readout = el.querySelector<HTMLElement>('[data-role="readout"]')!;
+
+    // Tiny forward DFT used by the Custom path so we don't import the
+    // qft module into the client bundle.
+    const customDFT = (real: number[]): PresetSnapshot => {
+      const sumSq = real.reduce((acc, v) => acc + v * v, 0);
+      if (!Number.isFinite(sumSq) || sumSq <= 0) {
+        const uniform = 1 / N;
+        return {
+          input: new Array(N).fill(uniform),
+          output: new Array(N).fill(uniform),
+        };
+      }
+      const inv = 1 / Math.sqrt(sumSq);
+      const ampReal = real.map((v) => v * inv);
+      const inputProbs = ampReal.map((v) => v * v);
+      const twoPiOverN = (2 * Math.PI) / N;
+      const out = new Array(N).fill(0);
+      const norm = 1 / Math.sqrt(N);
+      for (let k = 0; k < N; k++) {
+        let re = 0;
+        let im = 0;
+        for (let j = 0; j < N; j++) {
+          const angle = twoPiOverN * j * k;
+          re += ampReal[j] * Math.cos(angle);
+          im += ampReal[j] * Math.sin(angle);
+        }
+        re *= norm;
+        im *= norm;
+        out[k] = re * re + im * im;
+      }
+      return { input: inputProbs, output: out };
+    };
+
+    const buildBars = (svg: SVGSVGElement, n: number) => {
+      svg.innerHTML = "";
+      const axis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      axis.setAttribute("x1", String(PADDING_X));
+      axis.setAttribute("x2", String(VIEWBOX_W - PADDING_X));
+      axis.setAttribute("y1", String(ZERO_Y));
+      axis.setAttribute("y2", String(ZERO_Y));
+      axis.setAttribute("stroke", "currentColor");
+      axis.setAttribute("stroke-opacity", "0.4");
+      axis.setAttribute("stroke-width", "1");
+      svg.appendChild(axis);
+
+      const barWidth = (VIEWBOX_W - PADDING_X * 2) / n - 4;
+      const bars: SVGRectElement[] = [];
+      for (let i = 0; i < n; i++) {
+        const x = PADDING_X + i * (barWidth + 4);
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", String(x));
+        rect.setAttribute("width", String(barWidth));
+        rect.setAttribute("rx", "2");
+        rect.setAttribute("fill", "currentColor");
+        rect.setAttribute("fill-opacity", "0.75");
+        if (!reduceMotion) {
+          rect.style.transition = "height 220ms ease-out, y 220ms ease-out";
+        }
+        svg.appendChild(rect);
+        bars.push(rect);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", String(x + barWidth / 2));
+        label.setAttribute("y", String(VIEWBOX_H - 4));
+        label.setAttribute("text-anchor", "middle");
+        label.setAttribute("fill", "currentColor");
+        label.setAttribute("fill-opacity", "0.6");
+        label.setAttribute("font-size", n > 8 ? "9" : "11");
+        label.setAttribute("font-family", "ui-monospace, monospace");
+        label.textContent = labels[i] ?? "";
+        svg.appendChild(label);
+      }
+      return bars;
+    };
+
+    const inBars = buildBars(inputChart, N);
+    const outBars = buildBars(outputChart, N);
+
+    const paint = (bars: SVGRectElement[], probs: number[]) => {
+      const maxP = Math.max(0.5, ...probs);
+      for (let i = 0; i < bars.length; i++) {
+        const p = probs[i] ?? 0;
+        const h = (p / maxP) * MAX_BAR_H;
+        bars[i].setAttribute("height", String(h));
+        bars[i].setAttribute("y", String(ZERO_Y - h));
+      }
+    };
+
+    const render = (label: string, snap: PresetSnapshot) => {
+      paint(inBars, snap.input);
+      paint(outBars, snap.output);
+      let peakIdx = 0;
+      let peakP = -Infinity;
+      for (let i = 0; i < snap.output.length; i++) {
+        if (snap.output[i] > peakP) {
+          peakP = snap.output[i];
+          peakIdx = i;
+        }
+      }
+      const uniform = snap.output.every((p) => Math.abs(p - 1 / N) < 1e-6);
+      readout.textContent = uniform
+        ? `${label}: output is uniform — every bin has P = ${(1 / N).toFixed(3)}.`
+        : `${label}: strongest output bin = ${labels[peakIdx]} at P = ${peakP.toFixed(3)}.`;
+    };
+
+    const renderCurrent = () => {
+      const id = select.value;
+      if (id === "custom") {
+        const real = customInputs.map((inp) => Number(inp.value) || 0);
+        const snap = customDFT(real);
+        render("Custom", snap);
+        return;
+      }
+      const snap = presets[id];
+      if (!snap) return;
+      const label = presetLabels[id] ?? id;
+      render(label, snap);
+    };
+
+    select.addEventListener("change", () => {
+      const id = select.value;
+      if (id === "custom") {
+        editor.hidden = false;
+        hintEl.textContent =
+          "Type real weights below; they are normalized before the QFT runs.";
+      } else {
+        editor.hidden = true;
+        hintEl.textContent = hints[id] ?? "";
+      }
+      renderCurrent();
+    });
+
+    let debounce: number | undefined;
+    customInputs.forEach((inp) => {
+      inp.addEventListener("input", () => {
+        if (debounce !== undefined) window.clearTimeout(debounce);
+        debounce = window.setTimeout(renderCurrent, 80);
+      });
+    });
+
+    renderCurrent();
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-widget="qft-visualizer"]')
+    .forEach(mount);
+</script>
